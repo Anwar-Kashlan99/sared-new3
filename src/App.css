@@ -1,0 +1,188 @@
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wdth,wght@0,75..100,300..800;1,75..100,300..800&display=swap");
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+* {
+  box-sizing: border-box;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+ol,
+ul {
+  margin: 0;
+  padding: 0;
+  font-weight: normal;
+  -webkit-font-smoothing: antialiased;
+}
+
+ol,
+ul {
+  list-style: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+button {
+  border: none;
+  outline: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+body {
+  background-color: #f7f7f7 !important;
+  font-family: "Open Sans", sans-serif;
+  text-transform: capitalize;
+}
+
+@media (max-width: 768px) {
+  .css-19kzrtu {
+    padding: 10px !important;
+  }
+  .react-tel-input .flag-dropdown {
+    left: -20px !important;
+  }
+}
+
+.container {
+  width: 1200px;
+  max-width: 90%;
+  margin: 0 auto;
+}
+
+.cardWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 140px);
+}
+
+a {
+  text-decoration: none !important;
+  color: #fff !important;
+}
+.active h4 {
+  color: #f25f0c !important;
+  font-weight: bold !important;
+}
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 6px; /* Set the width of the scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent; /* Set the background color of the scrollbar track */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #888; /* Set the color of the scrollbar thumb */
+  border-radius: 3px; /* Add border radius to the scrollbar thumb */
+}
+.emoji-picker {
+  width: 290px;
+  height: 48px;
+}
+.rhap_progress-indicator {
+  background: #f7f7f7 !important;
+}
+.rhap_main-controls-button {
+  color: #f7f7f7 !important;
+}
+.rhap_volume-button {
+  color: #f7f7f7 !important;
+}
+.rhap_volume-indicator {
+  background: #f7f7f7 !important;
+}
+.rhap_repeat-button {
+  color: #f7f7f7 !important;
+}
+.rhap_time {
+  color: #f7f7f7 !important;
+}
+.rhap_progress-filled {
+  background-color: #a7a7a7 !important;
+}
+.editor {
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  outline: none;
+  width: 100%;
+  max-width: 100%;
+}
+.editor a {
+  color: #f25f0c !important;
+  text-decoration: underline !important;
+  cursor: pointer;
+}
+.nav-item:hover > div {
+  width: 100%;
+}
+.nav-item.active > div {
+  width: 100%;
+}
+
+.menuUlLi {
+  margin: 0;
+  padding: 0;
+}
+
+.menuLi {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.refresh {
+  padding: 10px;
+  position: absolute;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 10px;
+  width: 20px;
+  height: 20px;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* .react-tel-input .selected-flag {
+  box-shadow: 3px 5px 7px 0px #707070;
+  padding: 15px 25px !important;
+  width: 90px !important;
+  border-radius: 20px !important;
+  background-color: #fff !important;
+}
+
+.react-tel-input .selected-flag:focus:before,
+.react-tel-input .selected-flag.open:before {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.react-tel-input .form-control {
+  box-shadow: 3px 5px 7px 0px #707070;
+  border: none !important;
+}
+.react-tel-input .form-control:focus {
+  box-shadow: 3px 5px 7px 0px #707070 !important;
+} */
