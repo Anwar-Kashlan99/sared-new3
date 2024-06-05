@@ -20,7 +20,6 @@ import { useWebRTC } from "../../hooks/useWebRTC";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
-  ArrowBackIosNewOutlined,
   BackHand,
   LogoutOutlined,
   MicOffOutlined,
@@ -413,7 +412,7 @@ const Room = () => {
                   }}
                 >
                   <img
-                    src={client.avatar}
+                    src={client.profile}
                     alt=""
                     style={{
                       width: "100%",
@@ -478,7 +477,7 @@ const Room = () => {
                   }}
                 >
                   <img
-                    src={client.avatar}
+                    src={client.profile}
                     alt=""
                     style={{
                       width: "100%",
@@ -559,7 +558,7 @@ const Room = () => {
                   }}
                 >
                   <img
-                    src={client.avatar}
+                    src={client.profile}
                     alt=""
                     style={{
                       width: "100%",
@@ -639,9 +638,19 @@ const Room = () => {
         </DialogTitle>
         <DialogContent>
           <List>
-            {handRaiseRequests.map(({ peerId, userId }) => (
+            {handRaiseRequests.map(({ peerId, userId, username, profile }) => (
               <ListItem key={peerId}>
-                <ListItemText primary={`User ID: ${userId}`} />
+                <img
+                  src={profile}
+                  alt={username}
+                  style={{
+                    width: "30px",
+                    height: "30px",
+                    borderRadius: "50%",
+                    marginRight: "10px",
+                  }}
+                />
+                <ListItemText primary={`User: ${username}`} />
                 <Button
                   onClick={() => approveSpeakRequest(peerId, userId)}
                   color="primary"

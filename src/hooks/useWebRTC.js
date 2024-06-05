@@ -79,10 +79,16 @@ export const useWebRTC = (roomId, userDetails) => {
         navigate("/srdhouse");
       });
 
-      socket.current.on(ACTIONS.RAISE_HAND, ({ peerId, userId }) => {
-        setHandRaiseRequests((requests) => [...requests, { peerId, userId }]);
-        toast(`User ${userId} has raised their hand.`);
-      });
+      socket.current.on(
+        ACTIONS.RAISE_HAND,
+        ({ peerId, userId, username, profile }) => {
+          setHandRaiseRequests((requests) => [
+            ...requests,
+            { peerId, userId, username, profile },
+          ]);
+          toast(`User ${userId} has raised their hand.`);
+        }
+      );
 
       socket.current.on(ACTIONS.APPROVE_SPEAK, ({ userId }) => {
         toast(`User ${userId} has been approved to speak.`);
@@ -332,12 +338,26 @@ export const useWebRTC = (roomId, userDetails) => {
   };
 
   const raiseHand = () => {
-    if (socket.current) {
-      socket.current.emit(ACTIONS.RAISE_HAND, {
-        roomId,
-        userId: userDetails._id,
-      });
+    const existingRequest = handRaiseRequests.find(
+      (request) => request.userId === userDetails._id
+    );
+
+    if (existingRequest) {
+      toast(
+        "You have already raised your hand. Please wait for the admin to approve or reject."
+      );
+      return;
     }
+
+    socket.current.emit(ACTIONS.RAISE_HAND, {
+      roomId,
+      peerId: socket.current.id,
+      userId: userDetails._id,
+      username: userDetails.username,
+      profile: userDetails.profile,
+    });
+
+    toast("You have raised your hand.");
   };
 
   const approveSpeakRequest = (peerId, userId) => {
