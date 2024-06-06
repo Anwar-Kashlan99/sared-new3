@@ -18,9 +18,9 @@ import {
 import React, { useState, useEffect, useCallback } from "react";
 import { useWebRTC } from "../../hooks/useWebRTC";
 import { useNavigate, useParams } from "react-router-dom";
+import hand from "../../assets/hand.svg";
 
 import {
-  BackHand,
   LogoutOutlined,
   MicOffOutlined,
   MicOutlined,
@@ -43,6 +43,8 @@ import {
   WhatsappShareButton,
   XIcon,
 } from "react-share";
+import line from "../../assets/line-minus-svgrepo-com.png";
+import more from "../../assets/more.svg";
 
 const Room = () => {
   const { id: roomId } = useParams();
@@ -182,11 +184,18 @@ const Room = () => {
         toast.error("Failed to copy URL");
       });
   };
+  ///
+
+  const [isOpen, setIsOpen] = useState(true);
+
+  const toggleAccordion = () => {
+    setIsOpen(!isOpen);
+  };
 
   return (
     <Box
       sx={{
-        minHeight: "calc(100vh - 56px)",
+        minHeight: isMobile ? "" : "calc(100vh - 56px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -195,7 +204,7 @@ const Room = () => {
       <Box
         sx={{
           width: isMobile ? "100%" : "90%",
-          padding: "1rem 0.5rem",
+          padding: isMobile ? "0" : "1rem 0.5rem",
           m: isMobile ? "0rem auto" : "5.5rem auto 2rem",
         }}
       >
@@ -203,8 +212,8 @@ const Room = () => {
           sx={{
             position: "relative",
             width: "100%",
-            height: isBigSecreen ? "800px" : "700px",
-            borderRadius: "50px",
+            height: isBigSecreen ? "800px" : isMobile ? "850px" : "700px",
+            borderRadius: isMobile ? "0" : "50px",
             overflow: "hidden",
             backgroundColor: "#fff",
             boxShadow: "2px 4px 7px #707070",
@@ -222,20 +231,6 @@ const Room = () => {
             reverse={true}
           />
     */}
-          {!isMobile && (
-            <Box
-              sx={{
-                position: "absolute",
-                bottom: "0",
-                left: "0",
-                width: "100%",
-                height: "40px",
-                zIndex: "99",
-                backdropFilter: "blur(13px)",
-                backgroundImage: "linear-gradient(to top, transparent, #fff)",
-              }}
-            />
-          )}
 
           <Box
             sx={{
@@ -260,118 +255,7 @@ const Room = () => {
               </Typography>
             )}
 
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                columnGap: "10px",
-              }}
-            >
-              {/** RaiseHand btn */}
-
-              {isAdmin && (
-                <Button
-                  variant="outlined"
-                  sx={{
-                    background: "#f25f0c",
-                    outline: "none",
-                    display: "flex",
-                    alignItems: "center",
-                    padding: "0.7rem 1rem",
-                    borderRadius: "20px",
-                    color: "#fff",
-                    transition: "all 0.3s ease-in-out",
-                    "&:hover": {
-                      background: "#fff",
-                      color: "#f25f0c",
-                    },
-                  }}
-                  onClick={handleRaiseHandDialogOpen}
-                >
-                  <BackHand sx={{ fontSize: "24px" }} />
-                  <Typography
-                    sx={{ fontWeight: "bold", ml: "10px", fontSize: "13px" }}
-                  >
-                    {t("Requests")}
-                  </Typography>
-                </Button>
-              )}
-
-              {isAudience && (
-                <Button
-                  variant="outlined"
-                  sx={{
-                    background: "#f25f0c",
-                    outline: "none",
-                    marginLeft: "2rem",
-                    display: "flex",
-                    alignItems: "center",
-                    padding: "0.7rem ",
-                    borderRadius: "20px",
-                    color: "#fff",
-                    transition: "all 0.3s ease-in-out",
-                    "&:hover": {
-                      background: "#fff",
-                      color: "#f25f0c",
-                    },
-                  }}
-                  onClick={raiseHand}
-                >
-                  <BackHand sx={{ fontSize: "24px" }} />
-                </Button>
-              )}
-
-              <Button
-                variant="outlined"
-                sx={{
-                  background: "#f25f0c",
-                  outline: "none",
-                  display: "flex",
-                  alignItems: "center",
-                  padding: "0.7rem 0rem",
-                  borderRadius: "20px",
-                  color: "#fff",
-                  transition: "all 0.3s ease-in-out",
-                  "&:hover": {
-                    background: "#fff",
-                    color: "#f25f0c",
-                  },
-                }}
-                onClick={handManualLeave}
-              >
-                <LogoutOutlined sx={{ fontSize: "22px" }} />
-              </Button>
-
-              <IconButton
-                id="fade-button"
-                aria-controls={open ? "fade-menu" : undefined}
-                aria-haspopup="true"
-                aria-expanded={open ? "true" : undefined}
-                onClick={handleClick}
-              >
-                <MoreVert sx={{ color: "#f25f0c", cursor: "pointer" }} />
-              </IconButton>
-
-              <Menu
-                id="fade-menu"
-                MenuListProps={{
-                  "aria-labelledby": "fade-button",
-                }}
-                anchorEl={anchorEl}
-                open={open}
-                onClose={handleClose}
-                TransitionComponent={Fade}
-                sx={{ ml: "-8px", mt: "5px" }}
-              >
-                <MenuItem onClick={handleShareDialogOpen}>Invite</MenuItem>
-                {isAdmin && (
-                  <MenuItem sx={{ color: "red" }} onClick={handleEndRoom}>
-                    EndRoom
-                  </MenuItem>
-                )}
-              </Menu>
-            </Box>
+            {/** */}
           </Box>
           <Box
             sx={{
@@ -524,106 +408,287 @@ const Room = () => {
           <Box
             sx={{
               display: "flex",
-              alignItems: "center",
-              flexWrap: "wrap",
-              justifyContent: isMobile ? "center" : undefined,
-              gap: "30px",
-              maxHeight: "500px", // Set the maximum height for scrollable content
-              overflowY: "auto", // Enable vertical scrolling
-              scrollbarWidth: "none", // Hide the default scrollbar on webkit browsers
-              "&::-webkit-scrollbar": {
-                display: "none", // Hide the scrollbar on webkit browsers
-              },
+              flexDirection: "column",
+              height: "100vh",
+              overflow: "hidden",
             }}
           >
-            {/** here the audience */}
-
-            {audience.map((client) => (
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  width: "130px",
-                }}
-                key={client?._id}
-              >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                flexWrap: "wrap",
+                justifyContent: isMobile ? "center" : "flex-start",
+                gap: "30px",
+                maxHeight: isBigSecreen
+                  ? "calc(100vh - 400px)"
+                  : isMobile
+                  ? "calc(100vh - 200px)"
+                  : "calc(100vh - 280px)", // Adjust based on the second box height
+                overflowY: "auto",
+                scrollbarWidth: "none",
+                "&::-webkit-scrollbar": {
+                  display: "none",
+                },
+              }}
+            >
+              {audience.map((client) => (
                 <Box
                   sx={{
-                    width: "75px",
-                    height: "75px",
-                    borderRadius: "50%",
-                    border: "3px solid #f25f0c",
-                    position: " relative",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    width: "130px",
                   }}
+                  key={client?._id}
                 >
-                  <img
-                    src={client.profile}
-                    alt=""
-                    style={{
-                      width: "100%",
-                      height: "100%",
+                  <Box
+                    sx={{
+                      width: "75px",
+                      height: "75px",
                       borderRadius: "50%",
+                      border: "3px solid #f25f0c",
+                      position: "relative",
                     }}
-                  />
-                  {isAdmin && (
-                    <IconButton
-                      id="fade-button"
-                      aria-controls={openAud ? "fade-menu-aud" : undefined}
-                      aria-haspopup="true"
-                      aria-expanded={openAud ? "true" : undefined}
-                      onClick={(event) => handleClickAud(event, client._id)}
-                      sx={{
-                        position: "absolute",
-                        right: "-40px",
-                        top: "-10px",
-                      }}
-                    >
-                      <MoreVert sx={{ color: "#f25f0c", cursor: "pointer" }} />
-                    </IconButton>
-                  )}
-                  <Menu
-                    id="fade-menu-aud"
-                    MenuListProps={{
-                      "aria-labelledby": "fade-button",
-                    }}
-                    anchorEl={anchorElAud?.anchor || null}
-                    open={openAud}
-                    onClose={handleCloseAud}
-                    TransitionComponent={Fade}
-                    sx={{ ml: "-8px", mt: "5px" }}
                   >
-                    {isAdmin && anchorElAud && (
-                      <MenuItem
-                        sx={{ color: "red" }}
-                        onClick={() => {
-                          blockUser(anchorElAud.clientId);
-                          handleCloseAud();
+                    <img
+                      src={client.profile}
+                      alt=""
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "50%",
+                      }}
+                    />
+                    {isAdmin && (
+                      <IconButton
+                        id="fade-button"
+                        aria-controls={openAud ? "fade-menu-aud" : undefined}
+                        aria-haspopup="true"
+                        aria-expanded={openAud ? "true" : undefined}
+                        onClick={(event) => handleClickAud(event, client._id)}
+                        sx={{
+                          position: "absolute",
+                          right: "-40px",
+                          top: "-10px",
                         }}
                       >
-                        Block the user
-                      </MenuItem>
+                        <MoreVert
+                          sx={{ color: "#f25f0c", cursor: "pointer" }}
+                        />
+                      </IconButton>
                     )}
-                  </Menu>
-                  <audio
-                    autoPlay
-                    ref={(instance) => {
-                      provideRef(instance, client?._id);
+                    <Menu
+                      id="fade-menu-aud"
+                      MenuListProps={{
+                        "aria-labelledby": "fade-button",
+                      }}
+                      anchorEl={anchorElAud?.anchor || null}
+                      open={openAud}
+                      onClose={handleCloseAud}
+                      TransitionComponent={Fade}
+                      sx={{ ml: "-8px", mt: "5px" }}
+                    >
+                      {isAdmin && anchorElAud && (
+                        <MenuItem
+                          sx={{ color: "red" }}
+                          onClick={() => {
+                            blockUser(anchorElAud.clientId);
+                            handleCloseAud();
+                          }}
+                        >
+                          Block the user
+                        </MenuItem>
+                      )}
+                    </Menu>
+                    <audio
+                      autoPlay
+                      ref={(instance) => {
+                        provideRef(instance, client?._id);
+                      }}
+                    />
+                  </Box>
+                  <Typography
+                    sx={{
+                      marginTop: "0.5rem",
+                      fontSize: "15px",
+                      color: "#000",
+                      textAlign: "center",
+                    }}
+                  >
+                    {client.username}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+            <>
+              <Box
+                sx={{
+                  width: isMobile ? "100%" : "60%",
+                  borderRadius: isOpen ? "40px 40px 0 0" : "40px",
+                  boxShadow: isOpen ? "2px 3px 10px 3px #707070" : "",
+                  position: "absolute",
+                  backgroundColor: "#fff",
+                  bottom: 0,
+                  left: "50%",
+                  padding: !isOpen
+                    ? ""
+                    : isMobile
+                    ? "0.9rem 1.5rem 0.7rem"
+                    : "0.8rem 4rem 0.4rem",
+                  transform: "translateX(-50%)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  transition: "height 0.3s ease-in-out",
+                  height: isOpen ? "auto" : "0",
+                }}
+              >
+                <Box
+                  onClick={toggleAccordion}
+                  sx={{
+                    padding: "15px",
+                    cursor: "pointer",
+                    position: "absolute",
+                    top: "-20px",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: "125px",
+                      backgroundColor: "#f25f0c",
+                      borderRadius: "100px",
+                      height: "5px",
                     }}
                   />
                 </Box>
-                <Typography
-                  sx={{
-                    marginTop: "0.5rem",
-                    fontSize: "15px",
-                    color: "#000",
-                    textAlign: "center",
-                  }}
-                >
-                  {client.username}
-                </Typography>
+
+                {isOpen && (
+                  <>
+                    <IconButton
+                      onClick={handManualLeave}
+                      sx={{ backgroundColor: "#f5f5f5", padding: "0.7rem" }}
+                    >
+                      <LogoutOutlined
+                        sx={{ fontSize: "24px", color: "#f25f0c" }}
+                      />
+                    </IconButton>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        columnGap: "10px",
+                      }}
+                    >
+                      {isAdmin && (
+                        <Button
+                          variant="outlined"
+                          sx={{
+                            background: "#f5f5f5",
+                            outline: "none",
+                            display: "flex",
+                            alignItems: "center",
+                            padding: "0.5rem 1rem",
+                            border: "none",
+                            borderRadius: "20px",
+                            transition: "all 0.3s ease-in-out",
+                            "&:hover": {
+                              border: "none",
+                            },
+                          }}
+                          onClick={handleRaiseHandDialogOpen}
+                        >
+                          <img
+                            alt="hand"
+                            src={hand}
+                            style={{ width: "30px" }}
+                          />
+                          <Typography
+                            sx={{
+                              fontWeight: "bold",
+                              ml: "10px",
+                              fontSize: "13px",
+                            }}
+                          >
+                            {t("Requests")}
+                          </Typography>
+                        </Button>
+                      )}
+
+                      {isAudience && (
+                        <Button
+                          variant="outlined"
+                          sx={{
+                            background: "#eee",
+                            outline: "none",
+                            marginLeft: "2rem",
+                            display: "flex",
+                            alignItems: "center",
+                            padding: "0.7rem ",
+                            borderRadius: "20px",
+                            transition: "all 0.3s ease-in-out",
+                          }}
+                          onClick={raiseHand}
+                        >
+                          <img
+                            alt="hand"
+                            src={hand}
+                            style={{ width: "30px" }}
+                          />
+                        </Button>
+                      )}
+
+                      <IconButton
+                        id="fade-button"
+                        aria-controls={open ? "fade-menu" : undefined}
+                        aria-haspopup="true"
+                        aria-expanded={open ? "true" : undefined}
+                        onClick={handleClick}
+                      >
+                        <MoreVert
+                          sx={{ color: "#f25f0c", cursor: "pointer" }}
+                        />
+                      </IconButton>
+
+                      <Menu
+                        id="fade-menu"
+                        MenuListProps={{
+                          "aria-labelledby": "fade-button",
+                        }}
+                        anchorEl={anchorEl}
+                        open={open}
+                        onClose={handleClose}
+                        TransitionComponent={Fade}
+                        sx={{ mt: "-8px" }}
+                        anchorOrigin={{
+                          vertical: "top",
+                          horizontal: "right",
+                        }}
+                        transformOrigin={{
+                          vertical: "bottom",
+                          horizontal: "right",
+                        }}
+                      >
+                        <MenuItem onClick={handleShareDialogOpen}>
+                          Invite
+                        </MenuItem>
+                        {isAdmin && (
+                          <MenuItem
+                            sx={{ color: "red" }}
+                            onClick={handleEndRoom}
+                          >
+                            End Room
+                          </MenuItem>
+                        )}
+                      </Menu>
+                    </Box>
+                  </>
+                )}
               </Box>
-            ))}
+            </>
           </Box>
         </Box>
       </Box>
