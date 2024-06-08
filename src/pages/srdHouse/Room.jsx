@@ -43,8 +43,8 @@ import {
   WhatsappShareButton,
   XIcon,
 } from "react-share";
-import line from "../../assets/line-minus-svgrepo-com.png";
-import more from "../../assets/more.svg";
+import upArrow from "../../assets/up-arrow.svg";
+import downArrow from "../../assets/down-arrow.svg";
 
 const Room = () => {
   const { id: roomId } = useParams();
@@ -534,36 +534,32 @@ const Room = () => {
                   padding: !isOpen
                     ? ""
                     : isMobile
-                    ? "0.9rem 1.5rem 0.7rem"
+                    ? "1rem 1.5rem 0.8rem"
                     : "0.8rem 4rem 0.4rem",
                   transform: "translateX(-50%)",
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  transition: "height 0.3s ease-in-out",
+                  transition: "height 0.1s ease-in-out",
                   height: isOpen ? "auto" : "0",
                 }}
               >
-                <Box
+                <IconButton
                   onClick={toggleAccordion}
                   sx={{
                     padding: "15px",
                     cursor: "pointer",
                     position: "absolute",
-                    top: "-20px",
-                    left: "50%",
-                    transform: "translateX(-50%)",
+                    top: isOpen ? "-30px" : "-60px",
+                    right: "5px",
                   }}
                 >
-                  <Box
-                    sx={{
-                      width: "125px",
-                      backgroundColor: "#f25f0c",
-                      borderRadius: "100px",
-                      height: "5px",
-                    }}
+                  <img
+                    alt="arrow"
+                    src={isOpen ? downArrow : upArrow}
+                    style={{ width: "30px" }}
                   />
-                </Box>
+                </IconButton>
 
                 {isOpen && (
                   <>
@@ -622,14 +618,18 @@ const Room = () => {
                         <Button
                           variant="outlined"
                           sx={{
-                            background: "#eee",
+                            background: "#f5f5f5",
                             outline: "none",
-                            marginLeft: "2rem",
                             display: "flex",
+                            minWidth: "20px",
                             alignItems: "center",
-                            padding: "0.7rem ",
+                            padding: "0.5rem 0.7rem",
+                            border: "none",
                             borderRadius: "20px",
                             transition: "all 0.3s ease-in-out",
+                            "&:hover": {
+                              border: "none",
+                            },
                           }}
                           onClick={raiseHand}
                         >
