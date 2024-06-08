@@ -98,6 +98,10 @@ export const useWebRTC = (roomId, userDetails) => {
         toast(`User ${userId} has been rejected to speak.`);
       });
 
+      socket.current.on(ACTIONS.RAISE_HAND_DUPLICATE, ({ message }) => {
+        toast(message);
+      });
+
       await captureMedia();
 
       // Add the current user as the first client
@@ -143,6 +147,7 @@ export const useWebRTC = (roomId, userDetails) => {
         socket.current.off(ACTIONS.REMOVE_PEER);
         socket.current.off(ACTIONS.ICE_CANDIDATE);
         socket.current.off(ACTIONS.SESSION_DESCRIPTION);
+        socket.current.off(ACTIONS.RAISE_HAND_DUPLICATE);
         socket.current.off(ACTIONS.MUTE);
         socket.current.off(ACTIONS.UNMUTE);
         socket.current.emit(ACTIONS.LEAVE, { roomId });

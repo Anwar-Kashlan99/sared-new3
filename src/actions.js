@@ -16,6 +16,7 @@ export const ACTIONS = {
   ROOM_CLIENTS: "room_clients",
   ROOM_ENDED_REDIRECT: "room_ended_redirect",
   RAISE_HAND: "raise_hand",
+  RAISE_HAND_DUPLICATE: "raise_hand_duplicate",
   APPROVE_SPEAK: "approve_speak",
   REJECT_SPEAK: "reject_speak",
 };
