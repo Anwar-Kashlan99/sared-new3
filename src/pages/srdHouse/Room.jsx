@@ -94,7 +94,7 @@ const Room = () => {
 
   const admins = clients.filter((client) => client.role === "admin");
   const audience = clients.filter((client) => client.role === "audience");
-  const speaker = clients.filter((client) => client.role === "speaker");
+  const speakers = clients.filter((client) => client.role === "speaker");
   const [isMuted, setMuted] = useState(true);
 
   const [comments, setComments] = useState([]);
@@ -340,7 +340,7 @@ const Room = () => {
               </Box>
             ))}
 
-            {speaker.map((client) => (
+            {speakers.map((client) => (
               <Box
                 sx={{
                   display: "flex",
