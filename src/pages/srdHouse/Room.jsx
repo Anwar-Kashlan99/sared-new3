@@ -526,7 +526,7 @@ const Room = () => {
                 sx={{
                   width: isMobile ? "100%" : "60%",
                   borderRadius: isOpen ? "40px 40px 0 0" : "40px",
-                  boxShadow: isOpen ? "2px 3px 10px 3px #707070" : "",
+                  boxShadow: isOpen ? "0px 3px 10px 3px #707070" : "",
                   position: "absolute",
                   backgroundColor: "#fff",
                   bottom: 0,

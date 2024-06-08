@@ -324,30 +324,80 @@ const Navbar = (props) => {
           </Fragment>
         )}
         {isLoggedIn && (
-          <motion.li
-            variants={variantsLi}
-            className="menuLi menuUlLi"
-            style={{ justifyContent: "center" }}
-          >
-            <ListItemButton
-              onClick={handleLogoutClick}
-              sx={{ color: "#707070", textAlign: "center" }}
+          <>
+            <motion.li
+              variants={variantsLi}
+              className="menuLi menuUlLi"
+              style={{ justifyContent: "center" }}
             >
-              <ListItemText
-                sx={{ color: "#707070" }}
-                primary={
-                  <Typography
-                    sx={{
-                      color: "#707070",
-                      fontSize: "18px", // Adjust the font size as needed
-                    }}
-                  >
-                    {t("Log Out")}
-                  </Typography>
-                }
-              />
-            </ListItemButton>
-          </motion.li>
+              <ListItemButton
+                onClick={() => handleMenuItemClick("/about")}
+                sx={{ color: "#707070", textAlign: "center" }}
+              >
+                <ListItemText
+                  sx={{ color: "#707070" }}
+                  primary={
+                    <Typography
+                      sx={{
+                        color: "#707070",
+                        fontSize: "18px", // Adjust the font size as needed
+                      }}
+                    >
+                      {t("About Us")}
+                    </Typography>
+                  }
+                />
+              </ListItemButton>
+            </motion.li>
+            <motion.li
+              variants={variantsLi}
+              className="menuLi menuUlLi"
+              style={{ justifyContent: "center" }}
+            >
+              <ListItemButton
+                onClick={() => handleMenuItemClick("/contact")}
+                sx={{ color: "#707070", textAlign: "center" }}
+              >
+                <ListItemText
+                  sx={{ color: "#707070" }}
+                  primary={
+                    <Typography
+                      sx={{
+                        color: "#707070",
+                        fontSize: "18px", // Adjust the font size as needed
+                      }}
+                    >
+                      {t("Contact Us")}
+                    </Typography>
+                  }
+                />
+              </ListItemButton>
+            </motion.li>
+            <motion.li
+              variants={variantsLi}
+              className="menuLi menuUlLi"
+              style={{ justifyContent: "center" }}
+            >
+              <ListItemButton
+                onClick={handleLogoutClick}
+                sx={{ color: "#707070", textAlign: "center" }}
+              >
+                <ListItemText
+                  sx={{ color: "#707070" }}
+                  primary={
+                    <Typography
+                      sx={{
+                        color: "#707070",
+                        fontSize: "18px", // Adjust the font size as needed
+                      }}
+                    >
+                      {t("Log Out")}
+                    </Typography>
+                  }
+                />
+              </ListItemButton>
+            </motion.li>
+          </>
         )}
         <motion.li
           variants={variantsLi}

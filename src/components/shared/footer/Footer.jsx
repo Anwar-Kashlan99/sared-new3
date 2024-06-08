@@ -134,39 +134,48 @@ const Footer = () => {
               </Box>
             </Box>
           </Box>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              columnGap: "25px",
-              order: isTabScreen ? "1" : "2",
-              mb: isTabScreen ? "10px" : undefined,
-            }}
-          >
-            <NavLink to={"/contact"}>
-              <Typography component="h4" variant={"h4"}>
-                {t("Contact Us")}
-              </Typography>
-            </NavLink>
-            <NavLink to={"/about"}>
-              <Typography component="h4" variant={"h4"}>
-                {t("About Us")}
-              </Typography>
-            </NavLink>
-          </Box>
+          {!isMobile && (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                columnGap: "25px",
+                order: isTabScreen ? "1" : "2",
+                mb: isTabScreen ? "10px" : undefined,
+              }}
+            >
+              <NavLink to={"/contact"}>
+                <Typography component="h4" variant={"h4"}>
+                  {t("Contact Us")}
+                </Typography>
+              </NavLink>
+              <NavLink to={"/about"}>
+                <Typography component="h4" variant={"h4"}>
+                  {t("About Us")}
+                </Typography>
+              </NavLink>
+            </Box>
+          )}
           <Typography
             variant={isTabScreen ? "h5" : "h4"}
             color="#fff"
             sx={{
               mb: isTabScreen ? "8px" : "",
               order: "3",
+              textAlign: "center",
             }}
           >
             {t("This website is made by")}{" "}
-            <span style={{ color: palette.primary.main }}>
-              {t("focus trading company")}
-            </span>
+            <a
+              href="https://focustradingcompany.com/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <span style={{ color: palette.primary.main }}>
+                {t("focus trading company")}
+              </span>
+            </a>
           </Typography>
         </Box>
       </Box>
