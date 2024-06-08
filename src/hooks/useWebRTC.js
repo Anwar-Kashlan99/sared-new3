@@ -92,10 +92,18 @@ export const useWebRTC = (roomId, userDetails) => {
 
       socket.current.on(ACTIONS.APPROVE_SPEAK, ({ userId }) => {
         toast(`User ${userId} has been approved to speak.`);
+        // Remove from hand raise requests
+        setHandRaiseRequests((requests) =>
+          requests.filter((req) => req.userId !== userId)
+        );
       });
 
       socket.current.on(ACTIONS.REJECT_SPEAK, ({ userId }) => {
         toast(`User ${userId} has been rejected to speak.`);
+        // Remove from hand raise requests
+        setHandRaiseRequests((requests) =>
+          requests.filter((req) => req.userId !== userId)
+        );
       });
 
       socket.current.on(ACTIONS.RAISE_HAND_DUPLICATE, ({ message }) => {
