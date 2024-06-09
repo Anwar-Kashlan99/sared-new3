@@ -102,11 +102,17 @@ export const useWebRTC = (roomId, userDetails) => {
         toast(message);
       });
 
-      socket.current.on(ACTIONS.APPROVE_SPEAK, ({ userId }) => {
+      socket.current.on(ACTIONS.APPROVE_SPEAK, ({ userId, role }) => {
         toast(`User ${userId} has been approved to speak.`);
         // Remove from hand raise requests
         setHandRaiseRequests((requests) =>
           requests.filter((req) => req.userId !== userId)
+        );
+        // Update the role of the approved user to 'speaker'
+        setClients((prevClients) =>
+          prevClients.map((client) =>
+            client._id === userId ? { ...client, role } : client
+          )
         );
       });
 
