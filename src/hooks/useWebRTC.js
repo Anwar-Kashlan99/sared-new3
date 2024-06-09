@@ -79,17 +79,35 @@ export const useWebRTC = (roomId, userDetails) => {
         navigate("/srdhouse");
       });
 
-      socket.current.on(ACTIONS.RAISE_HAND, ({ peerId, userId }) => {
-        setHandRaiseRequests((requests) => [...requests, { peerId, userId }]);
-        toast(`User ${userId} has raised their hand.`);
-      });
+      socket.current.on(
+        ACTIONS.RAISE_HAND,
+        ({ peerId, userId, username, profile }) => {
+          setHandRaiseRequests((requests) => [
+            ...requests,
+            { peerId, userId, username, profile },
+          ]);
+          toast(`User ${userId} has raised their hand.`);
+        }
+      );
 
       socket.current.on(ACTIONS.APPROVE_SPEAK, ({ userId }) => {
         toast(`User ${userId} has been approved to speak.`);
+        // Remove from hand raise requests
+        setHandRaiseRequests((requests) =>
+          requests.filter((req) => req.userId !== userId)
+        );
       });
 
       socket.current.on(ACTIONS.REJECT_SPEAK, ({ userId }) => {
         toast(`User ${userId} has been rejected to speak.`);
+        // Remove from hand raise requests
+        setHandRaiseRequests((requests) =>
+          requests.filter((req) => req.userId !== userId)
+        );
+      });
+
+      socket.current.on(ACTIONS.RAISE_HAND_DUPLICATE, ({ message }) => {
+        toast(message);
       });
 
       await captureMedia();
@@ -137,6 +155,7 @@ export const useWebRTC = (roomId, userDetails) => {
         socket.current.off(ACTIONS.REMOVE_PEER);
         socket.current.off(ACTIONS.ICE_CANDIDATE);
         socket.current.off(ACTIONS.SESSION_DESCRIPTION);
+        socket.current.off(ACTIONS.RAISE_HAND_DUPLICATE);
         socket.current.off(ACTIONS.MUTE);
         socket.current.off(ACTIONS.UNMUTE);
         socket.current.emit(ACTIONS.LEAVE, { roomId });
@@ -155,12 +174,7 @@ export const useWebRTC = (roomId, userDetails) => {
 
       try {
         localMediaStream.current = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-            latency: 0,
-          },
+          audio: true,
         });
         console.log("Media captured");
       } catch (error) {
@@ -178,36 +192,40 @@ export const useWebRTC = (roomId, userDetails) => {
 
       console.log(`Adding new peer: ${peerId}`);
 
-      const connectionConstraints = {
-        optional: [{ DtlsSrtpKeyAgreement: true }, { RtpDataChannels: true }],
-      };
+      const connection = new RTCPeerConnection({ iceServers: freeice() });
 
-      connections.current[peerId] = new RTCPeerConnection({
-        iceServers: freeice(),
-        ...connectionConstraints,
-      });
+      connections.current[peerId] = connection;
 
-      connections.current[peerId].onicecandidate = (event) => {
+      connection.onicecandidate = (event) => {
         if (event.candidate) {
-          socket.current.emit(ACTIONS.ICE_CANDIDATE, {
+          socket.current.emit(ACTIONS.RELAY_ICE, {
             peerId,
-            iceCandidate: event.candidate,
+            icecandidate: event.candidate,
           });
         }
       };
 
-      connections.current[peerId].ontrack = ({ streams: [remoteStream] }) => {
+      connection.ontrack = ({ streams: [remoteStream] }) => {
         addNewClient({ ...remoteUser, muted: true }, () => {
-          if (audioElements.current[remoteUser._id]) {
-            audioElements.current[remoteUser._id].srcObject = remoteStream;
+          const currentUser = clientsRef.current.find(
+            (client) => client._id === userDetails._id
+          );
+          if (currentUser) {
+            socket.current.emit(ACTIONS.MUTE_INFO, {
+              userId: userDetails._id,
+              roomId,
+              isMute: currentUser.muted,
+            });
+          }
+
+          const audioElement = audioElements.current[remoteUser._id];
+          if (audioElement) {
+            audioElement.srcObject = remoteStream;
           } else {
-            let settled = false;
             const interval = setInterval(() => {
-              if (audioElements.current[remoteUser._id]) {
-                audioElements.current[remoteUser._id].srcObject = remoteStream;
-                settled = true;
-              }
-              if (settled) {
+              const element = audioElements.current[remoteUser._id];
+              if (element) {
+                element.srcObject = remoteStream;
                 clearInterval(interval);
               }
             }, 300);
@@ -215,17 +233,25 @@ export const useWebRTC = (roomId, userDetails) => {
         });
       };
 
-      localMediaStream.current.getTracks().forEach((track) => {
-        connections.current[peerId].addTrack(track, localMediaStream.current);
-      });
+      if (localMediaStream.current) {
+        localMediaStream.current.getTracks().forEach((track) => {
+          connection.addTrack(track, localMediaStream.current);
+        });
+      } else {
+        console.warn("Local media stream is not available.");
+      }
 
       if (createOffer) {
-        const offer = await connections.current[peerId].createOffer();
-        await connections.current[peerId].setLocalDescription(offer);
-        socket.current.emit(ACTIONS.SESSION_DESCRIPTION, {
-          peerId,
-          sessionDescription: offer,
-        });
+        try {
+          const offer = await connection.createOffer();
+          await connection.setLocalDescription(offer);
+          socket.current.emit(ACTIONS.RELAY_SDP, {
+            peerId,
+            sessionDescription: offer,
+          });
+        } catch (error) {
+          console.error("Error creating offer: ", error);
+        }
       }
     };
 
@@ -332,12 +358,26 @@ export const useWebRTC = (roomId, userDetails) => {
   };
 
   const raiseHand = () => {
-    if (socket.current) {
-      socket.current.emit(ACTIONS.RAISE_HAND, {
-        roomId,
-        userId: userDetails._id,
-      });
+    const existingRequest = handRaiseRequests.find(
+      (request) => request.userId === userDetails._id
+    );
+
+    if (existingRequest) {
+      toast(
+        "You have already raised your hand. Please wait for the admin to approve or reject."
+      );
+      return;
     }
+
+    socket.current.emit(ACTIONS.RAISE_HAND, {
+      roomId,
+      peerId: socket.current.id,
+      userId: userDetails._id,
+      username: userDetails.username,
+      profile: userDetails.profile,
+    });
+
+    toast("You have raised your hand.");
   };
 
   const approveSpeakRequest = (peerId, userId) => {
