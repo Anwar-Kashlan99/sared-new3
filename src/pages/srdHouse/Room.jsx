@@ -68,12 +68,12 @@ const Room = () => {
     clients,
     provideRef,
     handleMute,
-    // endRoom,
-    // blockUser,
-    // raiseHand,
-    // handRaiseRequests,
-    // approveSpeakRequest,
-    // rejectSpeakRequest,
+    endRoom,
+    blockUser,
+    raiseHand,
+    handRaiseRequests,
+    approveSpeakRequest,
+    rejectSpeakRequest,
   } = useWebRTC(roomId, userDetails);
   const [isAdmin, setIsAdmin] = useState(false);
   const currentUser = clients.find((client) => client._id === userDetails._id);
@@ -92,9 +92,9 @@ const Room = () => {
     }
   }, [clients, userDetails]);
 
-  // const admins = clients.filter((client) => client.role === "admin");
-  // const audience = clients.filter((client) => client.role === "audience");
-  // const speaker = clients.filter((client) => client.role === "speaker");
+  const admins = clients.filter((client) => client.role === "admin");
+  const audience = clients.filter((client) => client.role === "audience");
+  const speaker = clients.filter((client) => client.role === "speaker");
   const [isMuted, setMuted] = useState(true);
 
   const [comments, setComments] = useState([]);
@@ -111,11 +111,11 @@ const Room = () => {
     refetch();
   };
 
-  // const handleEndRoom = async () => {
-  //   handleClose();
-  //   await endRoom();
-  //   refetch();
-  // };
+  const handleEndRoom = async () => {
+    handleClose();
+    await endRoom();
+    refetch();
+  };
   const handleMuteClick = useCallback(
     (clientId) => {
       if (clientId !== userDetails?._id) {
@@ -631,7 +631,7 @@ const Room = () => {
                               border: "none",
                             },
                           }}
-                          // onClick={raiseHand}
+                          onClick={raiseHand}
                         >
                           <img
                             alt="hand"
@@ -678,7 +678,7 @@ const Room = () => {
                         {isAdmin && (
                           <MenuItem
                             sx={{ color: "red" }}
-                            // onClick={handleEndRoom}
+                            onClick={handleEndRoom}
                           >
                             End Room
                           </MenuItem>
@@ -692,7 +692,7 @@ const Room = () => {
           </Box>
         </Box>
       </Box>
-      {/**
+
       <Dialog
         open={raiseHandDialogOpen}
         onClose={handleRaiseHandDialogClose}
@@ -743,7 +743,7 @@ const Room = () => {
           </Button>
         </DialogActions>
       </Dialog>
-*/}
+
       <Dialog
         open={shareDialogOpen}
         onClose={handleShareDialogClose}
