@@ -5,9 +5,6 @@ import { useStateWithCallback } from "./useStateWithCallback";
 import freeice from "freeice";
 
 export const useWebRTC = (roomId, userDetails) => {
-  console.log(roomId);
-  console.log(userDetails);
-
   const [clients, setClients] = useStateWithCallback([]);
   const audioElements = useRef({});
   const connections = useRef({});
@@ -113,7 +110,12 @@ export const useWebRTC = (roomId, userDetails) => {
 
       try {
         localMediaStream.current = await navigator.mediaDevices.getUserMedia({
-          audio: true,
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            latency: 0,
+          },
         });
         console.log("Media captured");
       } catch (error) {
@@ -144,27 +146,18 @@ export const useWebRTC = (roomId, userDetails) => {
         }
       };
 
-      connection.ontrack = ({ streams: [remoteStream] }) => {
+      connections.current[peerId].ontrack = ({ streams: [remoteStream] }) => {
         addNewClient({ ...remoteUser, muted: true }, () => {
-          const currentUser = clientsRef.current.find(
-            (client) => client._id === userDetails._id
-          );
-          if (currentUser) {
-            socket.current.emit(ACTIONS.MUTE_INFO, {
-              userId: userDetails._id,
-              roomId,
-              isMute: currentUser.muted,
-            });
-          }
-
-          const audioElement = audioElements.current[remoteUser._id];
-          if (audioElement) {
-            audioElement.srcObject = remoteStream;
+          if (audioElements.current[remoteUser._id]) {
+            audioElements.current[remoteUser._id].srcObject = remoteStream;
           } else {
+            let settled = false;
             const interval = setInterval(() => {
-              const element = audioElements.current[remoteUser._id];
-              if (element) {
-                element.srcObject = remoteStream;
+              if (audioElements.current[remoteUser._id]) {
+                audioElements.current[remoteUser._id].srcObject = remoteStream;
+                settled = true;
+              }
+              if (settled) {
                 clearInterval(interval);
               }
             }, 300);
@@ -174,23 +167,19 @@ export const useWebRTC = (roomId, userDetails) => {
 
       if (localMediaStream.current) {
         localMediaStream.current.getTracks().forEach((track) => {
-          connection.addTrack(track, localMediaStream.current);
+          connections.current[peerId].addTrack(track, localMediaStream.current);
         });
       } else {
         console.warn("Local media stream is not available.");
       }
 
       if (createOffer) {
-        try {
-          const offer = await connection.createOffer();
-          await connection.setLocalDescription(offer);
-          socket.current.emit(ACTIONS.RELAY_SDP, {
-            peerId,
-            sessionDescription: offer,
-          });
-        } catch (error) {
-          console.error("Error creating offer: ", error);
-        }
+        const offer = await connections.current[peerId].createOffer();
+        await connections.current[peerId].setLocalDescription(offer);
+        socket.current.emit(ACTIONS.SESSION_DESCRIPTION, {
+          peerId,
+          sessionDescription: offer,
+        });
       }
     };
 
