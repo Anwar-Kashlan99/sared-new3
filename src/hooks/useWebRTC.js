@@ -241,17 +241,16 @@ export const useWebRTC = (roomId, userDetails) => {
         }
       }
     };
+
     //
     const handleSetMute = (mute, userId) => {
-      const clientIdx = clientsRef.current.findIndex(
-        (client) => client._id === userId
-      );
-      const allConnectedClients = JSON.parse(
-        JSON.stringify(clientsRef.current)
-      );
+      const clientIdx = clientsRef.current
+        .map((client) => client._id)
+        .indexOf(userId);
+      const connectedClients = JSON.parse(JSON.stringify(clientsRef.current));
       if (clientIdx > -1) {
-        allConnectedClients[clientIdx].muted = mute;
-        setClients(allConnectedClients);
+        connectedClients[clientIdx].muted = mute;
+        setClients(connectedClients);
       }
     };
 
@@ -264,7 +263,7 @@ export const useWebRTC = (roomId, userDetails) => {
       }
       cleanupConnections();
     };
-  }, [roomId, userDetails]);
+  }, [roomId, userDetails, addNewClient, setClients]);
 
   const provideRef = (instance, userId) => {
     audioElements.current[userId] = instance;
