@@ -275,7 +275,7 @@ const Room = () => {
             }}
           >
             {/** here the andmin and speker */}
-            {clients.map((client) => (
+            {admins.map((client) => (
               <Box
                 sx={{
                   display: "flex",
@@ -340,7 +340,7 @@ const Room = () => {
               </Box>
             ))}
 
-            {/** speaker.map((client) => (
+            {speaker.map((client) => (
               <Box
                 sx={{
                   display: "flex",
@@ -402,7 +402,7 @@ const Room = () => {
                   {client.username}
                 </Typography>
               </Box>
-            )) */}
+            ))}
           </Box>
           <hr style={{ marginTop: "25px", marginBottom: "25px" }} />
           <Box
@@ -432,7 +432,7 @@ const Room = () => {
                 },
               }}
             >
-              {/**audience.map((client) => (
+              {audience.map((client) => (
                 <Box
                   sx={{
                     display: "flex",
@@ -519,7 +519,7 @@ const Room = () => {
                     {client.username}
                   </Typography>
                 </Box>
-              )) */}
+              ))}
             </Box>
             <>
               <Box
