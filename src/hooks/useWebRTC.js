@@ -215,29 +215,23 @@ export const useWebRTC = (roomId, userDetails) => {
         }
       }
     };
+    //
 
     const setRemoteMedia = async ({
       peerId,
-      sessionDescription: remoteSessionDescription,
+      sessionDescription: remoteDescription,
     }) => {
-      const connection = connections.current[peerId];
-      if (connection) {
-        try {
-          await connection.setRemoteDescription(
-            new RTCSessionDescription(remoteSessionDescription)
-          );
+      await connections.current[peerId].setRemoteDescription(
+        new RTCSessionDescription(remoteDescription)
+      );
 
-          if (remoteSessionDescription.type === "offer") {
-            const answer = await connection.createAnswer();
-            await connection.setLocalDescription(answer);
-            socket.current.emit(ACTIONS.RELAY_SDP, {
-              peerId,
-              sessionDescription: answer,
-            });
-          }
-        } catch (error) {
-          console.error("Error setting remote description: ", error);
-        }
+      if (remoteDescription.type === "offer") {
+        const answer = await connections.current[peerId].createAnswer();
+        await connections.current[peerId].setLocalDescription(answer);
+        socket.current.emit(ACTIONS.SESSION_DESCRIPTION, {
+          peerId,
+          sessionDescription: answer,
+        });
       }
     };
 
