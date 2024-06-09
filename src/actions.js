@@ -19,4 +19,6 @@ export const ACTIONS = {
   RAISE_HAND_DUPLICATE: "raise_hand_duplicate",
   APPROVE_SPEAK: "approve_speak",
   REJECT_SPEAK: "reject_speak",
+  ROOM_CREATED: "room_created",
+  ROOM_DELETED: "room_deleted",
 };
