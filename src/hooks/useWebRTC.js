@@ -194,52 +194,46 @@ export const useWebRTC = (roomId, userDetails) => {
       }
     };
 
+    //
+
     const handleRemovePeer = ({ peerId, userId }) => {
       if (connections.current[peerId]) {
         connections.current[peerId].close();
-        delete connections.current[peerId];
       }
 
-      if (audioElements.current[peerId]) {
-        delete audioElements.current[peerId];
-      }
+      delete connections.current[peerId];
+      delete audioElements.current[userId];
 
       setClients((list) => list.filter((c) => c._id !== userId));
     };
 
-    const handleIceCandidate = async ({ peerId, icecandidate }) => {
-      if (icecandidate) {
-        const connection = connections.current[peerId];
-        if (connection) {
-          await connection.addIceCandidate(icecandidate);
-        }
+    const handleIceCandidate = async ({ peerId, iceCandidate }) => {
+      if (connections.current[peerId]) {
+        await connections.current[peerId].addIceCandidate(
+          new RTCIceCandidate(iceCandidate)
+        );
       }
     };
 
     const setRemoteMedia = async ({
       peerId,
-      sessionDescription: remoteSessionDescription,
+      sessionDescription: remoteDescription,
     }) => {
-      const connection = connections.current[peerId];
-      if (connection) {
-        try {
-          await connection.setRemoteDescription(
-            new RTCSessionDescription(remoteSessionDescription)
-          );
+      await connections.current[peerId].setRemoteDescription(
+        new RTCSessionDescription(remoteDescription)
+      );
 
-          if (remoteSessionDescription.type === "offer") {
-            const answer = await connection.createAnswer();
-            await connection.setLocalDescription(answer);
-            socket.current.emit(ACTIONS.RELAY_SDP, {
-              peerId,
-              sessionDescription: answer,
-            });
-          }
-        } catch (error) {
-          console.error("Error setting remote description: ", error);
-        }
+      if (remoteDescription.type === "offer") {
+        const answer = await connections.current[peerId].createAnswer();
+        await connections.current[peerId].setLocalDescription(answer);
+        socket.current.emit(ACTIONS.SESSION_DESCRIPTION, {
+          peerId,
+          sessionDescription: answer,
+        });
       }
     };
+
+    //
 
     const handleSetMute = (mute, userId) => {
       const clientIdx = clientsRef.current.findIndex(
