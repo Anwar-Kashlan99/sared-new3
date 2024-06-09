@@ -63,6 +63,53 @@ export const useWebRTC = (roomId, userDetails) => {
         handleSetMute(false, userId);
       });
 
+      // Handle the ROOM_CLIENTS event
+      socket.current.on(ACTIONS.ROOM_CLIENTS, ({ roomId, clients }) => {
+        console.log(`Updated clients for room ${roomId}:`, clients);
+
+        setClients(clients);
+      });
+
+      // Listen for ROOM_ENDED_REDIRECT event
+      socket.current.on("ROOM_ENDED_REDIRECT", () => {
+        console.log("Room ended, redirecting to /srdhouse");
+        toast("Room ended", {
+          icon: "⚠️",
+        });
+        navigate("/srdhouse");
+      });
+
+      socket.current.on(
+        ACTIONS.RAISE_HAND,
+        ({ peerId, userId, username, profile }) => {
+          setHandRaiseRequests((requests) => [
+            ...requests,
+            { peerId, userId, username, profile },
+          ]);
+          toast(`User ${userId} has raised their hand.`);
+        }
+      );
+
+      socket.current.on(ACTIONS.REJECT_SPEAK, ({ userId }) => {
+        toast(`User ${userId} has been rejected to speak.`);
+        // Remove from hand raise requests
+        setHandRaiseRequests((requests) =>
+          requests.filter((req) => req.userId !== userId)
+        );
+      });
+
+      socket.current.on(ACTIONS.RAISE_HAND_DUPLICATE, ({ message }) => {
+        toast(message);
+      });
+
+      socket.current.on(ACTIONS.APPROVE_SPEAK, ({ userId }) => {
+        toast(`User ${userId} has been approved to speak.`);
+        // Remove from hand raise requests
+        setHandRaiseRequests((requests) =>
+          requests.filter((req) => req.userId !== userId)
+        );
+      });
+
       await captureMedia();
 
       addNewClient({ ...userDetails, muted: true }, () => {
@@ -71,13 +118,23 @@ export const useWebRTC = (roomId, userDetails) => {
           localElement.volume = 0;
           localElement.srcObject = localMediaStream.current;
         }
+        console.log("Emitting JOIN event:", { roomId, user: userDetails });
+        socket.current.emit(ACTIONS.JOIN, {
+          roomId,
+          user: userDetails,
+        });
       });
 
-      console.log("Emitting JOIN event:", { roomId, user: userDetails });
-      socket.current.emit(ACTIONS.JOIN, {
-        roomId,
-        user: userDetails,
-      });
+      socket.current.on(
+        ACTIONS.JOIN,
+        ({ roomId, user, isAdmin, adminUser }) => {
+          const updatedUserDetails = { ...user, isAdmin };
+          addNewClient(updatedUserDetails);
+          console.log(
+            `User ${user._id} joined as ${isAdmin ? "admin" : "audience"}`
+          );
+        }
+      );
     };
 
     const cleanupConnections = () => {
@@ -96,6 +153,7 @@ export const useWebRTC = (roomId, userDetails) => {
         socket.current.off(ACTIONS.REMOVE_PEER);
         socket.current.off(ACTIONS.ICE_CANDIDATE);
         socket.current.off(ACTIONS.SESSION_DESCRIPTION);
+        socket.current.off(ACTIONS.RAISE_HAND_DUPLICATE);
         socket.current.off(ACTIONS.MUTE);
         socket.current.off(ACTIONS.UNMUTE);
         socket.current.emit(ACTIONS.LEAVE, { roomId });
