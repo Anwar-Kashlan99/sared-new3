@@ -322,7 +322,7 @@ export const useWebRTC = (roomId, userDetails) => {
       }
       cleanupConnections();
     };
-  }, [roomId, userDetails, addNewClient, setClients, navigate]);
+  }, [roomId, userDetails, addNewClient, setClients]);
 
   const provideRef = (instance, userId) => {
     audioElements.current[userId] = instance;
