@@ -207,31 +207,36 @@ export const useWebRTC = (roomId, userDetails) => {
     };
     //
 
-    const handleIceCandidate = async ({ peerId, icecandidate }) => {
-      if (icecandidate) {
-        const connection = connections.current[peerId];
-        if (connection) {
-          await connection.addIceCandidate(icecandidate);
-        }
+    const handleIceCandidate = async ({ peerId, iceCandidate }) => {
+      if (connections.current[peerId]) {
+        await connections.current[peerId].addIceCandidate(
+          new RTCIceCandidate(iceCandidate)
+        );
       }
     };
     //
-
     const setRemoteMedia = async ({
       peerId,
-      sessionDescription: remoteDescription,
+      sessionDescription: remoteSessionDescription,
     }) => {
-      await connections.current[peerId].setRemoteDescription(
-        new RTCSessionDescription(remoteDescription)
-      );
+      const connection = connections.current[peerId];
+      if (connection) {
+        try {
+          await connection.setRemoteDescription(
+            new RTCSessionDescription(remoteSessionDescription)
+          );
 
-      if (remoteDescription.type === "offer") {
-        const answer = await connections.current[peerId].createAnswer();
-        await connections.current[peerId].setLocalDescription(answer);
-        socket.current.emit(ACTIONS.SESSION_DESCRIPTION, {
-          peerId,
-          sessionDescription: answer,
-        });
+          if (remoteSessionDescription.type === "offer") {
+            const answer = await connection.createAnswer();
+            await connection.setLocalDescription(answer);
+            socket.current.emit(ACTIONS.RELAY_SDP, {
+              peerId,
+              sessionDescription: answer,
+            });
+          }
+        } catch (error) {
+          console.error("Error setting remote description: ", error);
+        }
       }
     };
 
