@@ -205,16 +205,18 @@ export const useWebRTC = (roomId, userDetails) => {
 
       setClients((list) => list.filter((c) => c._id !== userId));
     };
+
     //
 
-    const handleIceCandidate = async ({ peerId, iceCandidate }) => {
-      if (connections.current[peerId]) {
-        await connections.current[peerId].addIceCandidate(
-          new RTCIceCandidate(iceCandidate)
-        );
+    const handleIceCandidate = async ({ peerId, icecandidate }) => {
+      if (icecandidate) {
+        const connection = connections.current[peerId];
+        if (connection) {
+          await connection.addIceCandidate(icecandidate);
+        }
       }
     };
-    //
+
     const setRemoteMedia = async ({
       peerId,
       sessionDescription: remoteSessionDescription,
@@ -239,7 +241,7 @@ export const useWebRTC = (roomId, userDetails) => {
         }
       }
     };
-
+    //
     const handleSetMute = (mute, userId) => {
       const clientIdx = clientsRef.current.findIndex(
         (client) => client._id === userId
