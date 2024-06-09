@@ -68,12 +68,12 @@ const Room = () => {
     clients,
     provideRef,
     handleMute,
-    // endRoom,
-    // blockUser,
-    // raiseHand,
-    // handRaiseRequests,
-    // approveSpeakRequest,
-    // rejectSpeakRequest,
+    endRoom,
+    blockUser,
+    raiseHand,
+    handRaiseRequests,
+    approveSpeakRequest,
+    rejectSpeakRequest,
   } = useWebRTC(roomId, userDetails);
   const [isAdmin, setIsAdmin] = useState(false);
   const currentUser = clients.find((client) => client._id === userDetails._id);
@@ -92,9 +92,9 @@ const Room = () => {
     }
   }, [clients, userDetails]);
 
-  // const admins = clients.filter((client) => client.role === "admin");
-  // const audience = clients.filter((client) => client.role === "audience");
-  // const speakers = clients.filter((client) => client.role === "speaker");
+  const admins = clients.filter((client) => client.role === "admin");
+  const audience = clients.filter((client) => client.role === "audience");
+  const speaker = clients.filter((client) => client.role === "speaker");
   const [isMuted, setMuted] = useState(true);
 
   const [comments, setComments] = useState([]);
@@ -111,11 +111,11 @@ const Room = () => {
     refetch();
   };
 
-  // const handleEndRoom = async () => {
-  //   handleClose();
-  //   await endRoom();
-  //   refetch();
-  // };
+  const handleEndRoom = async () => {
+    handleClose();
+    await endRoom();
+    refetch();
+  };
   const handleMuteClick = useCallback(
     (clientId) => {
       if (clientId !== userDetails?._id) {
@@ -275,7 +275,7 @@ const Room = () => {
             }}
           >
             {/** here the andmin and speker */}
-            {clients.map((client) => (
+            {admins.map((client) => (
               <Box
                 sx={{
                   display: "flex",
@@ -340,8 +340,7 @@ const Room = () => {
               </Box>
             ))}
 
-            {/**
-            clients.map((client) => (
+            {speaker.map((client) => (
               <Box
                 sx={{
                   display: "flex",
@@ -403,8 +402,7 @@ const Room = () => {
                   {client.username}
                 </Typography>
               </Box>
-            ))
-          */}
+            ))}
           </Box>
           <hr style={{ marginTop: "25px", marginBottom: "25px" }} />
           <Box
@@ -434,13 +432,12 @@ const Room = () => {
                 },
               }}
             >
-              {/**clients.map((client) => (
+              {audience.map((client) => (
                 <Box
                   sx={{
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
-                    textAlign: "center",
                     width: "130px",
                   }}
                   key={client?._id}
@@ -450,8 +447,8 @@ const Room = () => {
                       width: "75px",
                       height: "75px",
                       borderRadius: "50%",
-                      border: "3px solid #ffc500",
-                      position: " relative",
+                      border: "3px solid #f25f0c",
+                      position: "relative",
                     }}
                   >
                     <img
@@ -463,48 +460,73 @@ const Room = () => {
                         borderRadius: "50%",
                       }}
                     />
-
+                    {isAdmin && (
+                      <IconButton
+                        id="fade-button"
+                        aria-controls={openAud ? "fade-menu-aud" : undefined}
+                        aria-haspopup="true"
+                        aria-expanded={openAud ? "true" : undefined}
+                        onClick={(event) => handleClickAud(event, client._id)}
+                        sx={{
+                          position: "absolute",
+                          right: "-40px",
+                          top: "-10px",
+                        }}
+                      >
+                        <MoreVert
+                          sx={{ color: "#f25f0c", cursor: "pointer" }}
+                        />
+                      </IconButton>
+                    )}
+                    <Menu
+                      id="fade-menu-aud"
+                      MenuListProps={{
+                        "aria-labelledby": "fade-button",
+                      }}
+                      anchorEl={anchorElAud?.anchor || null}
+                      open={openAud}
+                      onClose={handleCloseAud}
+                      TransitionComponent={Fade}
+                      sx={{ ml: "-8px", mt: "5px" }}
+                    >
+                      {isAdmin && anchorElAud && (
+                        <MenuItem
+                          sx={{ color: "red" }}
+                          onClick={() => {
+                            blockUser(anchorElAud.clientId);
+                            handleCloseAud();
+                          }}
+                        >
+                          Block the user
+                        </MenuItem>
+                      )}
+                    </Menu>
                     <audio
                       autoPlay
                       ref={(instance) => {
                         provideRef(instance, client?._id);
                       }}
                     />
-                    <IconButton
-                      onClick={() => handleMuteClick(client?._id)}
-                      sx={{
-                        backgroundColor: "#fff",
-                        position: "absolute",
-                        bottom: "0px",
-                        right: "0px",
-                        width: "30px",
-                        height: "30px",
-                        padding: "5px",
-                        zIndex: "1111",
-                        boxShadow: "0px 4px 4px rgba(0, 0, 0, 0.25)",
-                      }}
-                    >
-                      {client.muted ? <MicOffOutlined /> : <MicOutlined />}
-                    </IconButton>
                   </Box>
                   <Typography
                     sx={{
                       marginTop: "0.5rem",
                       fontSize: "15px",
                       color: "#000",
+                      textAlign: "center",
                     }}
                   >
                     {client.username}
                   </Typography>
                 </Box>
-              )) */}
+              ))}
             </Box>
             <>
               <Box
                 sx={{
                   width: isMobile ? "100%" : "60%",
                   borderRadius: isOpen ? "40px 40px 0 0" : "40px",
-                  boxShadow: isOpen ? "0px 3px 10px 3px #707070" : "",
+                  boxShadow: isOpen ? "2px 3px 10px 3px #707070" : "",
                   position: "absolute",
                   backgroundColor: "#fff",
                   bottom: 0,
@@ -609,7 +631,7 @@ const Room = () => {
                               border: "none",
                             },
                           }}
-                          // onClick={raiseHand}
+                          onClick={raiseHand}
                         >
                           <img
                             alt="hand"
@@ -656,7 +678,7 @@ const Room = () => {
                         {isAdmin && (
                           <MenuItem
                             sx={{ color: "red" }}
-                            // onClick={handleEndRoom}
+                            onClick={handleEndRoom}
                           >
                             End Room
                           </MenuItem>
@@ -670,7 +692,7 @@ const Room = () => {
           </Box>
         </Box>
       </Box>
-      {/**      <Dialog
+      <Dialog
         open={raiseHandDialogOpen}
         onClose={handleRaiseHandDialogClose}
         aria-labelledby="alert-dialog-title"
@@ -719,7 +741,7 @@ const Room = () => {
             Close
           </Button>
         </DialogActions>
-      </Dialog> */}
+      </Dialog>
       <Dialog
         open={shareDialogOpen}
         onClose={handleShareDialogClose}
