@@ -1,19 +1,20 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { ACTIONS } from "../actions";
 import socketInit from "../socket";
 import { useStateWithCallback } from "./useStateWithCallback";
 import freeice from "freeice";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 export const useWebRTC = (roomId, userDetails) => {
-  console.log(roomId);
-  console.log(userDetails);
-
   const [clients, setClients] = useStateWithCallback([]);
   const audioElements = useRef({});
   const connections = useRef({});
   const socket = useRef(null);
   const localMediaStream = useRef(null);
   const clientsRef = useRef(null);
+  const navigate = useNavigate();
+  const [handRaiseRequests, setHandRaiseRequests] = useState([]); // To track hand raise requests
 
   const addNewClient = useCallback(
     (newClient, cb) => {
@@ -270,23 +271,96 @@ export const useWebRTC = (roomId, userDetails) => {
   };
 
   const handleMute = (isMute, userId) => {
-    if (userId === userDetails._id) {
-      const interval = setInterval(() => {
+    let settled = false;
+    let interval = null;
+
+    const setMute = () => {
+      if (localMediaStream.current) {
+        localMediaStream.current.getTracks().forEach((track) => {
+          if (track.kind === "audio") {
+            track.enabled = !isMute;
+            if (!settled) {
+              socket.current.emit(isMute ? ACTIONS.MUTE : ACTIONS.UNMUTE, {
+                roomId,
+                userId,
+              });
+              settled = true;
+            }
+          }
+        });
+      }
+    };
+
+    if (localMediaStream.current) {
+      setMute();
+    } else {
+      interval = setInterval(() => {
         if (localMediaStream.current) {
-          localMediaStream.current.getTracks()[0].enabled = !isMute;
-          socket.current.emit(isMute ? ACTIONS.MUTE : ACTIONS.UNMUTE, {
-            roomId,
-            userId: userDetails._id,
-          });
+          setMute();
           clearInterval(interval);
         }
       }, 200);
     }
   };
 
+  const endRoom = () => {
+    if (socket.current) {
+      socket.current.emit(ACTIONS.END_ROOM, roomId);
+    }
+  };
+
+  const blockUser = (userId) => {
+    if (socket.current) {
+      socket.current.emit(ACTIONS.BLOCK_USER, { roomId, userId });
+    }
+  };
+
+  const raiseHand = () => {
+    const existingRequest = handRaiseRequests.find(
+      (request) => request.userId === userDetails._id
+    );
+
+    if (existingRequest) {
+      toast(
+        "You have already raised your hand. Please wait for the admin to approve or reject."
+      );
+      return;
+    }
+
+    socket.current.emit(ACTIONS.RAISE_HAND, {
+      roomId,
+      peerId: socket.current.id,
+      userId: userDetails._id,
+      username: userDetails.username,
+      profile: userDetails.profile,
+    });
+
+    toast("You have raised your hand.");
+  };
+
+  const approveSpeakRequest = (peerId, userId) => {
+    socket.current.emit(ACTIONS.APPROVE_SPEAK, { roomId, userId });
+    setHandRaiseRequests((requests) =>
+      requests.filter((req) => req.userId !== userId)
+    );
+  };
+
+  const rejectSpeakRequest = (peerId, userId) => {
+    socket.current.emit(ACTIONS.REJECT_SPEAK, { roomId, userId });
+    setHandRaiseRequests((requests) =>
+      requests.filter((req) => req.userId !== userId)
+    );
+  };
+
   return {
     clients,
     provideRef,
     handleMute,
+    endRoom,
+    blockUser,
+    raiseHand,
+    handRaiseRequests, // Add this to return the requests
+    approveSpeakRequest,
+    rejectSpeakRequest,
   };
 };
