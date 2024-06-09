@@ -438,6 +438,7 @@ const Room = () => {
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
+                    textAlign: "center",
                     width: "130px",
                   }}
                   key={client?._id}
@@ -447,8 +448,8 @@ const Room = () => {
                       width: "75px",
                       height: "75px",
                       borderRadius: "50%",
-                      border: "3px solid #f25f0c",
-                      position: "relative",
+                      border: "3px solid #ffc500",
+                      position: " relative",
                     }}
                   >
                     <img
@@ -460,60 +461,35 @@ const Room = () => {
                         borderRadius: "50%",
                       }}
                     />
-                    {isAdmin && (
-                      <IconButton
-                        id="fade-button"
-                        aria-controls={openAud ? "fade-menu-aud" : undefined}
-                        aria-haspopup="true"
-                        aria-expanded={openAud ? "true" : undefined}
-                        onClick={(event) => handleClickAud(event, client._id)}
-                        sx={{
-                          position: "absolute",
-                          right: "-40px",
-                          top: "-10px",
-                        }}
-                      >
-                        <MoreVert
-                          sx={{ color: "#f25f0c", cursor: "pointer" }}
-                        />
-                      </IconButton>
-                    )}
-                    <Menu
-                      id="fade-menu-aud"
-                      MenuListProps={{
-                        "aria-labelledby": "fade-button",
-                      }}
-                      anchorEl={anchorElAud?.anchor || null}
-                      open={openAud}
-                      onClose={handleCloseAud}
-                      TransitionComponent={Fade}
-                      sx={{ ml: "-8px", mt: "5px" }}
-                    >
-                      {isAdmin && anchorElAud && (
-                        <MenuItem
-                          sx={{ color: "red" }}
-                          onClick={() => {
-                            blockUser(anchorElAud.clientId);
-                            handleCloseAud();
-                          }}
-                        >
-                          Block the user
-                        </MenuItem>
-                      )}
-                    </Menu>
+
                     <audio
                       autoPlay
                       ref={(instance) => {
                         provideRef(instance, client?._id);
                       }}
                     />
+                    <IconButton
+                      onClick={() => handleMuteClick(client?._id)}
+                      sx={{
+                        backgroundColor: "#fff",
+                        position: "absolute",
+                        bottom: "0px",
+                        right: "0px",
+                        width: "30px",
+                        height: "30px",
+                        padding: "5px",
+                        zIndex: "1111",
+                        boxShadow: "0px 4px 4px rgba(0, 0, 0, 0.25)",
+                      }}
+                    >
+                      {client.muted ? <MicOffOutlined /> : <MicOutlined />}
+                    </IconButton>
                   </Box>
                   <Typography
                     sx={{
                       marginTop: "0.5rem",
                       fontSize: "15px",
                       color: "#000",
-                      textAlign: "center",
                     }}
                   >
                     {client.username}
