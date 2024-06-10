@@ -138,10 +138,16 @@ export const useWebRTC = (roomId, userDetails) => {
         ACTIONS.JOIN,
         ({ roomId, user, isAdmin, adminUser }) => {
           const updatedUserDetails = { ...user, isAdmin };
-          addNewClient(updatedUserDetails);
-          console.log(
-            `User ${user._id} joined as ${isAdmin ? "admin" : "audience"}`
-          );
+          addNewClient(updatedUserDetails, () => {
+            const existingClient = clientsRef.current.find(
+              (client) => client._id === userDetails._id
+            );
+            if (!existingClient) {
+              console.log(
+                `User ${user._id} joined as ${isAdmin ? "admin" : "audience"}`
+              );
+            }
+          });
         }
       );
     };
