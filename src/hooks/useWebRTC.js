@@ -86,7 +86,7 @@ export const useWebRTC = (roomId, userDetails) => {
             ...requests,
             { peerId, userId, username, profile },
           ]);
-          toast(`User ${userId} has raised their hand.`);
+          toast(`User ${username} has raised their hand.`);
         }
       );
 
@@ -111,7 +111,7 @@ export const useWebRTC = (roomId, userDetails) => {
         // Update the role of the approved user to 'speaker'
         setClients((prevClients) =>
           prevClients.map((client) =>
-            client._id === userId ? { ...client, role } : client
+            client._id === userId ? { ...client, role: "speaker" } : client
           )
         );
       });
