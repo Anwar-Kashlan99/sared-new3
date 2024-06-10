@@ -109,11 +109,14 @@ export const useWebRTC = (roomId, userDetails) => {
           requests.filter((req) => req.userId !== userId)
         );
         // Update the role of the approved user to 'speaker'
-        setClients((prevClients) =>
-          prevClients.map((client) =>
+        setClients((prevClients) => {
+          console.log("Clients before update:", prevClients);
+          const updatedClients = prevClients.map((client) =>
             client._id === userId ? { ...client, role: "speaker" } : client
-          )
-        );
+          );
+          console.log("Clients after update:", updatedClients);
+          return updatedClients;
+        });
       });
 
       await captureMedia();
