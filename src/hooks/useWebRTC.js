@@ -12,9 +12,9 @@ export const useWebRTC = (roomId, userDetails) => {
   const connections = useRef({});
   const socket = useRef(null);
   const localMediaStream = useRef(null);
-  const clientsRef = useRef(null);
+  const clientsRef = useRef([]);
   const navigate = useNavigate();
-  const [handRaiseRequests, setHandRaiseRequests] = useState([]); // To track hand raise requests
+  const [handRaiseRequests, setHandRaiseRequests] = useState([]);
 
   const addNewClient = useCallback(
     (newClient, cb) => {
@@ -48,76 +48,30 @@ export const useWebRTC = (roomId, userDetails) => {
 
       socket.current = socketInit();
 
-      socket.current.on(ACTIONS.MUTE_INFO, ({ userId, isMute }) => {
-        handleSetMute(isMute, userId);
-      });
-
+      // Define socket event handlers
+      socket.current.on(ACTIONS.MUTE_INFO, ({ userId, isMute }) =>
+        handleSetMute(isMute, userId)
+      );
       socket.current.on(ACTIONS.ADD_PEER, handleNewPeer);
       socket.current.on(ACTIONS.REMOVE_PEER, handleRemovePeer);
       socket.current.on(ACTIONS.ICE_CANDIDATE, handleIceCandidate);
       socket.current.on(ACTIONS.SESSION_DESCRIPTION, setRemoteMedia);
-      socket.current.on(ACTIONS.MUTE, ({ peerId, userId }) => {
-        handleSetMute(true, userId);
-      });
-      socket.current.on(ACTIONS.UNMUTE, ({ peerId, userId }) => {
-        handleSetMute(false, userId);
-      });
-
-      // Handle the ROOM_CLIENTS event
-      socket.current.on(ACTIONS.ROOM_CLIENTS, ({ roomId, clients }) => {
-        console.log(`Updated clients for room ${roomId}:`, clients);
-
-        setClients(clients);
-      });
-
-      // Listen for ROOM_ENDED_REDIRECT event
-      socket.current.on("ROOM_ENDED_REDIRECT", () => {
-        console.log("Room ended, redirecting to /srdhouse");
-        toast("Room ended", {
-          icon: "⚠️",
-        });
-        navigate("/srdhouse");
-      });
-
-      socket.current.on(
-        ACTIONS.RAISE_HAND,
-        ({ peerId, userId, username, profile }) => {
-          setHandRaiseRequests((requests) => [
-            ...requests,
-            { peerId, userId, username, profile },
-          ]);
-          toast(`User ${username} has raised their hand.`);
-        }
+      socket.current.on(ACTIONS.MUTE, ({ userId }) =>
+        handleSetMute(true, userId)
       );
-
-      socket.current.on(ACTIONS.REJECT_SPEAK, ({ userId }) => {
-        toast(`User ${userId} has been rejected to speak.`);
-        // Remove from hand raise requests
-        setHandRaiseRequests((requests) =>
-          requests.filter((req) => req.userId !== userId)
-        );
-      });
-
-      socket.current.on(ACTIONS.RAISE_HAND_DUPLICATE, ({ message }) => {
-        toast(message);
-      });
-
-      socket.current.on(ACTIONS.APPROVE_SPEAK, ({ userId, role }) => {
-        toast(`User ${userId} has been approved to speak.`);
-        // Remove from hand raise requests
-        setHandRaiseRequests((requests) =>
-          requests.filter((req) => req.userId !== userId)
-        );
-        // Update the role of the approved user to 'speaker'
-        setClients((prevClients) => {
-          console.log("Clients before update:", prevClients);
-          const updatedClients = prevClients.map((client) =>
-            client._id === userId ? { ...client, role: "speaker" } : client
-          );
-          console.log("Clients after update:", updatedClients);
-          return updatedClients;
-        });
-      });
+      socket.current.on(ACTIONS.UNMUTE, ({ userId }) =>
+        handleSetMute(false, userId)
+      );
+      socket.current.on(ACTIONS.ROOM_CLIENTS, ({ roomId, clients }) =>
+        setClients(clients)
+      );
+      socket.current.on("ROOM_ENDED_REDIRECT", handleRoomEnded);
+      socket.current.on(ACTIONS.RAISE_HAND, handleRaiseHand);
+      socket.current.on(ACTIONS.REJECT_SPEAK, handleRejectSpeak);
+      socket.current.on(ACTIONS.RAISE_HAND_DUPLICATE, ({ message }) =>
+        toast(message)
+      );
+      socket.current.on(ACTIONS.APPROVE_SPEAK, handleApproveSpeak);
 
       await captureMedia();
 
@@ -128,34 +82,28 @@ export const useWebRTC = (roomId, userDetails) => {
           localElement.srcObject = localMediaStream.current;
         }
         console.log("Emitting JOIN event:", { roomId, user: userDetails });
-        socket.current.emit(ACTIONS.JOIN, {
-          roomId,
-          user: userDetails,
-        });
+        socket.current.emit(ACTIONS.JOIN, { roomId, user: userDetails });
       });
 
-      socket.current.on(
-        ACTIONS.JOIN,
-        ({ roomId, user, isAdmin, adminUser }) => {
-          const updatedUserDetails = { ...user, isAdmin };
-          addNewClient(updatedUserDetails, () => {
-            const existingClient = clientsRef.current.find(
-              (client) => client._id === userDetails._id
+      socket.current.on(ACTIONS.JOIN, ({ user, isAdmin }) => {
+        const updatedUserDetails = { ...user, isAdmin };
+        addNewClient(updatedUserDetails, () => {
+          const existingClient = clientsRef.current.find(
+            (client) => client._id === user._id
+          );
+          if (!existingClient) {
+            console.log(
+              `User ${user._id} joined as ${isAdmin ? "admin" : "audience"}`
             );
-            if (!existingClient) {
-              console.log(
-                `User ${user._id} joined as ${isAdmin ? "admin" : "audience"}`
-              );
-            }
-          });
-        }
-      );
+          }
+        });
+      });
     };
 
     const cleanupConnections = () => {
       for (let peerId in connections.current) {
         if (connections.current[peerId]) {
-          connections.current[peerId].close();
+          connections.current[peerId].connection.close();
           delete connections.current[peerId];
         }
       }
@@ -207,7 +155,7 @@ export const useWebRTC = (roomId, userDetails) => {
 
       const connection = new RTCPeerConnection({ iceServers: freeice() });
 
-      connections.current[peerId] = connection;
+      connections.current[peerId] = { connection, iceCandidatesQueue: [] };
 
       connection.onicecandidate = (event) => {
         if (event.candidate) {
@@ -267,11 +215,10 @@ export const useWebRTC = (roomId, userDetails) => {
         }
       }
     };
-    //
 
     const handleRemovePeer = ({ peerId, userId }) => {
       if (connections.current[peerId]) {
-        connections.current[peerId].close();
+        connections.current[peerId].connection.close();
       }
 
       delete connections.current[peerId];
@@ -280,13 +227,15 @@ export const useWebRTC = (roomId, userDetails) => {
       setClients((list) => list.filter((c) => c._id !== userId));
     };
 
-    //
-
     const handleIceCandidate = async ({ peerId, icecandidate }) => {
       if (icecandidate) {
-        const connection = connections.current[peerId];
-        if (connection) {
-          await connection.addIceCandidate(icecandidate);
+        const connectionData = connections.current[peerId];
+        if (connectionData) {
+          if (connectionData.connection.remoteDescription) {
+            await connectionData.connection.addIceCandidate(icecandidate);
+          } else {
+            connectionData.iceCandidatesQueue.push(icecandidate);
+          }
         }
       }
     };
@@ -295,8 +244,9 @@ export const useWebRTC = (roomId, userDetails) => {
       peerId,
       sessionDescription: remoteSessionDescription,
     }) => {
-      const connection = connections.current[peerId];
-      if (connection) {
+      const connectionData = connections.current[peerId];
+      if (connectionData) {
+        const connection = connectionData.connection;
         try {
           await connection.setRemoteDescription(
             new RTCSessionDescription(remoteSessionDescription)
@@ -310,13 +260,18 @@ export const useWebRTC = (roomId, userDetails) => {
               sessionDescription: answer,
             });
           }
+
+          // Process queued ICE candidates
+          while (connectionData.iceCandidatesQueue.length > 0) {
+            const candidate = connectionData.iceCandidatesQueue.shift();
+            await connection.addIceCandidate(candidate);
+          }
         } catch (error) {
           console.error("Error setting remote description: ", error);
         }
       }
     };
 
-    //
     const handleSetMute = (mute, userId) => {
       const clientIdx = clientsRef.current
         .map((client) => client._id)
@@ -326,6 +281,42 @@ export const useWebRTC = (roomId, userDetails) => {
         connectedClients[clientIdx].muted = mute;
         setClients(connectedClients);
       }
+    };
+
+    const handleRoomEnded = () => {
+      console.log("Room ended, redirecting to /srdhouse");
+      toast("Room ended", { icon: "⚠️" });
+      navigate("/srdhouse");
+    };
+
+    const handleRaiseHand = ({ peerId, userId, username, profile }) => {
+      setHandRaiseRequests((requests) => [
+        ...requests,
+        { peerId, userId, username, profile },
+      ]);
+      toast(`User ${username} has raised their hand.`);
+    };
+
+    const handleRejectSpeak = ({ userId }) => {
+      toast(`User ${userId} has been rejected to speak.`);
+      setHandRaiseRequests((requests) =>
+        requests.filter((req) => req.userId !== userId)
+      );
+    };
+
+    const handleApproveSpeak = ({ userId }) => {
+      toast(`User ${userId} has been approved to speak.`);
+      setHandRaiseRequests((requests) =>
+        requests.filter((req) => req.userId !== userId)
+      );
+      setClients((prevClients) => {
+        console.log("Clients before update:", prevClients);
+        const updatedClients = prevClients.map((client) =>
+          client._id === userId ? { ...client, role: "speaker" } : client
+        );
+        console.log("Clients after update:", updatedClients);
+        return updatedClients;
+      });
     };
 
     initChat();
@@ -432,7 +423,7 @@ export const useWebRTC = (roomId, userDetails) => {
     endRoom,
     blockUser,
     raiseHand,
-    handRaiseRequests, // Add this to return the requests
+    handRaiseRequests,
     approveSpeakRequest,
     rejectSpeakRequest,
   };
