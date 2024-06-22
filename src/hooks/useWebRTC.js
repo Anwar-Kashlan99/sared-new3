@@ -153,7 +153,20 @@ export const useWebRTC = (roomId, userDetails) => {
 
       console.log(`Adding new peer: ${peerId}`);
 
-      const connection = new RTCPeerConnection({ iceServers: freeice() });
+      const connection = new RTCPeerConnection({
+        iceServers: [
+          { urls: "stun:stun.l.google.com:19302" },
+          { urls: "stun:stun1.l.google.com:19302" },
+          { urls: "stun:stun2.l.google.com:19302" },
+          { urls: "stun:stun3.l.google.com:19302" },
+          { urls: "stun:stun4.l.google.com:19302" },
+          {
+            urls: "turn:turn.anyfirewall.com:443?transport=tcp",
+            username: "webrtc",
+            credential: "webrtc",
+          },
+        ],
+      });
 
       connections.current[peerId] = { connection, iceCandidatesQueue: [] };
 

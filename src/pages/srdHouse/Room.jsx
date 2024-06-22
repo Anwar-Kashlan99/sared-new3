@@ -507,7 +507,7 @@ const Room = () => {
                         provideRef(instance, client?._id);
                       }}
                     />
-                    {/**  <IconButton
+                    <IconButton
                       onClick={() => handleMuteClick(client?._id)}
                       sx={{
                         backgroundColor: "#fff",
@@ -522,7 +522,7 @@ const Room = () => {
                       }}
                     >
                       {client.muted ? <MicOffOutlined /> : <MicOutlined />}
-                    </IconButton>*/}
+                    </IconButton>
                   </Box>
                   <Typography
                     sx={{
