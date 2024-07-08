@@ -151,7 +151,9 @@ export const useWebRTC = (roomId, userDetails) => {
         return console.warn(`You are already connected with ${peerId}`);
       }
 
-      console.log(`Adding new peer: ${peerId}`);
+      console.log(
+        `Adding new peer: ${peerId} ${remoteUser._id} ${remoteUser.username}`
+      );
 
       const connection = new RTCPeerConnection({
         iceServers: [
@@ -319,6 +321,7 @@ export const useWebRTC = (roomId, userDetails) => {
 
     const handleApproveSpeak = ({ userId }) => {
       toast(`User ${userId} has been approved to speak.`);
+      console.log(`User ${userId} has been approved to speak.`);
       setHandRaiseRequests((requests) =>
         requests.filter((req) => req.userId !== userId)
       );
