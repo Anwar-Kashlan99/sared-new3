@@ -288,8 +288,6 @@ const Room = () => {
                 key={client?._id}
               >
                 <Box
-                  id={`avatar-${client._id}`}
-                  className="speaking-avatar"
                   sx={{
                     width: "75px",
                     height: "75px",
@@ -355,8 +353,6 @@ const Room = () => {
                 key={client?._id}
               >
                 <Box
-                  id={`avatar-${client._id}`}
-                  className="speaking-avatar"
                   sx={{
                     width: "75px",
                     height: "75px",

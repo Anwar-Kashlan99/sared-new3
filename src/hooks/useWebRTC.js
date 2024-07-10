@@ -13,7 +13,6 @@ export const useWebRTC = (roomId, userDetails) => {
   const socket = useRef(null);
   const localMediaStream = useRef(null);
   const clientsRef = useRef([]);
-  const audioAnalyzers = useRef({});
   const navigate = useNavigate();
   const [handRaiseRequests, setHandRaiseRequests] = useState([]);
 
@@ -81,7 +80,6 @@ export const useWebRTC = (roomId, userDetails) => {
         if (localElement) {
           localElement.volume = 0;
           localElement.srcObject = localMediaStream.current;
-          createAudioAnalyzer(localMediaStream.current, userDetails._id);
         }
         console.log("Emitting JOIN event:", { roomId, user: userDetails });
         socket.current.emit(ACTIONS.JOIN, { roomId, user: userDetails });
@@ -111,12 +109,6 @@ export const useWebRTC = (roomId, userDetails) => {
       }
       for (let userId in audioElements.current) {
         delete audioElements.current[userId];
-      }
-      for (let userId in audioAnalyzers.current) {
-        if (audioAnalyzers.current[userId]) {
-          audioAnalyzers.current[userId].audioContext.close();
-          delete audioAnalyzers.current[userId];
-        }
       }
       if (socket.current) {
         socket.current.off(ACTIONS.MUTE_INFO);
@@ -205,13 +197,11 @@ export const useWebRTC = (roomId, userDetails) => {
           const audioElement = audioElements.current[remoteUser._id];
           if (audioElement) {
             audioElement.srcObject = remoteStream;
-            createAudioAnalyzer(remoteStream, remoteUser._id);
           } else {
             const interval = setInterval(() => {
               const element = audioElements.current[remoteUser._id];
               if (element) {
                 element.srcObject = remoteStream;
-                createAudioAnalyzer(remoteStream, remoteUser._id);
                 clearInterval(interval);
               }
             }, 300);
@@ -248,10 +238,6 @@ export const useWebRTC = (roomId, userDetails) => {
 
       delete connections.current[peerId];
       delete audioElements.current[userId];
-      if (audioAnalyzers.current[userId]) {
-        audioAnalyzers.current[userId].audioContext.close();
-        delete audioAnalyzers.current[userId];
-      }
 
       setClients((list) => list.filter((c) => c._id !== userId));
     };
@@ -362,44 +348,6 @@ export const useWebRTC = (roomId, userDetails) => {
 
   const provideRef = (instance, userId) => {
     audioElements.current[userId] = instance;
-  };
-
-  const createAudioAnalyzer = (stream, userId) => {
-    const audioContext = new (window.AudioContext ||
-      window.webkitAudioContext)();
-    const analyser = audioContext.createAnalyser();
-    const source = audioContext.createMediaStreamSource(stream);
-    source.connect(analyser);
-    analyser.fftSize = 256;
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-
-    audioAnalyzers.current[userId] = {
-      analyser,
-      dataArray,
-      bufferLength,
-      audioContext,
-    };
-
-    const analyzeAudio = () => {
-      if (audioAnalyzers.current[userId]) {
-        const { analyser, dataArray, bufferLength } =
-          audioAnalyzers.current[userId];
-        analyser.getByteFrequencyData(dataArray);
-        const volume = dataArray.reduce((a, b) => a + b) / bufferLength;
-        if (volume > 30) {
-          // Adjust threshold as needed
-          document.getElementById(`avatar-${userId}`).classList.add("speaking");
-        } else {
-          document
-            .getElementById(`avatar-${userId}`)
-            .classList.remove("speaking");
-        }
-        requestAnimationFrame(analyzeAudio);
-      }
-    };
-
-    analyzeAudio();
   };
 
   const handleMute = (isMute, userId) => {
