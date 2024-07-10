@@ -27,7 +27,6 @@ import {
   MicOutlined,
   MoreVert,
 } from "@mui/icons-material";
-import ChatRoom from "../../components/ChatRoom";
 import { useTranslation } from "react-i18next";
 import { useGetAllRoomsQuery, useGetRoomQuery } from "../../store/srdClubSlice";
 import { useSelector } from "react-redux";
@@ -97,10 +96,6 @@ const Room = () => {
   const audience = clients.filter((client) => client.role === "audience");
   const speaker = clients.filter((client) => client.role === "speaker");
 
-  const isHandRaised = handRaiseRequests.some(
-    (request) => request.userId === userDetails._id
-  );
-
   const [isMuted, setMuted] = useState(true);
 
   const [comments, setComments] = useState([]);
@@ -122,6 +117,7 @@ const Room = () => {
     await endRoom();
     refetch();
   };
+
   const handleMuteClick = useCallback(
     (clientId) => {
       if (clientId !== userDetails?._id) {
@@ -154,7 +150,7 @@ const Room = () => {
     setAnchorElAud(null);
   };
 
-  // rais hand sittings
+  // raise hand sittings
 
   const [raiseHandDialogOpen, setRaiseHandDialogOpen] = useState(false);
 
@@ -190,13 +186,16 @@ const Room = () => {
         toast.error("Failed to copy URL");
       });
   };
-  ///
 
   const [isOpen, setIsOpen] = useState(true);
 
   const toggleAccordion = () => {
     setIsOpen(!isOpen);
   };
+
+  const isHandRaised = handRaiseRequests.some(
+    (request) => request.userId === userDetails._id
+  );
 
   return (
     <Box
