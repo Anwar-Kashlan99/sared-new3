@@ -1,4 +1,5 @@
 import {
+  Avatar,
   Box,
   Button,
   Dialog,
@@ -287,6 +288,8 @@ const Room = () => {
                 key={client?._id}
               >
                 <Box
+                  id={`avatar-${client._id}`}
+                  className="speaking-avatar"
                   sx={{
                     width: "75px",
                     height: "75px",
@@ -352,6 +355,8 @@ const Room = () => {
                 key={client?._id}
               >
                 <Box
+                  id={`avatar-${client._id}`}
+                  className="speaking-avatar"
                   sx={{
                     width: "75px",
                     height: "75px",
@@ -706,7 +711,7 @@ const Room = () => {
           <List>
             {handRaiseRequests.map(({ peerId, userId, username, profile }) => (
               <ListItem key={peerId}>
-                <img
+                <Avatar
                   src={profile}
                   alt={username}
                   style={{

@@ -16,6 +16,45 @@ export const useWebRTC = (roomId, userDetails) => {
   const navigate = useNavigate();
   const [handRaiseRequests, setHandRaiseRequests] = useState([]);
 
+  const audioAnalyzers = useRef({});
+
+  const createAudioAnalyzer = (stream, userId) => {
+    const audioContext = new (window.AudioContext || window.AudioContext)();
+    const analyser = audioContext.createAnalyser();
+    const source = audioContext.createMediaStreamSource(stream);
+    source.connect(analyser);
+    analyser.fftSize = 256;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    audioAnalyzers.current[userId] = {
+      analyser,
+      dataArray,
+      bufferLength,
+      audioContext,
+    };
+
+    const analyzeAudio = () => {
+      if (audioAnalyzers.current[userId]) {
+        const { analyser, dataArray, bufferLength } =
+          audioAnalyzers.current[userId];
+        analyser.getByteFrequencyData(dataArray);
+        const volume = dataArray.reduce((a, b) => a + b) / bufferLength;
+        if (volume > 30) {
+          // Adjust threshold as needed
+          document.getElementById(`avatar-${userId}`).classList.add("speaking");
+        } else {
+          document
+            .getElementById(`avatar-${userId}`)
+            .classList.remove("speaking");
+        }
+        requestAnimationFrame(analyzeAudio);
+      }
+    };
+
+    analyzeAudio();
+  };
+
   const addNewClient = useCallback(
     (newClient, cb) => {
       setClients((existingClients) => {
@@ -80,6 +119,7 @@ export const useWebRTC = (roomId, userDetails) => {
         if (localElement) {
           localElement.volume = 0;
           localElement.srcObject = localMediaStream.current;
+          createAudioAnalyzer(localMediaStream.current, userDetails._id);
         }
         console.log("Emitting JOIN event:", { roomId, user: userDetails });
         socket.current.emit(ACTIONS.JOIN, { roomId, user: userDetails });

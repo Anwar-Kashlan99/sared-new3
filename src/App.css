@@ -169,6 +169,56 @@ a {
   cursor: pointer;
 }
 
+/**/
+/* In your CSS file */
+
+.speaking-avatar {
+  position: relative;
+}
+
+.speaking-avatar::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: calc(100% + 20px);
+  height: calc(100% + 20px);
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-radius: 50%;
+  -webkit-animation: speak-animation 1s infinite;
+  animation: speak-animation 1s infinite;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.speaking {
+  opacity: 1 !important;
+}
+
+@-webkit-keyframes speak-animation {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+@keyframes speak-animation {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
 /* .react-tel-input .selected-flag {
   box-shadow: 3px 5px 7px 0px #707070;
   padding: 15px 25px !important;
