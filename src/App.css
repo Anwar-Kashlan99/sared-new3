@@ -170,47 +170,50 @@ a {
 }
 
 /**/
-
-.speaking {
+.speaking-avatar {
   position: relative;
-  -webkit-animation: pulse 1.5s infinite;
-  animation: pulse 1.5s infinite;
 }
 
-.speaking::before {
+.speaking-avatar::before {
   content: "";
   position: absolute;
-  top: -5px;
-  left: -5px;
-  width: 85px;
-  height: 85px;
+  top: -10px;
+  left: -10px;
+  width: calc(100% + 20px);
+  height: calc(100% + 20px);
+  border: 2px solid rgba(0, 0, 0, 0.2);
   border-radius: 50%;
-  background-color: rgba(255, 0, 0, 0.3);
-  -webkit-animation: pulse 1.5s infinite;
-  animation: pulse 1.5s infinite;
+  -webkit-animation: speak-animation 1s infinite;
+  animation: speak-animation 1s infinite;
+  opacity: 0;
+  pointer-events: none;
 }
 
-@-webkit-keyframes pulse {
-  0% {
+.speaking {
+  opacity: 1 !important;
+}
+
+@-webkit-keyframes speak-animation {
+  0%,
+  100% {
     transform: scale(1);
+    opacity: 0.5;
   }
   50% {
     transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
+    opacity: 1;
   }
 }
 
-@keyframes pulse {
-  0% {
+@keyframes speak-animation {
+  0%,
+  100% {
     transform: scale(1);
+    opacity: 0.5;
   }
   50% {
     transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
+    opacity: 1;
   }
 }
 

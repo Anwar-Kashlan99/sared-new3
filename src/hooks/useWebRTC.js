@@ -15,7 +15,7 @@ export const useWebRTC = (roomId, userDetails) => {
   const clientsRef = useRef([]);
   const navigate = useNavigate();
   const [handRaiseRequests, setHandRaiseRequests] = useState([]);
-  const [speakingUsers, setSpeakingUsers] = useState([]); // New state to track speaking users
+  const speakingStatus = useRef({});
 
   const addNewClient = useCallback(
     (newClient, cb) => {
@@ -139,40 +139,13 @@ export const useWebRTC = (roomId, userDetails) => {
           audio: true,
         });
         console.log("Media captured");
-        analyzeAudioStream(localMediaStream.current); // Start analyzing the audio stream
+        trackAudioLevels(localMediaStream.current, userDetails._id);
       } catch (error) {
         console.error("Error capturing media: ", error);
         alert(
           "Error capturing media. Please ensure your browser has permission to access the microphone."
         );
       }
-    };
-
-    const analyzeAudioStream = (stream) => {
-      const audioContext = new (window.AudioContext ||
-        window.webkitAudioContext)();
-      const analyser = audioContext.createAnalyser();
-      const source = audioContext.createMediaStreamSource(stream);
-      source.connect(analyser);
-      analyser.fftSize = 256;
-
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-      const detectSpeech = () => {
-        analyser.getByteFrequencyData(dataArray);
-        const volume = dataArray.reduce((sum, value) => sum + value, 0);
-        const isSpeaking = volume > 1000; // Adjust the threshold value as needed
-        if (isSpeaking && !speakingUsers.includes(userDetails._id)) {
-          setSpeakingUsers((prev) => [...prev, userDetails._id]);
-        } else if (!isSpeaking && speakingUsers.includes(userDetails._id)) {
-          setSpeakingUsers((prev) =>
-            prev.filter((id) => id !== userDetails._id)
-          );
-        }
-        requestAnimationFrame(detectSpeech);
-      };
-
-      detectSpeech();
     };
 
     const handleNewPeer = async ({ peerId, createOffer, user: remoteUser }) => {
@@ -235,6 +208,7 @@ export const useWebRTC = (roomId, userDetails) => {
               }
             }, 300);
           }
+          trackAudioLevels(remoteStream, remoteUser._id);
         });
       };
 
@@ -461,6 +435,34 @@ export const useWebRTC = (roomId, userDetails) => {
     );
   };
 
+  const trackAudioLevels = (stream, userId) => {
+    const audioContext = new (window.AudioContext || window.AudioContext)();
+    const analyser = audioContext.createAnalyser();
+    const source = audioContext.createMediaStreamSource(stream);
+
+    source.connect(analyser);
+    analyser.fftSize = 256;
+
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+    const checkSpeaking = () => {
+      analyser.getByteFrequencyData(dataArray);
+
+      const sum = dataArray.reduce((a, b) => a + b, 0);
+      const average = sum / dataArray.length;
+
+      if (average > 10) {
+        speakingStatus.current[userId] = true;
+      } else {
+        speakingStatus.current[userId] = false;
+      }
+
+      requestAnimationFrame(checkSpeaking);
+    };
+
+    checkSpeaking();
+  };
+
   return {
     clients,
     provideRef,
@@ -471,6 +473,6 @@ export const useWebRTC = (roomId, userDetails) => {
     handRaiseRequests,
     approveSpeakRequest,
     rejectSpeakRequest,
-    speakingUsers,
+    speakingStatus: speakingStatus.current,
   };
 };
