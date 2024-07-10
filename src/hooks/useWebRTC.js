@@ -15,7 +15,6 @@ export const useWebRTC = (roomId, userDetails) => {
   const clientsRef = useRef([]);
   const navigate = useNavigate();
   const [handRaiseRequests, setHandRaiseRequests] = useState([]);
-  const speakingStatus = useRef({});
 
   const addNewClient = useCallback(
     (newClient, cb) => {
@@ -139,7 +138,6 @@ export const useWebRTC = (roomId, userDetails) => {
           audio: true,
         });
         console.log("Media captured");
-        trackAudioLevels(localMediaStream.current, userDetails._id);
       } catch (error) {
         console.error("Error capturing media: ", error);
         alert(
@@ -208,7 +206,6 @@ export const useWebRTC = (roomId, userDetails) => {
               }
             }, 300);
           }
-          trackAudioLevels(remoteStream, remoteUser._id);
         });
       };
 
@@ -297,6 +294,7 @@ export const useWebRTC = (roomId, userDetails) => {
       const connectedClients = JSON.parse(JSON.stringify(clientsRef.current));
       if (clientIdx > -1) {
         connectedClients[clientIdx].muted = mute;
+        connectedClients[clientIdx].speaking = !mute;
         setClients(connectedClients);
       }
     };
@@ -435,34 +433,6 @@ export const useWebRTC = (roomId, userDetails) => {
     );
   };
 
-  const trackAudioLevels = (stream, userId) => {
-    const audioContext = new (window.AudioContext || window.AudioContext)();
-    const analyser = audioContext.createAnalyser();
-    const source = audioContext.createMediaStreamSource(stream);
-
-    source.connect(analyser);
-    analyser.fftSize = 256;
-
-    const dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-    const checkSpeaking = () => {
-      analyser.getByteFrequencyData(dataArray);
-
-      const sum = dataArray.reduce((a, b) => a + b, 0);
-      const average = sum / dataArray.length;
-
-      if (average > 10) {
-        speakingStatus.current[userId] = true;
-      } else {
-        speakingStatus.current[userId] = false;
-      }
-
-      requestAnimationFrame(checkSpeaking);
-    };
-
-    checkSpeaking();
-  };
-
   return {
     clients,
     provideRef,
@@ -473,6 +443,5 @@ export const useWebRTC = (roomId, userDetails) => {
     handRaiseRequests,
     approveSpeakRequest,
     rejectSpeakRequest,
-    speakingStatus: speakingStatus.current,
   };
 };
