@@ -181,7 +181,7 @@ a {
   left: -8px;
   width: calc(100% + 16px);
   height: calc(100% + 16px);
-  border: 2px solid rgba(0, 0, 0, 0.2);
+  border: 2px solid #eb7635;
   border-radius: 50%;
   -webkit-animation: speak-animation 1s infinite;
   animation: speak-animation 1s infinite;

@@ -367,6 +367,7 @@ const Room = () => {
                     border: "3px solid #c0c0c0",
                     position: " relative",
                   }}
+                  className={client.speaking ? "speaking-avatar" : ""}
                 >
                   <img
                     src={client.profile}
