@@ -96,6 +96,11 @@ const Room = () => {
   const admins = clients.filter((client) => client.role === "admin");
   const audience = clients.filter((client) => client.role === "audience");
   const speaker = clients.filter((client) => client.role === "speaker");
+
+  const isHandRaised = handRaiseRequests.some(
+    (request) => request.userId === userDetails._id
+  );
+
   const [isMuted, setMuted] = useState(true);
 
   const [comments, setComments] = useState([]);
@@ -267,6 +272,7 @@ const Room = () => {
               alignItems: "center",
               flexWrap: "wrap",
               gap: "30px",
+              padding: "10px",
               maxHeight: "130px", // Set the maximum height for scrollable content
               overflowY: "auto", // Enable vertical scrolling
               scrollbarWidth: "none", // Hide the default scrollbar on webkit browsers
@@ -422,6 +428,7 @@ const Room = () => {
                 flexWrap: "wrap",
                 justifyContent: isMobile ? "center" : "flex-start",
                 gap: "30px",
+                padding: "10px",
                 maxHeight: isBigSecreen
                   ? "calc(100vh - 400px)"
                   : isMobile
@@ -620,7 +627,7 @@ const Room = () => {
                         <Button
                           variant="outlined"
                           sx={{
-                            background: "#f5f5f5",
+                            background: isHandRaised ? "#eb7635" : "#f5f5f5",
                             outline: "none",
                             display: "flex",
                             minWidth: "20px",
@@ -633,6 +640,7 @@ const Room = () => {
                               border: "none",
                             },
                           }}
+                          disabled={isHandRaised}
                           onClick={raiseHand}
                         >
                           <img

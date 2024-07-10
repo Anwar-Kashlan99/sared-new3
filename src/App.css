@@ -177,10 +177,10 @@ a {
 .speaking-avatar::before {
   content: "";
   position: absolute;
-  top: -10px;
-  left: -10px;
-  width: calc(100% + 20px);
-  height: calc(100% + 20px);
+  top: -8px;
+  left: -8px;
+  width: calc(100% + 16px);
+  height: calc(100% + 16px);
   border: 2px solid rgba(0, 0, 0, 0.2);
   border-radius: 50%;
   -webkit-animation: speak-animation 1s infinite;
@@ -200,7 +200,7 @@ a {
     opacity: 0.5;
   }
   50% {
-    transform: scale(1.2);
+    transform: scale(1.1);
     opacity: 1;
   }
 }
@@ -212,7 +212,7 @@ a {
     opacity: 0.5;
   }
   50% {
-    transform: scale(1.2);
+    transform: scale(1.1);
     opacity: 1;
   }
 }
