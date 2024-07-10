@@ -15,6 +15,7 @@ export const useWebRTC = (roomId, userDetails) => {
   const clientsRef = useRef([]);
   const navigate = useNavigate();
   const [handRaiseRequests, setHandRaiseRequests] = useState([]);
+  const [speakingUsers, setSpeakingUsers] = useState([]); // New state to track speaking users
 
   const addNewClient = useCallback(
     (newClient, cb) => {
@@ -138,12 +139,40 @@ export const useWebRTC = (roomId, userDetails) => {
           audio: true,
         });
         console.log("Media captured");
+        analyzeAudioStream(localMediaStream.current); // Start analyzing the audio stream
       } catch (error) {
         console.error("Error capturing media: ", error);
         alert(
           "Error capturing media. Please ensure your browser has permission to access the microphone."
         );
       }
+    };
+
+    const analyzeAudioStream = (stream) => {
+      const audioContext = new (window.AudioContext ||
+        window.webkitAudioContext)();
+      const analyser = audioContext.createAnalyser();
+      const source = audioContext.createMediaStreamSource(stream);
+      source.connect(analyser);
+      analyser.fftSize = 256;
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      const detectSpeech = () => {
+        analyser.getByteFrequencyData(dataArray);
+        const volume = dataArray.reduce((sum, value) => sum + value, 0);
+        const isSpeaking = volume > 1000; // Adjust the threshold value as needed
+        if (isSpeaking && !speakingUsers.includes(userDetails._id)) {
+          setSpeakingUsers((prev) => [...prev, userDetails._id]);
+        } else if (!isSpeaking && speakingUsers.includes(userDetails._id)) {
+          setSpeakingUsers((prev) =>
+            prev.filter((id) => id !== userDetails._id)
+          );
+        }
+        requestAnimationFrame(detectSpeech);
+      };
+
+      detectSpeech();
     };
 
     const handleNewPeer = async ({ peerId, createOffer, user: remoteUser }) => {
@@ -442,5 +471,6 @@ export const useWebRTC = (roomId, userDetails) => {
     handRaiseRequests,
     approveSpeakRequest,
     rejectSpeakRequest,
+    speakingUsers,
   };
 };

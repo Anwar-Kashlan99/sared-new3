@@ -75,6 +75,7 @@ const Room = () => {
     handRaiseRequests,
     approveSpeakRequest,
     rejectSpeakRequest,
+    speakingUsers,
   } = useWebRTC(roomId, userDetails);
   const [isAdmin, setIsAdmin] = useState(false);
   const currentUser = clients.find((client) => client._id === userDetails._id);
@@ -288,6 +289,9 @@ const Room = () => {
                 key={client?._id}
               >
                 <Box
+                  className={
+                    speakingUsers.includes(client._id) ? "speaking" : ""
+                  }
                   sx={{
                     width: "75px",
                     height: "75px",
@@ -353,6 +357,9 @@ const Room = () => {
                 key={client?._id}
               >
                 <Box
+                  className={
+                    speakingUsers.includes(client._id) ? "speaking" : ""
+                  }
                   sx={{
                     width: "75px",
                     height: "75px",
