@@ -408,12 +408,18 @@ export const useWebRTC = (roomId, userDetails) => {
       return;
     }
 
-    socket.current.emit(ACTIONS.RAISE_HAND, {
-      roomId,
+    const newRequest = {
       peerId: socket.current.id,
       userId: userDetails._id,
       username: userDetails.username,
       profile: userDetails.profile,
+    };
+
+    setHandRaiseRequests((prevRequests) => [...prevRequests, newRequest]);
+
+    socket.current.emit(ACTIONS.RAISE_HAND, {
+      roomId,
+      ...newRequest,
     });
 
     toast("You have raised your hand.");

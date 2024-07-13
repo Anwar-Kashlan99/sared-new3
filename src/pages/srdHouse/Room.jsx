@@ -194,10 +194,11 @@ const Room = () => {
   };
 
   const isHandRaised = handRaiseRequests.some(
-    (request) => request.userId === userDetails._id
+    (request) => request.userId === userDetails?._id
   );
-
-  console.log(isHandRaised);
+  useEffect(() => {
+    console.log(isHandRaised);
+  }, [handRaiseRequests, userDetails?._id]);
   return (
     <Box
       sx={{
