@@ -75,10 +75,11 @@ const Room = () => {
     approveSpeakRequest,
     rejectSpeakRequest,
   } = useWebRTC(roomId, userDetails);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const currentUser = clients.find((client) => client._id === userDetails._id);
 
+  const currentUser = clients.find((client) => client._id === userDetails._id);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isAudience, setIsAudience] = useState(false);
+  const [isSpeaker, setIsSpeaker] = useState(false);
   const [isHandRaised, setIsHandRaised] = useState(false);
 
   useEffect(() => {
@@ -90,8 +91,10 @@ const Room = () => {
   useEffect(() => {
     if (currentUser && currentUser.role === "audience") {
       setIsAudience(true);
+      setIsSpeaker(false);
     }
     if (currentUser && currentUser.role === "speaker") {
+      setIsSpeaker(true);
       setIsAudience(false);
     }
   }, [clients, userDetails]);
@@ -309,13 +312,14 @@ const Room = () => {
                   }}
                   className={client.speaking ? "speaking-avatar" : ""}
                 >
-                  <img
+                  <Avatar
                     src={client.profile}
                     alt=""
                     style={{
                       width: "100%",
                       height: "100%",
                       borderRadius: "50%",
+                      backgroundColor: "#ddd",
                     }}
                   />
 
@@ -325,22 +329,26 @@ const Room = () => {
                       provideRef(instance, client?._id);
                     }}
                   />
-                  <IconButton
-                    onClick={() => handleMuteClick(client?._id)}
+                  <Box
                     sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      borderRadius: "50%",
                       backgroundColor: "#fff",
                       position: "absolute",
-                      bottom: "0px",
-                      right: "0px",
-                      width: "30px",
-                      height: "30px",
-                      padding: "5px",
+                      bottom: "-2px",
+                      right: "-2px",
+                      width: "25px",
+                      height: "25px",
                       zIndex: "1111",
-                      boxShadow: "0px 4px 4px rgba(0, 0, 0, 0.25)",
+                      boxShadow: "0px 0px 3px 1px rgba(0, 0, 0, 0.25)",
                     }}
                   >
-                    {client.muted ? <MicOffOutlined /> : <MicOutlined />}
-                  </IconButton>
+                    {client.muted ? (
+                      <MicOffOutlined sx={{ fontSize: "18px" }} />
+                    ) : undefined}
+                  </Box>
                 </Box>
                 <Typography
                   sx={{
@@ -375,13 +383,14 @@ const Room = () => {
                   }}
                   className={client.speaking ? "speaking-avatar" : ""}
                 >
-                  <img
+                  <Avatar
                     src={client.profile}
                     alt=""
                     style={{
                       width: "100%",
                       height: "100%",
                       borderRadius: "50%",
+                      backgroundColor: "#ddd",
                     }}
                   />
                   <audio
@@ -390,22 +399,26 @@ const Room = () => {
                       provideRef(instance, client?._id);
                     }}
                   />
-                  <IconButton
-                    onClick={() => handleMuteClick(client?._id)}
+                  <Box
                     sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      borderRadius: "50%",
                       backgroundColor: "#fff",
                       position: "absolute",
-                      bottom: "0px",
-                      right: "0px",
-                      width: "30px",
-                      height: "30px",
-                      padding: "5px",
+                      bottom: "-2px",
+                      right: "-2px",
+                      width: "25px",
+                      height: "25px",
                       zIndex: "1111",
-                      boxShadow: "0px 4px 4px rgba(0, 0, 0, 0.25)",
+                      boxShadow: "0px 0px 3px 1px rgba(0, 0, 0, 0.25)",
                     }}
                   >
-                    {client.muted ? <MicOffOutlined /> : <MicOutlined />}
-                  </IconButton>
+                    {client.muted ? (
+                      <MicOffOutlined sx={{ fontSize: "18px" }} />
+                    ) : undefined}
+                  </Box>
                 </Box>
                 <Typography
                   sx={{
@@ -467,15 +480,42 @@ const Room = () => {
                       position: "relative",
                     }}
                   >
-                    <img
+                    <Avatar
                       src={client.profile}
                       alt=""
                       style={{
                         width: "100%",
                         height: "100%",
                         borderRadius: "50%",
+                        backgroundColor: "#ddd",
                       }}
                     />
+                    <audio
+                      autoPlay
+                      ref={(instance) => {
+                        provideRef(instance, client?._id);
+                      }}
+                    />
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        borderRadius: "50%",
+                        backgroundColor: "#fff",
+                        position: "absolute",
+                        bottom: "-2px",
+                        right: "-2px",
+                        width: "25px",
+                        height: "25px",
+                        zIndex: "1111",
+                        boxShadow: "0px 0px 3px 1px rgba(0, 0, 0, 0.25)",
+                      }}
+                    >
+                      {client.muted ? (
+                        <MicOffOutlined sx={{ fontSize: "18px" }} />
+                      ) : undefined}
+                    </Box>
                     {isAdmin && (
                       <IconButton
                         id="fade-button"
@@ -595,6 +635,14 @@ const Room = () => {
                         columnGap: "10px",
                       }}
                     >
+                      {(isAdmin || isSpeaker) && (
+                        <IconButton
+                          sx={{ mr: "5px" }}
+                          onClick={() => handleMuteClick(currentUser?._id)}
+                        >
+                          <MicOutlined sx={{ fontSize: "28px" }} />
+                        </IconButton>
+                      )}
                       {isAdmin && (
                         <Button
                           variant="outlined"
@@ -644,6 +692,9 @@ const Room = () => {
                             borderRadius: "20px",
                             transition: "all 0.3s ease-in-out",
                             "&:hover": {
+                              border: "none",
+                            },
+                            "&.Mui-disabled": {
                               border: "none",
                             },
                           }}
