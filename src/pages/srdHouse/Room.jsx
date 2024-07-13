@@ -329,26 +329,26 @@ const Room = () => {
                       provideRef(instance, client?._id);
                     }}
                   />
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      borderRadius: "50%",
-                      backgroundColor: "#fff",
-                      position: "absolute",
-                      bottom: "-2px",
-                      right: "-2px",
-                      width: "25px",
-                      height: "25px",
-                      zIndex: "1111",
-                      boxShadow: "0px 0px 3px 1px rgba(0, 0, 0, 0.25)",
-                    }}
-                  >
-                    {client.muted ? (
+                  {client.muted && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        borderRadius: "50%",
+                        backgroundColor: "#fff",
+                        position: "absolute",
+                        bottom: "-2px",
+                        right: "-2px",
+                        width: "25px",
+                        height: "25px",
+                        zIndex: "1111",
+                        boxShadow: "0px 0px 3px 1px rgba(0, 0, 0, 0.25)",
+                      }}
+                    >
                       <MicOffOutlined sx={{ fontSize: "18px" }} />
-                    ) : undefined}
-                  </Box>
+                    </Box>
+                  )}
                 </Box>
                 <Typography
                   sx={{
@@ -399,26 +399,26 @@ const Room = () => {
                       provideRef(instance, client?._id);
                     }}
                   />
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      borderRadius: "50%",
-                      backgroundColor: "#fff",
-                      position: "absolute",
-                      bottom: "-2px",
-                      right: "-2px",
-                      width: "25px",
-                      height: "25px",
-                      zIndex: "1111",
-                      boxShadow: "0px 0px 3px 1px rgba(0, 0, 0, 0.25)",
-                    }}
-                  >
-                    {client.muted ? (
+                  {client.muted && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        borderRadius: "50%",
+                        backgroundColor: "#fff",
+                        position: "absolute",
+                        bottom: "-2px",
+                        right: "-2px",
+                        width: "25px",
+                        height: "25px",
+                        zIndex: "1111",
+                        boxShadow: "0px 0px 3px 1px rgba(0, 0, 0, 0.25)",
+                      }}
+                    >
                       <MicOffOutlined sx={{ fontSize: "18px" }} />
-                    ) : undefined}
-                  </Box>
+                    </Box>
+                  )}
                 </Box>
                 <Typography
                   sx={{
@@ -496,26 +496,27 @@ const Room = () => {
                         provideRef(instance, client?._id);
                       }}
                     />
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        borderRadius: "50%",
-                        backgroundColor: "#fff",
-                        position: "absolute",
-                        bottom: "-2px",
-                        right: "-2px",
-                        width: "25px",
-                        height: "25px",
-                        zIndex: "1111",
-                        boxShadow: "0px 0px 3px 1px rgba(0, 0, 0, 0.25)",
-                      }}
-                    >
-                      {client.muted ? (
+                    {client.muted && (
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          borderRadius: "50%",
+                          backgroundColor: "#fff",
+                          position: "absolute",
+                          bottom: "-2px",
+                          right: "-2px",
+                          width: "25px",
+                          height: "25px",
+                          zIndex: "1111",
+                          boxShadow: "0px 0px 3px 1px rgba(0, 0, 0, 0.25)",
+                        }}
+                      >
                         <MicOffOutlined sx={{ fontSize: "18px" }} />
-                      ) : undefined}
-                    </Box>
+                      </Box>
+                    )}
+
                     {isAdmin && (
                       <IconButton
                         id="fade-button"
