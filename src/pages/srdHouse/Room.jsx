@@ -79,6 +79,7 @@ const Room = () => {
   const currentUser = clients.find((client) => client._id === userDetails._id);
 
   const [isAudience, setIsAudience] = useState(false);
+  const [isHandRaised, setIsHandRaised] = useState(false);
 
   useEffect(() => {
     if (currentUser && currentUser.role === "admin") {
@@ -90,7 +91,17 @@ const Room = () => {
     if (currentUser && currentUser.role === "audience") {
       setIsAudience(true);
     }
+    if (currentUser && currentUser.role === "speaker") {
+      setIsAudience(false);
+    }
   }, [clients, userDetails]);
+
+  useEffect(() => {
+    const handRaised = handRaiseRequests.some(
+      (request) => request.userId === userDetails?._id
+    );
+    setIsHandRaised(handRaised);
+  }, [handRaiseRequests, userDetails?._id]);
 
   const admins = clients.filter((client) => client.role === "admin");
   const audience = clients.filter((client) => client.role === "audience");
@@ -193,12 +204,6 @@ const Room = () => {
     setIsOpen(!isOpen);
   };
 
-  const isHandRaised = handRaiseRequests.some(
-    (request) => request.userId === userDetails?._id
-  );
-  useEffect(() => {
-    console.log(isHandRaised);
-  }, [handRaiseRequests, userDetails?._id]);
   return (
     <Box
       sx={{
