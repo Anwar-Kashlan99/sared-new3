@@ -197,6 +197,7 @@ const Room = () => {
     (request) => request.userId === userDetails._id
   );
 
+  console.log(isHandRaised);
   return (
     <Box
       sx={{
