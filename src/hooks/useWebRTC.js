@@ -15,6 +15,7 @@ export const useWebRTC = (roomId, userDetails) => {
   const clientsRef = useRef([]);
   const navigate = useNavigate();
   const [handRaiseRequests, setHandRaiseRequests] = useState([]);
+  const [messages, setMessages] = useState([]);
 
   const addNewClient = useCallback(
     (newClient, cb) => {
@@ -72,6 +73,7 @@ export const useWebRTC = (roomId, userDetails) => {
         toast(message)
       );
       socket.current.on(ACTIONS.APPROVE_SPEAK, handleApproveSpeak);
+      socket.current.on(ACTIONS.MESSAGE, handleMessageReceived);
 
       await captureMedia();
 
@@ -119,6 +121,7 @@ export const useWebRTC = (roomId, userDetails) => {
         socket.current.off(ACTIONS.RAISE_HAND_DUPLICATE);
         socket.current.off(ACTIONS.MUTE);
         socket.current.off(ACTIONS.UNMUTE);
+        socket.current.off(ACTIONS.MESSAGE);
         socket.current.emit(ACTIONS.LEAVE, { roomId });
         socket.current = null;
       }
@@ -144,6 +147,13 @@ export const useWebRTC = (roomId, userDetails) => {
           "Error capturing media. Please ensure your browser has permission to access the microphone."
         );
       }
+    };
+
+    const handleMessageReceived = ({ user, message }) => {
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { userId: user._id, username: user.username, message },
+      ]);
     };
 
     const handleNewPeer = async ({ peerId, createOffer, user: remoteUser }) => {
@@ -439,6 +449,14 @@ export const useWebRTC = (roomId, userDetails) => {
     );
   };
 
+  const sendMessage = (message) => {
+    socket.current.emit(ACTIONS.MESSAGE, {
+      roomId,
+      user: userDetails,
+      message,
+    });
+  };
+
   return {
     clients,
     provideRef,
@@ -449,5 +467,7 @@ export const useWebRTC = (roomId, userDetails) => {
     handRaiseRequests,
     approveSpeakRequest,
     rejectSpeakRequest,
+    messages,
+    sendMessage,
   };
 };

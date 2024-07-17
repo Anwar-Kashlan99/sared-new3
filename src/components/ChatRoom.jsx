@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import EmojiPicker from "emoji-picker-react";
 import React, { Fragment, useEffect, useRef, useState } from "react";
+import { useWebRTC } from "../hooks/useWebRTC";
 
 const ChatRoom = ({
   comments,
@@ -24,6 +25,7 @@ const ChatRoom = ({
   setCommentReactions,
   reverse,
 }) => {
+  const { roomId, userDetails, sendMessage, messages } = useWebRTC();
   const [isCurtainClose, setIsCurtainClose] = useState(true);
   const [dragStartX, setDragStartX] = useState(0);
   const [showPicker, setShowPicker] = useState(false);
@@ -53,29 +55,10 @@ const ChatRoom = ({
 
   const handleAddComment = () => {
     if (newComment) {
-      const commentId = Date.now(); // Generate a unique comment ID
-      const updatedComments = [
-        ...comments,
-        { id: commentId, comment: newComment },
-      ];
-      setComments(updatedComments);
+      sendMessage(newComment);
       setNewComment("");
-      setCommentReactions((prevReactions) => ({
-        ...prevReactions,
-        [commentId]: {},
-      }));
     }
   };
-  const reversedComments = [...comments].reverse();
-
-  const commentBoxRef = useRef(null);
-
-  useEffect(() => {
-    // Scroll to the bottom of the comment box when a new comment is added
-    if (commentBoxRef.current) {
-      commentBoxRef.current.scrollTop = commentBoxRef.current.scrollHeight;
-    }
-  }, [comments]);
 
   // for the Emoji
 
@@ -102,6 +85,13 @@ const ChatRoom = ({
       setShowPickerComment(false);
     }
   };
+  const commentBoxRef = useRef(null);
+
+  useEffect(() => {
+    if (commentBoxRef.current) {
+      commentBoxRef.current.scrollTop = commentBoxRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   return (
     <Box
@@ -156,9 +146,9 @@ const ChatRoom = ({
             flexDirection: "column-reverse", // Reverse the order of the comments
           }}
         >
-          {reversedComments.map((comment, index) => (
+          {messages.map((message, index) => (
             <Box
-              key={comment.id}
+              key={index}
               sx={{
                 backgroundColor: "#fff",
                 width: "fit-content",
@@ -176,7 +166,7 @@ const ChatRoom = ({
               }}
             >
               <Typography variant="body1" sx={{ fontWeight: "bold" }}>
-                {comment.username}
+                {message.username}
               </Typography>
               <Avatar
                 sx={{
@@ -185,10 +175,10 @@ const ChatRoom = ({
                   top: "50%",
                   transform: "translateY(-50%)",
                 }}
-                src={comment.avatar}
+                src={message.avatar}
                 alt="User Avatar"
               />
-              {comment.comment}
+              {message.message}
               <IconButton
                 sx={{
                   position: "absolute",
@@ -202,13 +192,13 @@ const ChatRoom = ({
                   opacity: "0",
                 }}
                 onClick={() => {
-                  setShowPickerComment(comment.id);
+                  setShowPickerComment(message.id);
                   setShowPicker(false);
                 }}
               >
                 <EmojiEmotionsOutlined sx={{ color: "#f25f0c" }} />
               </IconButton>
-              {showPickerComment === comment.id && (
+              {showPickerComment === message.id && (
                 <EmojiPicker
                   searchDisabled
                   emojiStyle="facebook"
@@ -224,11 +214,11 @@ const ChatRoom = ({
                   }}
                   reactionsDefaultOpen
                   onEmojiClick={(emojiObject) =>
-                    handleReactionSelect(comment.id, emojiObject)
+                    handleReactionSelect(message.id, emojiObject)
                   }
                 />
               )}
-              {comment.id in commentReactions && (
+              {message.id in commentReactions && (
                 <span
                   style={{
                     position: "absolute",
@@ -237,7 +227,7 @@ const ChatRoom = ({
                     right: "5px",
                   }}
                 >
-                  {commentReactions[comment.id].emoji}
+                  {commentReactions[message.id].emoji}
                 </span>
               )}
             </Box>

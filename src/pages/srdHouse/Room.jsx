@@ -45,6 +45,7 @@ import {
 } from "react-share";
 import upArrow from "../../assets/up-arrow.svg";
 import downArrow from "../../assets/down-arrow.svg";
+import ChatRoom from "../../components/ChatRoom";
 
 const Room = () => {
   const { id: roomId } = useParams();
@@ -235,8 +236,7 @@ const Room = () => {
             p: "2rem 2.5rem",
           }}
         >
-          {/**
-        <ChatRoom
+          <ChatRoom
             comments={comments}
             setComments={setComments}
             newComment={newComment}
@@ -245,7 +245,6 @@ const Room = () => {
             setCommentReactions={setCommentReactions}
             reverse={true}
           />
-    */}
 
           <Box
             sx={{
