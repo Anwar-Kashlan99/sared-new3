@@ -1,5 +1,4 @@
 import {
-  Add,
   DragIndicatorOutlined,
   EmojiEmotionsOutlined,
   Send,
