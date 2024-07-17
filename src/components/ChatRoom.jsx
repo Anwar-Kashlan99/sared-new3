@@ -13,8 +13,14 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import EmojiPicker from "emoji-picker-react";
-import React, { Fragment, useEffect, useRef, useState } from "react";
-import { useWebRTC } from "../hooks/useWebRTC";
+import React, {
+  Fragment,
+  useEffect,
+  useRef,
+  useState,
+  sendMessage,
+  messages,
+} from "react";
 
 const ChatRoom = ({ reverse }) => {
   const [newMessage, setNewMessage] = useState("");
