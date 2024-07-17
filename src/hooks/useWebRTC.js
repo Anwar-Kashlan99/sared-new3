@@ -440,6 +440,7 @@ export const useWebRTC = (roomId, userDetails) => {
 
   const sendMessage = (message) => {
     if (socket.current) {
+      console.log("Sending message:", { roomId, userDetails, message });
       socket.current.emit(ACTIONS.MESSAGE, {
         roomId,
         user: userDetails,

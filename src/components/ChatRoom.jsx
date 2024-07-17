@@ -16,16 +16,9 @@ import EmojiPicker from "emoji-picker-react";
 import React, { Fragment, useEffect, useRef, useState } from "react";
 import { useWebRTC } from "../hooks/useWebRTC";
 
-const ChatRoom = ({
-  comments,
-  setComments,
-  setNewComment,
-  newComment,
-  commentReactions,
-  setCommentReactions,
-  reverse,
-}) => {
-  const { sendMessage, messages } = useWebRTC();
+const ChatRoom = ({ reverse, roomId, userDetails }) => {
+  const { sendMessage, messages } = useWebRTC(roomId, userDetails);
+  const [newMessage, setNewMessage] = useState("");
   const [isCurtainClose, setIsCurtainClose] = useState(true);
   const [dragStartX, setDragStartX] = useState(0);
   const [showPicker, setShowPicker] = useState(false);
@@ -48,43 +41,24 @@ const ChatRoom = ({
   };
   // for the comment
 
-  const handleCommentChange = (event) => {
-    setNewComment(event.target.value);
+  const handleMessageChange = (event) => {
+    setNewMessage(event.target.value);
     setShowPicker(false);
   };
 
-  const handleAddComment = () => {
-    if (newComment) {
-      sendMessage(newComment);
-      setNewComment("");
+  const handleSendMessage = () => {
+    if (newMessage) {
+      sendMessage(newMessage);
+      setNewMessage("");
     }
   };
 
   // for the Emoji
 
-  const onEmojiClick = (event) => {
-    const { emoji } = event;
-    setNewComment((prevComment) => prevComment + emoji);
+  const onEmojiClick = (event, emojiObject) => {
+    setNewMessage((prevMessage) => prevMessage + emojiObject.emoji);
   };
 
-  const handleReactionSelect = (commentId, emojiObject) => {
-    // Check if the comment already has the same reaction
-    if (commentReactions[commentId]?.emoji === emojiObject.emoji) {
-      // Remove the reaction if it already exists
-      const updatedReactions = { ...commentReactions };
-      delete updatedReactions[commentId];
-      setCommentReactions(updatedReactions);
-      setShowPickerComment(false);
-    } else {
-      // Add or update the reaction
-      const updatedReactions = {
-        ...commentReactions,
-        [commentId]: emojiObject,
-      };
-      setCommentReactions(updatedReactions);
-      setShowPickerComment(false);
-    }
-  };
   const commentBoxRef = useRef(null);
 
   useEffect(() => {
@@ -92,6 +66,7 @@ const ChatRoom = ({
       commentBoxRef.current.scrollTop = commentBoxRef.current.scrollHeight;
     }
   }, [messages]);
+
   console.log(messages);
 
   return (
@@ -213,23 +188,8 @@ const ChatRoom = ({
                   previewConfig={{
                     showPreview: false,
                   }}
-                  reactionsDefaultOpen
-                  onEmojiClick={(emojiObject) =>
-                    handleReactionSelect(index, emojiObject)
-                  }
+                  onEmojiClick={onEmojiClick}
                 />
-              )}
-              {index in commentReactions && (
-                <span
-                  style={{
-                    position: "absolute",
-                    bottom: "-20px",
-                    fontSize: "21px",
-                    right: "5px",
-                  }}
-                >
-                  {commentReactions[index].emoji}
-                </span>
               )}
             </Box>
           ))}
@@ -265,8 +225,8 @@ const ChatRoom = ({
                   border: "none",
                 },
               }}
-              value={newComment}
-              onChange={handleCommentChange}
+              value={newMessage}
+              onChange={handleMessageChange}
             />
           </Box>
 
@@ -320,7 +280,7 @@ const ChatRoom = ({
               }}
             />
             <IconButton
-              onClick={handleAddComment}
+              onClick={handleSendMessage}
               sx={{
                 width: "50px",
                 height: "50px",

@@ -113,9 +113,6 @@ const Room = () => {
 
   const [isMuted, setMuted] = useState(true);
 
-  const [comments, setComments] = useState([]);
-  const [newComment, setNewComment] = useState("");
-  const [commentReactions, setCommentReactions] = useState({});
   console.log(clients);
 
   useEffect(() => {
@@ -236,15 +233,7 @@ const Room = () => {
             p: "2rem 2.5rem",
           }}
         >
-          <ChatRoom
-            comments={comments}
-            setComments={setComments}
-            newComment={newComment}
-            setNewComment={setNewComment}
-            commentReactions={commentReactions}
-            setCommentReactions={setCommentReactions}
-            reverse={true}
-          />
+          <ChatRoom reverse={true} roomId={roomId} userDetails={userDetails} />
 
           <Box
             sx={{
