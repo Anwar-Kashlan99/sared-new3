@@ -50,8 +50,8 @@ const ChatRoom = ({ reverse, sendMessage, messages, currentUserId }) => {
     }
   };
 
-  const onEmojiClick = (event, emojiObject) => {
-    const { emoji } = emojiObject;
+  const onEmojiClick = (event) => {
+    const { emoji } = event;
     setNewMessage((prevMessage) => prevMessage + emoji);
   };
 
