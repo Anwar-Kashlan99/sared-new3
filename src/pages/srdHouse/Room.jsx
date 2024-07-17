@@ -239,6 +239,7 @@ const Room = () => {
             reverse={true}
             messages={messages}
             sendMessage={sendMessage}
+            currentUserId={currentUser}
           />
 
           <Box
