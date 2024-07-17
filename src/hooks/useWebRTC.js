@@ -449,13 +449,13 @@ export const useWebRTC = (roomId, userDetails) => {
     );
   };
 
-  const sendMessage = (message) => {
+  const sendMessage = (text) => {
     if (socket.current) {
-      console.log("Sending message:", { roomId, userDetails, message });
+      console.log("Sending message:", { roomId, userDetails, text });
       socket.current.emit(ACTIONS.MESSAGE, {
         roomId,
         user: userDetails,
-        message,
+        text,
       });
     }
   };
