@@ -92,6 +92,7 @@ const ChatRoom = ({
       commentBoxRef.current.scrollTop = commentBoxRef.current.scrollHeight;
     }
   }, [messages]);
+  console.log(messages);
 
   return (
     <Box
@@ -192,13 +193,13 @@ const ChatRoom = ({
                   opacity: "0",
                 }}
                 onClick={() => {
-                  setShowPickerComment(message.id);
+                  setShowPickerComment(index);
                   setShowPicker(false);
                 }}
               >
                 <EmojiEmotionsOutlined sx={{ color: "#f25f0c" }} />
               </IconButton>
-              {showPickerComment === message.id && (
+              {showPickerComment === index && (
                 <EmojiPicker
                   searchDisabled
                   emojiStyle="facebook"
@@ -214,11 +215,11 @@ const ChatRoom = ({
                   }}
                   reactionsDefaultOpen
                   onEmojiClick={(emojiObject) =>
-                    handleReactionSelect(message.id, emojiObject)
+                    handleReactionSelect(index, emojiObject)
                   }
                 />
               )}
-              {message.id in commentReactions && (
+              {index in commentReactions && (
                 <span
                   style={{
                     position: "absolute",
@@ -227,7 +228,7 @@ const ChatRoom = ({
                     right: "5px",
                   }}
                 >
-                  {commentReactions[message.id].emoji}
+                  {commentReactions[index].emoji}
                 </span>
               )}
             </Box>
