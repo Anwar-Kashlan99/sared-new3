@@ -36,7 +36,6 @@ const ChatRoom = ({ reverse, sendMessage, messages }) => {
       setShowPicker(false);
     }
   };
-  // for the comment
 
   const handleMessageChange = (event) => {
     setNewMessage(event.target.value);
@@ -49,8 +48,6 @@ const ChatRoom = ({ reverse, sendMessage, messages }) => {
       setNewMessage("");
     }
   };
-
-  // for the Emoji
 
   const onEmojiClick = (event, emojiObject) => {
     setNewMessage((prevMessage) => prevMessage + emojiObject.emoji);
@@ -112,11 +109,11 @@ const ChatRoom = ({ reverse, sendMessage, messages }) => {
         <Box
           ref={commentBoxRef}
           sx={{
-            height: "calc(100% - 100px)", // Set the height of the scrollable container
-            overflowY: "scroll", // Enable vertical scrolling
-            marginBottom: "1rem", // Add some spacing at the bottom
+            height: "calc(100% - 100px)",
+            overflowY: "scroll",
+            marginBottom: "1rem",
             display: isCurtainClose ? "none" : "flex",
-            flexDirection: "column-reverse", // Reverse the order of the comments
+            flexDirection: "column-reverse",
           }}
         >
           {messages.map((message, index) => (

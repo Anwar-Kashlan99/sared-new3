@@ -153,13 +153,15 @@ export const useWebRTC = (roomId, userDetails) => {
 
     const handleMessageReceived = (data) => {
       console.log("Received message data:", data);
-      const { user, message } = data;
 
-      if (!message) {
-        console.error("Received message is undefined:", data);
+      if (!data || !data.user || !data.message) {
+        console.error(
+          "Received message is undefined or has missing fields:",
+          data
+        );
         return;
       }
-
+      const { user, message } = data;
       setMessages((prevMessages) => [
         ...prevMessages,
         { userId: user._id, username: user.username, message },
