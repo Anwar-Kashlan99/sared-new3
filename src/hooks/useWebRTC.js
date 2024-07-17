@@ -2,7 +2,6 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { ACTIONS } from "../actions";
 import socketInit from "../socket";
 import { useStateWithCallback } from "./useStateWithCallback";
-// import freeice from "freeice";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -161,7 +160,9 @@ export const useWebRTC = (roomId, userDetails) => {
         );
         return;
       }
+
       const { user, message } = data;
+
       setMessages((prevMessages) => [
         ...prevMessages,
         { userId: user._id, username: user.username, message },
