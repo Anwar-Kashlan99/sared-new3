@@ -219,7 +219,7 @@ const Room = () => {
       <Box
         sx={{
           width: isMobile ? "100%" : "90%",
-          padding: isMobile ? "0" : "1rem 0.5rem",
+          padding: isMobile ? "" : "1rem 0.5rem",
           m: isMobile ? "0rem auto" : "5.5rem auto 2rem",
         }}
       >
@@ -336,7 +336,7 @@ const Room = () => {
                         right: "-2px",
                         width: "25px",
                         height: "25px",
-                        zIndex: "1111",
+                        zIndex: "99",
                         boxShadow: "0px 0px 3px 1px rgba(0, 0, 0, 0.25)",
                       }}
                     >
@@ -406,7 +406,7 @@ const Room = () => {
                         right: "-2px",
                         width: "25px",
                         height: "25px",
-                        zIndex: "1111",
+                        zIndex: "99",
                         boxShadow: "0px 0px 3px 1px rgba(0, 0, 0, 0.25)",
                       }}
                     >
@@ -503,7 +503,7 @@ const Room = () => {
                           right: "-2px",
                           width: "25px",
                           height: "25px",
-                          zIndex: "1111",
+                          zIndex: "99",
                           boxShadow: "0px 0px 3px 1px rgba(0, 0, 0, 0.25)",
                         }}
                       >

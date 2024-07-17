@@ -238,3 +238,13 @@ a {
 .react-tel-input .form-control:focus {
   box-shadow: 3px 5px 7px 0px #707070 !important;
 } */
+/*Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
