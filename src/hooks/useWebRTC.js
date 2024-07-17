@@ -17,6 +17,8 @@ export const useWebRTC = (roomId, userDetails) => {
   const [handRaiseRequests, setHandRaiseRequests] = useState([]);
   const [messages, setMessages] = useState([]);
 
+  console.log("userDetails in useWebRTC:", userDetails); // Debugging
+
   const addNewClient = useCallback(
     (newClient, cb) => {
       setClients((existingClients) => {

@@ -75,6 +75,8 @@ const Room = () => {
     handRaiseRequests,
     approveSpeakRequest,
     rejectSpeakRequest,
+    messages,
+    sendMessage,
   } = useWebRTC(roomId, userDetails);
 
   const currentUser = clients.find((client) => client._id === userDetails._id);
@@ -233,7 +235,11 @@ const Room = () => {
             p: "2rem 2.5rem",
           }}
         >
-          <ChatRoom reverse={true} roomId={roomId} userDetails={userDetails} />
+          <ChatRoom
+            reverse={true}
+            messages={messages}
+            sendMessage={sendMessage}
+          />
 
           <Box
             sx={{

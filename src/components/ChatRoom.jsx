@@ -16,8 +16,7 @@ import EmojiPicker from "emoji-picker-react";
 import React, { Fragment, useEffect, useRef, useState } from "react";
 import { useWebRTC } from "../hooks/useWebRTC";
 
-const ChatRoom = ({ reverse, roomId, userDetails }) => {
-  const { sendMessage, messages } = useWebRTC(roomId, userDetails);
+const ChatRoom = ({ reverse }) => {
   const [newMessage, setNewMessage] = useState("");
   const [isCurtainClose, setIsCurtainClose] = useState(true);
   const [dragStartX, setDragStartX] = useState(0);
