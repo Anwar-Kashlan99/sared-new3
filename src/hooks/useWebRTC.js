@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { ACTIONS } from "../actions";
 import socketInit from "../socket";
 import { useStateWithCallback } from "./useStateWithCallback";
-import freeice from "freeice";
+// import freeice from "freeice";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
