@@ -21,4 +21,5 @@ export const ACTIONS = {
   REJECT_SPEAK: "reject_speak",
   ROOM_CREATED: "room_created",
   ROOM_DELETED: "room_deleted",
+  MESSAGE: "message",
 };
