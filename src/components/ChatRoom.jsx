@@ -19,7 +19,6 @@ const ChatRoom = ({ reverse, sendMessage, messages, currentUserId }) => {
   const [isCurtainClose, setIsCurtainClose] = useState(true);
   const [dragStartX, setDragStartX] = useState(0);
   const [showPicker, setShowPicker] = useState(false);
-  const [showPickerComment, setShowPickerComment] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const isBigSecreen = useMediaQuery("(min-width: 1800px)");
 
@@ -75,7 +74,13 @@ const ChatRoom = ({ reverse, sendMessage, messages, currentUserId }) => {
         background: reverse ? "#00000020" : "#ffffff33",
         backdropFilter: "blur(10px)",
         height: isMobile ? "99%" : "100%",
-        width: isCurtainClose ? "0" : isBigSecreen ? "450px" : "350px",
+        width: isCurtainClose
+          ? "0"
+          : isBigSecreen
+          ? "450px"
+          : isMobile
+          ? "350px"
+          : "400px",
         borderRadius: isMobile ? "30px 0px 0px 30px" : "30px 50px 50px 30px",
         transition: "width 0.5s ease",
         zIndex: "998",
@@ -121,7 +126,7 @@ const ChatRoom = ({ reverse, sendMessage, messages, currentUserId }) => {
             className="no-scrollbar"
           >
             {[...messages].reverse().map((message, index) => {
-              const isCurrentUser = message.userId === currentUserId;
+              const isCurrentUser = message.userId === currentUserId._id;
               return (
                 <Box
                   key={index}
@@ -133,7 +138,7 @@ const ChatRoom = ({ reverse, sendMessage, messages, currentUserId }) => {
                     borderRadius: "20px",
                     maxWidth: "240px",
                     marginLeft: isCurrentUser ? "auto" : "55px",
-                    marginRight: isCurrentUser ? "55px" : "auto",
+                    marginRight: isCurrentUser ? "13px" : "auto",
                     wordWrap: "break-word",
                     position: "relative",
                     marginBottom: "1rem",
@@ -144,7 +149,6 @@ const ChatRoom = ({ reverse, sendMessage, messages, currentUserId }) => {
                 >
                   {!isCurrentUser && (
                     <>
-                      {" "}
                       <Typography
                         variant="body1"
                         sx={{ fontWeight: "bold", fontSize: "14px" }}
@@ -252,7 +256,6 @@ const ChatRoom = ({ reverse, sendMessage, messages, currentUserId }) => {
                 }}
                 onClick={() => {
                   setShowPicker((prev) => !prev);
-                  setShowPickerComment(false);
                 }}
               />
               <IconButton
