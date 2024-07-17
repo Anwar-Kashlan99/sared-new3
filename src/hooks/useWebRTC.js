@@ -38,16 +38,16 @@ export const useWebRTC = (roomId, userDetails) => {
 
   useEffect(() => {
     const initChat = async () => {
-      console.log("Initializing chat...");
-
       if (socket.current) {
-        console.log(
-          "Socket already initialized. Cleaning up existing connections..."
-        );
         cleanupConnections();
       }
 
       socket.current = socketInit();
+
+      if (!socket.current) {
+        console.error("Socket initialization failed");
+        return;
+      }
 
       // Define socket event handlers
       socket.current.on(ACTIONS.MUTE_INFO, ({ userId, isMute }) =>
@@ -73,33 +73,38 @@ export const useWebRTC = (roomId, userDetails) => {
         toast(message)
       );
       socket.current.on(ACTIONS.APPROVE_SPEAK, handleApproveSpeak);
+
+      // Add message handling
       socket.current.on(ACTIONS.MESSAGE, handleMessageReceived);
 
       await captureMedia();
 
-      addNewClient({ ...userDetails, muted: true }, () => {
-        const localElement = audioElements.current[userDetails._id];
-        if (localElement) {
-          localElement.volume = 0;
-          localElement.srcObject = localMediaStream.current;
-        }
-        console.log("Emitting JOIN event:", { roomId, user: userDetails });
-        socket.current.emit(ACTIONS.JOIN, { roomId, user: userDetails });
-      });
-
-      socket.current.on(ACTIONS.JOIN, ({ user, isAdmin }) => {
-        const updatedUserDetails = { ...user, isAdmin };
-        addNewClient(updatedUserDetails, () => {
-          const existingClient = clientsRef.current.find(
-            (client) => client._id === user._id
-          );
-          if (!existingClient) {
-            console.log(
-              `User ${user._id} joined as ${isAdmin ? "admin" : "audience"}`
-            );
+      if (userDetails && userDetails._id) {
+        addNewClient({ ...userDetails, muted: true }, () => {
+          const localElement = audioElements.current[userDetails._id];
+          if (localElement) {
+            localElement.volume = 0;
+            localElement.srcObject = localMediaStream.current;
           }
+          socket.current.emit(ACTIONS.JOIN, { roomId, user: userDetails });
         });
-      });
+
+        socket.current.on(ACTIONS.JOIN, ({ user, isAdmin }) => {
+          const updatedUserDetails = { ...user, isAdmin };
+          addNewClient(updatedUserDetails, () => {
+            const existingClient = clientsRef.current.find(
+              (client) => client._id === user._id
+            );
+            if (!existingClient) {
+              console.log(
+                `User ${user._id} joined as ${isAdmin ? "admin" : "audience"}`
+              );
+            }
+          });
+        });
+      } else {
+        console.error("Invalid userDetails");
+      }
     };
 
     const cleanupConnections = () => {
@@ -129,7 +134,6 @@ export const useWebRTC = (roomId, userDetails) => {
 
     const captureMedia = async () => {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        console.error("getUserMedia is not supported in this browser.");
         alert(
           "Your browser does not support WebRTC. Please use a modern browser such as Chrome, Firefox, or Edge."
         );
@@ -140,9 +144,7 @@ export const useWebRTC = (roomId, userDetails) => {
         localMediaStream.current = await navigator.mediaDevices.getUserMedia({
           audio: true,
         });
-        console.log("Media captured");
       } catch (error) {
-        console.error("Error capturing media: ", error);
         alert(
           "Error capturing media. Please ensure your browser has permission to access the microphone."
         );
@@ -158,12 +160,8 @@ export const useWebRTC = (roomId, userDetails) => {
 
     const handleNewPeer = async ({ peerId, createOffer, user: remoteUser }) => {
       if (connections.current[peerId]) {
-        return console.warn(`You are already connected with ${peerId}`);
+        return;
       }
-
-      console.log(
-        `Adding new peer: ${peerId} ${remoteUser._id} ${remoteUser.username}`
-      );
 
       const connection = new RTCPeerConnection({
         iceServers: [
@@ -223,8 +221,6 @@ export const useWebRTC = (roomId, userDetails) => {
         localMediaStream.current.getTracks().forEach((track) => {
           connection.addTrack(track, localMediaStream.current);
         });
-      } else {
-        console.warn("Local media stream is not available.");
       }
 
       if (createOffer) {
@@ -286,7 +282,6 @@ export const useWebRTC = (roomId, userDetails) => {
             });
           }
 
-          // Process queued ICE candidates
           while (connectionData.iceCandidatesQueue.length > 0) {
             const candidate = connectionData.iceCandidatesQueue.shift();
             await connection.addIceCandidate(candidate);
@@ -310,7 +305,6 @@ export const useWebRTC = (roomId, userDetails) => {
     };
 
     const handleRoomEnded = () => {
-      console.log("Room ended, redirecting to /srdhouse");
       toast("Room ended", { icon: "⚠️" });
       navigate("/srdhouse");
     };
@@ -332,24 +326,19 @@ export const useWebRTC = (roomId, userDetails) => {
 
     const handleApproveSpeak = ({ userId }) => {
       toast(`User ${userId} has been approved to speak.`);
-      console.log(`User ${userId} has been approved to speak.`);
       setHandRaiseRequests((requests) =>
         requests.filter((req) => req.userId !== userId)
       );
-      setClients((prevClients) => {
-        console.log("Clients before update:", prevClients);
-        const updatedClients = prevClients.map((client) =>
+      setClients((prevClients) =>
+        prevClients.map((client) =>
           client._id === userId ? { ...client, role: "speaker" } : client
-        );
-        console.log("Clients after update:", updatedClients);
-        return updatedClients;
-      });
+        )
+      );
     };
 
     initChat();
 
     return () => {
-      console.log("Cleaning up...");
       if (localMediaStream.current) {
         localMediaStream.current.getTracks().forEach((track) => track.stop());
       }
@@ -450,11 +439,13 @@ export const useWebRTC = (roomId, userDetails) => {
   };
 
   const sendMessage = (message) => {
-    socket.current.emit(ACTIONS.MESSAGE, {
-      roomId,
-      user: userDetails,
-      message,
-    });
+    if (socket.current) {
+      socket.current.emit(ACTIONS.MESSAGE, {
+        roomId,
+        user: userDetails,
+        message,
+      });
+    }
   };
 
   return {

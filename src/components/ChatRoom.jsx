@@ -25,7 +25,7 @@ const ChatRoom = ({
   setCommentReactions,
   reverse,
 }) => {
-  const { roomId, userDetails, sendMessage, messages } = useWebRTC();
+  const { sendMessage, messages } = useWebRTC();
   const [isCurtainClose, setIsCurtainClose] = useState(true);
   const [dragStartX, setDragStartX] = useState(0);
   const [showPicker, setShowPicker] = useState(false);
