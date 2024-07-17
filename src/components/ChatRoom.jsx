@@ -12,16 +12,9 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import EmojiPicker from "emoji-picker-react";
-import React, {
-  Fragment,
-  useEffect,
-  useRef,
-  useState,
-  sendMessage,
-  messages,
-} from "react";
+import React, { Fragment, useEffect, useRef, useState } from "react";
 
-const ChatRoom = ({ reverse }) => {
+const ChatRoom = ({ reverse, sendMessage, messages }) => {
   const [newMessage, setNewMessage] = useState("");
   const [isCurtainClose, setIsCurtainClose] = useState(true);
   const [dragStartX, setDragStartX] = useState(0);
