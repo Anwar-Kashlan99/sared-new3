@@ -43,14 +43,16 @@ const ChatRoom = ({ reverse, sendMessage, messages }) => {
   };
 
   const handleSendMessage = () => {
-    if (newMessage) {
+    if (newMessage.trim()) {
       sendMessage(newMessage);
       setNewMessage("");
     }
   };
 
   const onEmojiClick = (event, emojiObject) => {
-    setNewMessage((prevMessage) => prevMessage + emojiObject.emoji);
+    const { emoji } = event;
+    console.log(emojiObject);
+    setNewMessage((prevMessage) => prevMessage + emoji);
   };
 
   const commentBoxRef = useRef(null);
@@ -116,7 +118,7 @@ const ChatRoom = ({ reverse, sendMessage, messages }) => {
             flexDirection: "column-reverse",
           }}
         >
-          {messages.map((message, index) => (
+          {[...messages].reverse().map((message, index) => (
             <Box
               key={index}
               sx={{
@@ -149,42 +151,6 @@ const ChatRoom = ({ reverse, sendMessage, messages }) => {
                 alt="User Avatar"
               />
               {message.message}
-              <IconButton
-                sx={{
-                  position: "absolute",
-                  right: "-40px",
-                  top: "50%",
-                  width: "36px",
-                  height: "36px",
-                  transform: "translateY(-50%)",
-                  transition: "all 0.3s ease-in-out",
-                  display: "flex",
-                  opacity: "0",
-                }}
-                onClick={() => {
-                  setShowPickerComment(index);
-                  setShowPicker(false);
-                }}
-              >
-                <EmojiEmotionsOutlined sx={{ color: "#f25f0c" }} />
-              </IconButton>
-              {showPickerComment === index && (
-                <EmojiPicker
-                  searchDisabled
-                  emojiStyle="facebook"
-                  className="emoji-picker"
-                  style={{
-                    position: "absolute",
-                    top: "-55px",
-                    left: isBigSecreen ? "0px" : "-50px",
-                    zIndex: "9999",
-                  }}
-                  previewConfig={{
-                    showPreview: false,
-                  }}
-                  onEmojiClick={onEmojiClick}
-                />
-              )}
             </Box>
           ))}
         </Box>
@@ -244,7 +210,7 @@ const ChatRoom = ({ reverse, sendMessage, messages }) => {
               <Box
                 sx={{
                   position: "absolute",
-                  bottom: "43px",
+                  bottom: "41px",
                   width: "0",
                   height: "0",
                   right: "55px",
