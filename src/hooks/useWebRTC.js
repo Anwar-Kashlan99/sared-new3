@@ -325,8 +325,8 @@ export const useWebRTC = (roomId, userDetails) => {
     };
 
     const startSpeakingDetection = (userId, stream) => {
-      const audioContext = new (window.AudioContext ||
-        window.webkitAudioContext)();
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const audioContext = new AudioContext();
       const source = audioContext.createMediaStreamSource(stream);
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
