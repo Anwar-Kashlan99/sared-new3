@@ -218,12 +218,14 @@ export const useWebRTC = (roomId, userDetails) => {
           const audioElement = audioElements.current[remoteUser._id];
           if (audioElement) {
             audioElement.srcObject = remoteStream;
+            startSpeakingDetection(remoteUser._id, remoteStream);
           } else {
             const interval = setInterval(() => {
               const element = audioElements.current[remoteUser._id];
               if (element) {
                 element.srcObject = remoteStream;
                 clearInterval(interval);
+                startSpeakingDetection(remoteUser._id, remoteStream);
               }
             }, 300);
           }
@@ -313,10 +315,14 @@ export const useWebRTC = (roomId, userDetails) => {
       if (clientIdx > -1) {
         connectedClients[clientIdx].muted = mute;
         if (!mute) {
-          startSpeakingDetection(
-            userId,
-            audioElements.current[userId].srcObject
-          );
+          const audioElement = audioElements.current[userId];
+          if (audioElement && audioElement.srcObject instanceof MediaStream) {
+            startSpeakingDetection(userId, audioElement.srcObject);
+          } else {
+            console.error(
+              `Failed to start speaking detection for user ${userId}: audioElement or srcObject is invalid.`
+            );
+          }
         } else {
           stopSpeakingDetection(userId);
         }
@@ -326,6 +332,11 @@ export const useWebRTC = (roomId, userDetails) => {
 
     const startSpeakingDetection = (userId, stream) => {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) {
+        console.error("AudioContext is not supported in this browser.");
+        return;
+      }
+
       const audioContext = new AudioContext();
       const source = audioContext.createMediaStreamSource(stream);
       const analyser = audioContext.createAnalyser();
