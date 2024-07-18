@@ -317,7 +317,6 @@ export const useWebRTC = (roomId, userDetails) => {
       const connectedClients = JSON.parse(JSON.stringify(clientsRef.current));
       if (clientIdx > -1) {
         connectedClients[clientIdx].muted = mute;
-        connectedClients[clientIdx].speaking = !mute;
         setClients(connectedClients);
       }
     };
