@@ -125,6 +125,7 @@ const CommentContainer = ({ willComment }) => {
 
   const onEmojiClick = (event) => {
     const { emoji } = event;
+    console.log(emoji);
     setNewComment((prevComment) => prevComment + emoji);
   };
 

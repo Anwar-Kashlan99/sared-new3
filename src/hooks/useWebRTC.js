@@ -15,6 +15,8 @@ export const useWebRTC = (roomId, userDetails) => {
   const navigate = useNavigate();
   const [handRaiseRequests, setHandRaiseRequests] = useState([]);
   const [messages, setMessages] = useState([]);
+  const analyserNodes = useRef({});
+  const audioContexts = useRef({});
 
   const addNewClient = useCallback(
     (newClient, cb) => {
@@ -310,9 +312,89 @@ export const useWebRTC = (roomId, userDetails) => {
       const connectedClients = JSON.parse(JSON.stringify(clientsRef.current));
       if (clientIdx > -1) {
         connectedClients[clientIdx].muted = mute;
-        connectedClients[clientIdx].speaking = !mute;
+        if (!mute) {
+          startSpeakingDetection(
+            userId,
+            audioElements.current[userId].srcObject
+          );
+        } else {
+          stopSpeakingDetection(userId);
+        }
         setClients(connectedClients);
       }
+    };
+
+    const startSpeakingDetection = (userId, stream) => {
+      const audioContext = new (window.AudioContext ||
+        window.webkitAudioContext)();
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      source.connect(analyser);
+      analyserNodes.current[userId] = analyser;
+      audioContexts.current[userId] = audioContext;
+
+      detectSpeaking(userId, analyser, dataArray, bufferLength);
+    };
+
+    const stopSpeakingDetection = (userId) => {
+      if (analyserNodes.current[userId]) {
+        delete analyserNodes.current[userId];
+      }
+      if (audioContexts.current[userId]) {
+        audioContexts.current[userId].close();
+        delete audioContexts.current[userId];
+      }
+    };
+
+    const detectSpeaking = (userId, analyser, dataArray, bufferLength) => {
+      let backgroundNoiseLevel = 0;
+      let sampleCount = 0;
+      const calibrationSamples = 50;
+      let isCalibrated = false;
+
+      const detect = () => {
+        analyser.getByteFrequencyData(dataArray);
+        const meanDecibel = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
+        console.log("Mean Decibel:", meanDecibel);
+
+        if (sampleCount < calibrationSamples) {
+          backgroundNoiseLevel += meanDecibel;
+          sampleCount++;
+          if (sampleCount === calibrationSamples) {
+            backgroundNoiseLevel /= calibrationSamples;
+            console.log(
+              "Calibrated background noise level:",
+              backgroundNoiseLevel
+            );
+            isCalibrated = true;
+          }
+        } else if (isCalibrated) {
+          const isSpeaking = meanDecibel > backgroundNoiseLevel + 10;
+          if (isSpeaking) {
+            console.log(`User ${userId} is speaking`);
+            updateSpeakingStatus(userId, true);
+          } else {
+            console.log(`User ${userId} is not speaking`);
+            updateSpeakingStatus(userId, false);
+          }
+        }
+
+        requestAnimationFrame(detect);
+      };
+
+      detect();
+    };
+
+    const updateSpeakingStatus = (userId, isSpeaking) => {
+      setClients((prevClients) =>
+        prevClients.map((client) =>
+          client._id === userId ? { ...client, speaking: isSpeaking } : client
+        )
+      );
     };
 
     const handleRoomEnded = () => {
