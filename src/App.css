@@ -183,12 +183,7 @@ a {
   height: calc(100% + 16px);
   border: 2px solid #eee;
   border-radius: 50%;
-  opacity: 0;
   pointer-events: none;
-}
-
-.speaking {
-  opacity: 1 !important;
 }
 
 /* .react-tel-input .selected-flag {
