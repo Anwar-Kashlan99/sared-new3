@@ -317,6 +317,7 @@ export const useWebRTC = (roomId, userDetails) => {
         if (!mute) {
           const audioElement = audioElements.current[userId];
           if (audioElement && audioElement.srcObject instanceof MediaStream) {
+            console.log(`Starting speaking detection for user ${userId}`);
             startSpeakingDetection(userId, audioElement.srcObject);
           } else {
             console.error(
@@ -337,7 +338,9 @@ export const useWebRTC = (roomId, userDetails) => {
         return;
       }
 
+      console.log(`Creating AudioContext for user ${userId}`);
       const audioContext = new AudioContext();
+      console.log(`Creating MediaStreamSource for user ${userId}`);
       const source = audioContext.createMediaStreamSource(stream);
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
