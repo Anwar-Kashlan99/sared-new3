@@ -2,7 +2,6 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { ACTIONS } from "../actions";
 import socketInit from "../socket";
 import { useStateWithCallback } from "./useStateWithCallback";
-import freeice from "freeice";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -12,9 +11,10 @@ export const useWebRTC = (roomId, userDetails) => {
   const connections = useRef({});
   const socket = useRef(null);
   const localMediaStream = useRef(null);
-  const clientsRef = useRef(null);
+  const clientsRef = useRef([]);
   const navigate = useNavigate();
-  const [handRaiseRequests, setHandRaiseRequests] = useState([]); // To track hand raise requests
+  const [handRaiseRequests, setHandRaiseRequests] = useState([]);
+  const [messages, setMessages] = useState([]);
 
   const addNewClient = useCallback(
     (newClient, cb) => {
@@ -37,110 +37,79 @@ export const useWebRTC = (roomId, userDetails) => {
 
   useEffect(() => {
     const initChat = async () => {
-      console.log("Initializing chat...");
-
       if (socket.current) {
-        console.log(
-          "Socket already initialized. Cleaning up existing connections..."
-        );
         cleanupConnections();
       }
 
       socket.current = socketInit();
 
-      socket.current.on(ACTIONS.MUTE_INFO, ({ userId, isMute }) => {
-        handleSetMute(isMute, userId);
-      });
+      if (!socket.current) {
+        console.error("Socket initialization failed");
+        return;
+      }
 
+      // Define socket event handlers
+      socket.current.on(ACTIONS.MUTE_INFO, ({ userId, isMute }) =>
+        handleSetMute(isMute, userId)
+      );
       socket.current.on(ACTIONS.ADD_PEER, handleNewPeer);
       socket.current.on(ACTIONS.REMOVE_PEER, handleRemovePeer);
       socket.current.on(ACTIONS.ICE_CANDIDATE, handleIceCandidate);
       socket.current.on(ACTIONS.SESSION_DESCRIPTION, setRemoteMedia);
-      socket.current.on(ACTIONS.MUTE, ({ peerId, userId }) => {
-        handleSetMute(true, userId);
-      });
-      socket.current.on(ACTIONS.UNMUTE, ({ peerId, userId }) => {
-        handleSetMute(false, userId);
-      });
-
-      // Handle the ROOM_CLIENTS event
-      socket.current.on(ACTIONS.ROOM_CLIENTS, ({ roomId, clients }) => {
-        console.log(`Updated clients for room ${roomId}:`, clients);
-
-        setClients(clients);
-      });
-
-      // Listen for ROOM_ENDED_REDIRECT event
-      socket.current.on("ROOM_ENDED_REDIRECT", () => {
-        console.log("Room ended, redirecting to /srdhouse");
-        toast("Room ended", {
-          icon: "⚠️",
-        });
-        navigate("/srdhouse");
-      });
-
-      socket.current.on(
-        ACTIONS.RAISE_HAND,
-        ({ peerId, userId, username, profile }) => {
-          setHandRaiseRequests((requests) => [
-            ...requests,
-            { peerId, userId, username, profile },
-          ]);
-          toast(`User ${userId} has raised their hand.`);
-        }
+      socket.current.on(ACTIONS.MUTE, ({ userId }) =>
+        handleSetMute(true, userId)
       );
+      socket.current.on(ACTIONS.UNMUTE, ({ userId }) =>
+        handleSetMute(false, userId)
+      );
+      socket.current.on(ACTIONS.ROOM_CLIENTS, ({ roomId, clients }) =>
+        setClients(clients)
+      );
+      socket.current.on("ROOM_ENDED_REDIRECT", handleRoomEnded);
+      socket.current.on(ACTIONS.RAISE_HAND, handleRaiseHand);
+      socket.current.on(ACTIONS.REJECT_SPEAK, handleRejectSpeak);
+      socket.current.on(ACTIONS.RAISE_HAND_DUPLICATE, ({ message }) =>
+        toast(message)
+      );
+      socket.current.on(ACTIONS.APPROVE_SPEAK, handleApproveSpeak);
 
-      socket.current.on(ACTIONS.REJECT_SPEAK, ({ userId }) => {
-        toast(`User ${userId} has been rejected to speak.`);
-        // Remove from hand raise requests
-        setHandRaiseRequests((requests) =>
-          requests.filter((req) => req.userId !== userId)
-        );
-      });
-
-      socket.current.on(ACTIONS.RAISE_HAND_DUPLICATE, ({ message }) => {
-        toast(message);
-      });
-
-      socket.current.on(ACTIONS.APPROVE_SPEAK, ({ userId }) => {
-        toast(`User ${userId} has been approved to speak.`);
-        // Remove from hand raise requests
-        setHandRaiseRequests((requests) =>
-          requests.filter((req) => req.userId !== userId)
-        );
-      });
+      // Add message handling
+      socket.current.on(ACTIONS.MESSAGE, handleMessageReceived);
 
       await captureMedia();
 
-      addNewClient({ ...userDetails, muted: true }, () => {
-        const localElement = audioElements.current[userDetails._id];
-        if (localElement) {
-          localElement.volume = 0;
-          localElement.srcObject = localMediaStream.current;
-        }
-        console.log("Emitting JOIN event:", { roomId, user: userDetails });
-        socket.current.emit(ACTIONS.JOIN, {
-          roomId,
-          user: userDetails,
+      if (userDetails && userDetails._id) {
+        addNewClient({ ...userDetails, muted: true }, () => {
+          const localElement = audioElements.current[userDetails._id];
+          if (localElement) {
+            localElement.volume = 0;
+            localElement.srcObject = localMediaStream.current;
+          }
+          socket.current.emit(ACTIONS.JOIN, { roomId, user: userDetails });
         });
-      });
 
-      socket.current.on(
-        ACTIONS.JOIN,
-        ({ roomId, user, isAdmin, adminUser }) => {
+        socket.current.on(ACTIONS.JOIN, ({ user, isAdmin }) => {
           const updatedUserDetails = { ...user, isAdmin };
-          addNewClient(updatedUserDetails);
-          console.log(
-            `User ${user._id} joined as ${isAdmin ? "admin" : "audience"}`
-          );
-        }
-      );
+          addNewClient(updatedUserDetails, () => {
+            const existingClient = clientsRef.current.find(
+              (client) => client._id === user._id
+            );
+            if (!existingClient) {
+              console.log(
+                `User ${user._id} joined as ${isAdmin ? "admin" : "audience"}`
+              );
+            }
+          });
+        });
+      } else {
+        console.error("Invalid userDetails");
+      }
     };
 
     const cleanupConnections = () => {
       for (let peerId in connections.current) {
         if (connections.current[peerId]) {
-          connections.current[peerId].close();
+          connections.current[peerId].connection.close();
           delete connections.current[peerId];
         }
       }
@@ -156,6 +125,7 @@ export const useWebRTC = (roomId, userDetails) => {
         socket.current.off(ACTIONS.RAISE_HAND_DUPLICATE);
         socket.current.off(ACTIONS.MUTE);
         socket.current.off(ACTIONS.UNMUTE);
+        socket.current.off(ACTIONS.MESSAGE);
         socket.current.emit(ACTIONS.LEAVE, { roomId });
         socket.current = null;
       }
@@ -163,7 +133,6 @@ export const useWebRTC = (roomId, userDetails) => {
 
     const captureMedia = async () => {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        console.error("getUserMedia is not supported in this browser.");
         alert(
           "Your browser does not support WebRTC. Please use a modern browser such as Chrome, Firefox, or Edge."
         );
@@ -174,25 +143,53 @@ export const useWebRTC = (roomId, userDetails) => {
         localMediaStream.current = await navigator.mediaDevices.getUserMedia({
           audio: true,
         });
-        console.log("Media captured");
       } catch (error) {
-        console.error("Error capturing media: ", error);
         alert(
           "Error capturing media. Please ensure your browser has permission to access the microphone."
         );
       }
     };
 
-    const handleNewPeer = async ({ peerId, createOffer, user: remoteUser }) => {
-      if (connections.current[peerId]) {
-        return console.warn(`You are already connected with ${peerId}`);
+    const handleMessageReceived = (data) => {
+      console.log("Received message data:", data);
+
+      if (!data || !data.user || !data.message) {
+        console.error(
+          "Received message is undefined or has missing fields:",
+          data
+        );
+        return;
       }
 
-      console.log(`Adding new peer: ${peerId}`);
+      const { user, message } = data;
 
-      const connection = new RTCPeerConnection({ iceServers: freeice() });
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { userId: user._id, username: user.username, message },
+      ]);
+    };
 
-      connections.current[peerId] = connection;
+    const handleNewPeer = async ({ peerId, createOffer, user: remoteUser }) => {
+      if (connections.current[peerId]) {
+        return;
+      }
+
+      const connection = new RTCPeerConnection({
+        iceServers: [
+          { urls: "stun:stun.l.google.com:19302" },
+          { urls: "stun:stun1.l.google.com:19302" },
+          { urls: "stun:stun2.l.google.com:19302" },
+          { urls: "stun:stun3.l.google.com:19302" },
+          { urls: "stun:stun4.l.google.com:19302" },
+          {
+            urls: "turn:turn.anyfirewall.com:443?transport=tcp",
+            username: "webrtc",
+            credential: "webrtc",
+          },
+        ],
+      });
+
+      connections.current[peerId] = { connection, iceCandidatesQueue: [] };
 
       connection.onicecandidate = (event) => {
         if (event.candidate) {
@@ -235,8 +232,6 @@ export const useWebRTC = (roomId, userDetails) => {
         localMediaStream.current.getTracks().forEach((track) => {
           connection.addTrack(track, localMediaStream.current);
         });
-      } else {
-        console.warn("Local media stream is not available.");
       }
 
       if (createOffer) {
@@ -252,11 +247,10 @@ export const useWebRTC = (roomId, userDetails) => {
         }
       }
     };
-    //
 
     const handleRemovePeer = ({ peerId, userId }) => {
       if (connections.current[peerId]) {
-        connections.current[peerId].close();
+        connections.current[peerId].connection.close();
       }
 
       delete connections.current[peerId];
@@ -265,13 +259,15 @@ export const useWebRTC = (roomId, userDetails) => {
       setClients((list) => list.filter((c) => c._id !== userId));
     };
 
-    //
-
     const handleIceCandidate = async ({ peerId, icecandidate }) => {
       if (icecandidate) {
-        const connection = connections.current[peerId];
-        if (connection) {
-          await connection.addIceCandidate(icecandidate);
+        const connectionData = connections.current[peerId];
+        if (connectionData) {
+          if (connectionData.connection.remoteDescription) {
+            await connectionData.connection.addIceCandidate(icecandidate);
+          } else {
+            connectionData.iceCandidatesQueue.push(icecandidate);
+          }
         }
       }
     };
@@ -280,8 +276,9 @@ export const useWebRTC = (roomId, userDetails) => {
       peerId,
       sessionDescription: remoteSessionDescription,
     }) => {
-      const connection = connections.current[peerId];
-      if (connection) {
+      const connectionData = connections.current[peerId];
+      if (connectionData) {
+        const connection = connectionData.connection;
         try {
           await connection.setRemoteDescription(
             new RTCSessionDescription(remoteSessionDescription)
@@ -295,13 +292,17 @@ export const useWebRTC = (roomId, userDetails) => {
               sessionDescription: answer,
             });
           }
+
+          while (connectionData.iceCandidatesQueue.length > 0) {
+            const candidate = connectionData.iceCandidatesQueue.shift();
+            await connection.addIceCandidate(candidate);
+          }
         } catch (error) {
           console.error("Error setting remote description: ", error);
         }
       }
     };
 
-    //
     const handleSetMute = (mute, userId) => {
       const clientIdx = clientsRef.current
         .map((client) => client._id)
@@ -309,14 +310,46 @@ export const useWebRTC = (roomId, userDetails) => {
       const connectedClients = JSON.parse(JSON.stringify(clientsRef.current));
       if (clientIdx > -1) {
         connectedClients[clientIdx].muted = mute;
+        connectedClients[clientIdx].speaking = !mute;
         setClients(connectedClients);
       }
+    };
+
+    const handleRoomEnded = () => {
+      toast("Room ended", { icon: "⚠️" });
+      navigate("/srdhouse");
+    };
+
+    const handleRaiseHand = ({ peerId, userId, username, profile }) => {
+      setHandRaiseRequests((requests) => [
+        ...requests,
+        { peerId, userId, username, profile },
+      ]);
+      toast(`User ${username} has raised their hand.`);
+    };
+
+    const handleRejectSpeak = ({ userId }) => {
+      toast(`User ${userId} has been rejected to speak.`);
+      setHandRaiseRequests((requests) =>
+        requests.filter((req) => req.userId !== userId)
+      );
+    };
+
+    const handleApproveSpeak = ({ userId }) => {
+      toast(`User ${userId} has been approved to speak.`);
+      setHandRaiseRequests((requests) =>
+        requests.filter((req) => req.userId !== userId)
+      );
+      setClients((prevClients) =>
+        prevClients.map((client) =>
+          client._id === userId ? { ...client, role: "speaker" } : client
+        )
+      );
     };
 
     initChat();
 
     return () => {
-      console.log("Cleaning up...");
       if (localMediaStream.current) {
         localMediaStream.current.getTracks().forEach((track) => track.stop());
       }
@@ -385,12 +418,18 @@ export const useWebRTC = (roomId, userDetails) => {
       return;
     }
 
-    socket.current.emit(ACTIONS.RAISE_HAND, {
-      roomId,
+    const newRequest = {
       peerId: socket.current.id,
       userId: userDetails._id,
       username: userDetails.username,
       profile: userDetails.profile,
+    };
+
+    setHandRaiseRequests((prevRequests) => [...prevRequests, newRequest]);
+
+    socket.current.emit(ACTIONS.RAISE_HAND, {
+      roomId,
+      ...newRequest,
     });
 
     toast("You have raised your hand.");
@@ -410,6 +449,17 @@ export const useWebRTC = (roomId, userDetails) => {
     );
   };
 
+  const sendMessage = (text) => {
+    if (socket.current) {
+      console.log("Sending message:", { roomId, userDetails, text });
+      socket.current.emit(ACTIONS.MESSAGE, {
+        roomId,
+        user: userDetails,
+        text,
+      });
+    }
+  };
+
   return {
     clients,
     provideRef,
@@ -417,8 +467,10 @@ export const useWebRTC = (roomId, userDetails) => {
     endRoom,
     blockUser,
     raiseHand,
-    handRaiseRequests, // Add this to return the requests
+    handRaiseRequests,
     approveSpeakRequest,
     rejectSpeakRequest,
+    messages,
+    sendMessage,
   };
 };
