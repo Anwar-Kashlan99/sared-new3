@@ -183,8 +183,8 @@ a {
   height: calc(100% + 16px);
   border: 2px solid #eb7635;
   border-radius: 50%;
-  -webkit-animation: speak-animation 1s infinite;
-  animation: speak-animation 1s infinite;
+  /* -webkit-animation: speak-animation 1s infinite;
+  animation: speak-animation 1s infinite; */
   opacity: 0;
   pointer-events: none;
 }
@@ -193,7 +193,7 @@ a {
   opacity: 1 !important;
 }
 
-@-webkit-keyframes speak-animation {
+/* @-webkit-keyframes speak-animation {
   0%,
   100% {
     transform: scale(1);
@@ -203,9 +203,9 @@ a {
     transform: scale(1.1);
     opacity: 1;
   }
-}
+} */
 
-@keyframes speak-animation {
+/* @keyframes speak-animation {
   0%,
   100% {
     transform: scale(1);
@@ -215,7 +215,7 @@ a {
     transform: scale(1.1);
     opacity: 1;
   }
-}
+} */
 
 /* .react-tel-input .selected-flag {
   box-shadow: 3px 5px 7px 0px #707070;

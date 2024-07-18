@@ -15,6 +15,7 @@ export const useWebRTC = (roomId, userDetails) => {
   const navigate = useNavigate();
   const [handRaiseRequests, setHandRaiseRequests] = useState([]);
   const [messages, setMessages] = useState([]);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const addNewClient = useCallback(
     (newClient, cb) => {
@@ -76,6 +77,9 @@ export const useWebRTC = (roomId, userDetails) => {
       // Add message handling
       socket.current.on(ACTIONS.MESSAGE, handleMessageReceived);
 
+      // Add speaking status handling
+      socket.current.on("TALK", handleTalk);
+
       await captureMedia();
 
       if (userDetails && userDetails._id) {
@@ -101,6 +105,9 @@ export const useWebRTC = (roomId, userDetails) => {
             }
           });
         });
+
+        // Start monitoring audio levels
+        startMonitoringAudioLevels();
       } else {
         console.error("Invalid userDetails");
       }
@@ -345,6 +352,55 @@ export const useWebRTC = (roomId, userDetails) => {
           client._id === userId ? { ...client, role: "speaker" } : client
         )
       );
+    };
+
+    const handleTalk = ({ userId, isTalk }) => {
+      const updatedClients = clientsRef.current.map((client) =>
+        client._id === userId ? { ...client, speaking: isTalk } : client
+      );
+      setClients(updatedClients);
+    };
+
+    const startMonitoringAudioLevels = () => {
+      setInterval(async () => {
+        if (!localMediaStream.current) return;
+
+        const audioLevel = await getAudioLevel();
+        if (audioLevel > 0.2) {
+          // Adjust the threshold based on your needs
+          if (!isSpeaking) {
+            setIsSpeaking(true);
+            socket.current.emit("TALK", {
+              userId: userDetails._id,
+              roomId,
+              isTalk: true,
+            });
+          }
+        } else {
+          if (isSpeaking) {
+            setIsSpeaking(false);
+            socket.current.emit("TALK", {
+              userId: userDetails._id,
+              roomId,
+              isTalk: false,
+            });
+          }
+        }
+      }, 200);
+    };
+
+    const getAudioLevel = async () => {
+      let audioLevel = 0.0;
+      const promises = Object.values(connections.current).map(async (pc) => {
+        const stats = await pc.connection.getStats();
+        stats.forEach((report) => {
+          if (report.type === "media-source" && report.kind === "audio") {
+            audioLevel = report.audioLevel || 0.0;
+          }
+        });
+      });
+      await Promise.all(promises);
+      return audioLevel;
     };
 
     initChat();
