@@ -305,7 +305,7 @@ const Room = () => {
                     border: "3px solid #ffc500",
                     position: " relative",
                     "&::before": {
-                      borderColor: "#eb7635",
+                      borderColor: client.speaking ? "#eb7635" : "#eee",
                     },
                   }}
                   className="speaking-avatar"
@@ -379,7 +379,7 @@ const Room = () => {
                     border: "3px solid #c0c0c0",
                     position: " relative",
                     "&::before": {
-                      borderColor: "#eb7635",
+                      borderColor: client.speaking ? "#eb7635" : "#eee",
                     },
                   }}
                   className="speaking-avatar"
