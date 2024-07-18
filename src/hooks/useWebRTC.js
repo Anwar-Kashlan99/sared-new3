@@ -354,20 +354,22 @@ export const useWebRTC = (roomId, userDetails) => {
     };
 
     const handleTalk = ({ userId, isTalk }) => {
-      const updatedClients = clientsRef.current.map((client) =>
-        client._id === userId ? { ...client, speaking: isTalk } : client
+      setClients((prevClients) =>
+        prevClients.map((client) =>
+          client._id === userId ? { ...client, speaking: isTalk } : client
+        )
       );
-      setClients(updatedClients);
     };
 
     const startMonitoringAudioLevels = () => {
-      setInterval(async () => {
+      const interval = setInterval(async () => {
         if (!localMediaStream.current) return;
 
         const audioLevel = await getAudioLevel();
+        console.log(audioLevel); // This should now print the audio level
+
         if (audioLevel > 0.2) {
           // Adjust the threshold based on your needs
-          console.log(audioLevel);
           if (!isSpeaking) {
             setIsSpeaking(true);
             socket.current.emit("TALK", {
@@ -387,6 +389,8 @@ export const useWebRTC = (roomId, userDetails) => {
           }
         }
       }, 200);
+
+      return () => clearInterval(interval);
     };
 
     const getAudioLevel = async () => {
