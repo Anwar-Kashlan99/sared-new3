@@ -218,13 +218,24 @@ export const useWebRTC = (roomId, userDetails) => {
           const audioElement = audioElements.current[remoteUser._id];
           if (audioElement) {
             audioElement.srcObject = remoteStream;
+            console.log(
+              `Starting speaking detection for user ${remoteUser._id} with stream:`,
+              remoteStream
+            );
             startSpeakingDetection(remoteUser._id, remoteStream);
           } else {
+            console.log(
+              `Audio element not found for user ${remoteUser._id}, setting interval`
+            );
             const interval = setInterval(() => {
               const element = audioElements.current[remoteUser._id];
               if (element) {
                 element.srcObject = remoteStream;
                 clearInterval(interval);
+                console.log(
+                  `Starting speaking detection for user ${remoteUser._id} with stream (from interval):`,
+                  remoteStream
+                );
                 startSpeakingDetection(remoteUser._id, remoteStream);
               }
             }, 300);
@@ -316,12 +327,22 @@ export const useWebRTC = (roomId, userDetails) => {
         connectedClients[clientIdx].muted = mute;
         if (!mute) {
           const audioElement = audioElements.current[userId];
-          if (audioElement && audioElement.srcObject instanceof MediaStream) {
-            console.log(`Starting speaking detection for user ${userId}`);
-            startSpeakingDetection(userId, audioElement.srcObject);
+          if (audioElement) {
+            const stream = audioElement.srcObject;
+            if (stream instanceof MediaStream) {
+              console.log(
+                `Starting speaking detection for user ${userId} with stream:`,
+                stream
+              );
+              startSpeakingDetection(userId, stream);
+            } else {
+              console.error(
+                `Failed to start speaking detection for user ${userId}: srcObject is not a MediaStream`
+              );
+            }
           } else {
             console.error(
-              `Failed to start speaking detection for user ${userId}: audioElement or srcObject is invalid.`
+              `Failed to start speaking detection for user ${userId}: audioElement is invalid`
             );
           }
         } else {
