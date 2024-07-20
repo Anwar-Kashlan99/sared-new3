@@ -378,9 +378,6 @@ const Room = () => {
                     borderRadius: "50%",
                     border: "3px solid #c0c0c0",
                     position: " relative",
-                    "&.css-rx20ph::before": {
-                      transition: "0.7s",
-                    },
                     "&::before": {
                       borderColor: client.speaking ? "#eb7635" : "#c0c0c0",
                     },
