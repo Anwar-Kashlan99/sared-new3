@@ -305,7 +305,6 @@ const Room = () => {
                     border: "3px solid #ffc500",
                     position: " relative",
                     "&::before": {
-                      transition: "all 0.08s ease-in-out 0.08s",
                       borderColor: client.speaking ? "#eb7635" : "#eee",
                     },
                   }}
