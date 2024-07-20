@@ -382,7 +382,7 @@ export const useWebRTC = (roomId, userDetails) => {
         const audioLevel = await getAudioLevel();
         console.log(audioLevel); // This should now print the audio level
 
-        if (audioLevel > 0.08) {
+        if (audioLevel > 0.09) {
           // Adjust the threshold based on your needs
           if (!isSpeaking) {
             setIsSpeaking(true);
