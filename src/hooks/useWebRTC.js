@@ -35,6 +35,19 @@ export const useWebRTC = (roomId, userDetails) => {
     [setClients]
   );
 
+  const updateSpeakingStatus = (userId, isTalk) => {
+    setClients((prevClients) => {
+      return prevClients.map((client) =>
+        client._id === userId ? { ...client, speaking: isTalk } : client
+      );
+    });
+    socket.current.emit(ACTIONS.TALK, {
+      userId,
+      roomId,
+      isTalk,
+    });
+  };
+
   useEffect(() => {
     clientsRef.current = clients;
   }, [clients]);
@@ -337,6 +350,7 @@ export const useWebRTC = (roomId, userDetails) => {
 
         // Update speaking status when muted
         if (mute) {
+          setIsSpeaking(false);
           updateSpeakingStatus(userId, false);
         }
       }
@@ -409,19 +423,6 @@ export const useWebRTC = (roomId, userDetails) => {
       return () => clearInterval(interval);
     };
 
-    const updateSpeakingStatus = (userId, isTalk) => {
-      setClients((prevClients) => {
-        return prevClients.map((client) =>
-          client._id === userId ? { ...client, speaking: isTalk } : client
-        );
-      });
-      socket.current.emit(ACTIONS.TALK, {
-        userId,
-        roomId,
-        isTalk,
-      });
-    };
-
     initChat();
 
     return () => {
@@ -454,6 +455,12 @@ export const useWebRTC = (roomId, userDetails) => {
             }
           }
         });
+
+        // Update speaking status when muted
+        if (isMute) {
+          setIsSpeaking(false);
+          updateSpeakingStatus(userId, false);
+        }
       }
     };
 
