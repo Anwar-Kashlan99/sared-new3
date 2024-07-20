@@ -377,6 +377,15 @@ export const useWebRTC = (roomId, userDetails) => {
               roomId,
               isTalk: true,
             });
+
+            // Set speaking key to true in the client object
+            setClients((prevClients) =>
+              prevClients.map((client) =>
+                client._id === userDetails._id
+                  ? { ...client, speaking: true }
+                  : client
+              )
+            );
           }
         } else {
           if (isSpeaking) {
@@ -386,6 +395,15 @@ export const useWebRTC = (roomId, userDetails) => {
               roomId,
               isTalk: false,
             });
+
+            // Set speaking key to false in the client object
+            setClients((prevClients) =>
+              prevClients.map((client) =>
+                client._id === userDetails._id
+                  ? { ...client, speaking: false }
+                  : client
+              )
+            );
           }
         }
       }, 200);
