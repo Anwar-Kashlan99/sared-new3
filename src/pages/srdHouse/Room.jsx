@@ -304,6 +304,9 @@ const Room = () => {
                     borderRadius: "50%",
                     border: "3px solid #ffc500",
                     position: " relative",
+                    "&::before": {
+                      borderColor: client.speaking ? "#eb7635" : "#eee",
+                    },
                   }}
                   className={`speaking-avatar ${
                     client.speaking ? "speaking" : ""
@@ -377,10 +380,11 @@ const Room = () => {
                     borderRadius: "50%",
                     border: "3px solid #c0c0c0",
                     position: " relative",
+                    "&::before": {
+                      borderColor: client.speaking ? "#eb7635" : "#eee",
+                    },
                   }}
-                  className={`speaking-avatar ${
-                    client.speaking ? "speaking" : ""
-                  }`}
+                  className="speaking-avatar"
                 >
                   <Avatar
                     src={client.profile}
