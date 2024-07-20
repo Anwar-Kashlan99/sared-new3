@@ -134,6 +134,7 @@ export const useWebRTC = (roomId, userDetails) => {
         socket.current.off(ACTIONS.MUTE);
         socket.current.off(ACTIONS.UNMUTE);
         socket.current.off(ACTIONS.MESSAGE);
+        socket.current.off(ACTIONS.TALK);
         socket.current.emit(ACTIONS.LEAVE, { roomId });
         socket.current = null;
       }
@@ -161,6 +162,7 @@ export const useWebRTC = (roomId, userDetails) => {
         alert(
           "Error capturing media. Please ensure your browser has permission to access the microphone."
         );
+        console.error("Error capturing media:", error);
       }
     };
 
