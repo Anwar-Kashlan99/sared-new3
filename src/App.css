@@ -184,7 +184,6 @@ a {
   border: 2px solid #eee;
   border-radius: 50%;
   pointer-events: none;
-  transition: all ease-in-out 0.7s;
 }
 
 /* .react-tel-input .selected-flag {

@@ -380,6 +380,7 @@ const Room = () => {
                     position: " relative",
                     "&::before": {
                       borderColor: client.speaking ? "#eb7635" : "#eee",
+                      transition: "0.7s",
                     },
                   }}
                   className="speaking-avatar"
