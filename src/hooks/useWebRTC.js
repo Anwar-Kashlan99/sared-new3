@@ -16,6 +16,7 @@ export const useWebRTC = (roomId, userDetails) => {
   const [handRaiseRequests, setHandRaiseRequests] = useState([]);
   const [messages, setMessages] = useState([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const monitoringInterval = useRef(null); // Store the interval ID
 
   const addNewClient = useCallback(
     (newClient, cb) => {
@@ -135,6 +136,12 @@ export const useWebRTC = (roomId, userDetails) => {
         socket.current.off(ACTIONS.MESSAGE);
         socket.current.emit(ACTIONS.LEAVE, { roomId });
         socket.current = null;
+      }
+
+      // Clear the monitoring interval
+      if (monitoringInterval.current) {
+        clearInterval(monitoringInterval.current);
+        monitoringInterval.current = null;
       }
     };
 
@@ -376,7 +383,7 @@ export const useWebRTC = (roomId, userDetails) => {
     };
 
     const startMonitoringAudioLevels = () => {
-      const interval = setInterval(async () => {
+      monitoringInterval.current = setInterval(async () => {
         if (!localMediaStream.current) return;
 
         const audioLevel = await getAudioLevel();
@@ -421,8 +428,6 @@ export const useWebRTC = (roomId, userDetails) => {
           }
         }
       }, 200);
-
-      return () => clearInterval(interval);
     };
 
     const getAudioLevel = async () => {
