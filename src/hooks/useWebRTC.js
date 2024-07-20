@@ -16,7 +16,7 @@ export const useWebRTC = (roomId, userDetails) => {
   const [handRaiseRequests, setHandRaiseRequests] = useState([]);
   const [messages, setMessages] = useState([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const monitoringInterval = useRef(null); // Store the interval ID
+  const monitoringInterval = useRef(null);
 
   const addNewClient = useCallback(
     (newClient, cb) => {
@@ -404,24 +404,22 @@ export const useWebRTC = (roomId, userDetails) => {
               )
             );
           }
-        } else {
-          if (audioLevel <= 0.1 && isSpeaking) {
-            setIsSpeaking(false);
-            socket.current.emit(ACTIONS.TALK, {
-              userId: userDetails._id,
-              roomId,
-              isTalk: false,
-            });
+        } else if (isSpeaking) {
+          setIsSpeaking(false);
+          socket.current.emit(ACTIONS.TALK, {
+            userId: userDetails._id,
+            roomId,
+            isTalk: false,
+          });
 
-            // Set speaking key to false in the client object
-            setClients((prevClients) =>
-              prevClients.map((client) =>
-                client._id === userDetails._id
-                  ? { ...client, speaking: false }
-                  : client
-              )
-            );
-          }
+          // Set speaking key to false in the client object
+          setClients((prevClients) =>
+            prevClients.map((client) =>
+              client._id === userDetails._id
+                ? { ...client, speaking: false }
+                : client
+            )
+          );
         }
       }, 200);
     };
