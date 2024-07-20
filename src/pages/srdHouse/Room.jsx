@@ -379,7 +379,7 @@ const Room = () => {
                     border: "3px solid #c0c0c0",
                     position: " relative",
                     "&::before": {
-                      transition: "borderColor 0.7s",
+                      transition: "border-color 0.7s",
                       borderColor: client.speaking ? "#eb7635" : "#c0c0c0",
                     },
                   }}
