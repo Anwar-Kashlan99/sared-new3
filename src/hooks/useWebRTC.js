@@ -11,6 +11,9 @@ export const useWebRTC = (roomId, userDetails) => {
   const connections = useRef({});
   const socket = useRef(null);
   const localMediaStream = useRef(null);
+  const audioContext = useRef(null);
+  const analyserNode = useRef(null);
+  const dataArray = useRef(null);
   const clientsRef = useRef([]);
   const navigate = useNavigate();
   const [handRaiseRequests, setHandRaiseRequests] = useState([]);
@@ -150,6 +153,19 @@ export const useWebRTC = (roomId, userDetails) => {
         localMediaStream.current = await navigator.mediaDevices.getUserMedia({
           audio: true,
         });
+
+        // Initialize audio context and analyser node
+        audioContext.current = new (window.AudioContext ||
+          window.webkitAudioContext)();
+        analyserNode.current = audioContext.current.createAnalyser();
+        analyserNode.current.fftSize = 256;
+        const source = audioContext.current.createMediaStreamSource(
+          localMediaStream.current
+        );
+        source.connect(analyserNode.current);
+        dataArray.current = new Uint8Array(
+          analyserNode.current.frequencyBinCount
+        );
       } catch (error) {
         alert(
           "Error capturing media. Please ensure your browser has permission to access the microphone."
@@ -362,13 +378,16 @@ export const useWebRTC = (roomId, userDetails) => {
     };
 
     const startMonitoringAudioLevels = () => {
-      const interval = setInterval(async () => {
-        if (!localMediaStream.current) return;
+      const interval = setInterval(() => {
+        if (!analyserNode.current || !dataArray.current) return;
 
-        const audioLevel = await getAudioLevel();
+        analyserNode.current.getByteFrequencyData(dataArray.current);
+        const audioLevel =
+          dataArray.current.reduce((a, b) => a + b) / dataArray.current.length;
+
         console.log(audioLevel); // This should now print the audio level
 
-        if (audioLevel > 0.2) {
+        if (audioLevel > 50) {
           // Adjust the threshold based on your needs
           if (!isSpeaking) {
             setIsSpeaking(true);
@@ -391,20 +410,6 @@ export const useWebRTC = (roomId, userDetails) => {
       }, 200);
 
       return () => clearInterval(interval);
-    };
-
-    const getAudioLevel = async () => {
-      let audioLevel = 0.0;
-      const promises = Object.values(connections.current).map(async (pc) => {
-        const stats = await pc.connection.getStats();
-        stats.forEach((report) => {
-          if (report.type === "media-source" && report.kind === "audio") {
-            audioLevel = report.audioLevel || 0.0;
-          }
-        });
-      });
-      await Promise.all(promises);
-      return audioLevel;
     };
 
     initChat();
