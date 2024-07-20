@@ -81,7 +81,7 @@ export const useWebRTC = (roomId, userDetails) => {
       socket.current.on(ACTIONS.MESSAGE, handleMessageReceived);
 
       // Add speaking status handling
-      socket.current.on("TALK", handleTalk);
+      socket.current.on(ACTIONS.TALK, handleTalk);
 
       await captureMedia();
 
@@ -334,6 +334,11 @@ export const useWebRTC = (roomId, userDetails) => {
       if (clientIdx > -1) {
         connectedClients[clientIdx].muted = mute;
         setClients(connectedClients);
+
+        // Update speaking status when muted
+        if (mute) {
+          updateSpeakingStatus(userId, false);
+        }
       }
     };
 
@@ -410,7 +415,7 @@ export const useWebRTC = (roomId, userDetails) => {
           client._id === userId ? { ...client, speaking: isTalk } : client
         );
       });
-      socket.current.emit("TALK", {
+      socket.current.emit(ACTIONS.TALK, {
         userId,
         roomId,
         isTalk,
