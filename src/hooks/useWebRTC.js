@@ -419,7 +419,7 @@ export const useWebRTC = (roomId, userDetails) => {
             );
           }
         }
-      }, 400);
+      }, 200);
 
       return () => clearInterval(interval);
     };
