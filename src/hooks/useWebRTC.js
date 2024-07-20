@@ -376,51 +376,46 @@ export const useWebRTC = (roomId, userDetails) => {
     };
 
     const startMonitoringAudioLevels = () => {
-      const interval = setInterval(async () => {
+      let debounceTimeout = null;
+      const debounceDelay = 500; // Adjust this value to make the updates smoother
+
+      const updateSpeakingStatus = (newIsSpeaking) => {
+        if (newIsSpeaking !== isSpeaking) {
+          setIsSpeaking(newIsSpeaking);
+          socket.current.emit(ACTIONS.TALK, {
+            userId: userDetails._id,
+            roomId,
+            isTalk: newIsSpeaking,
+          });
+
+          // Set speaking key in the client object
+          setClients((prevClients) =>
+            prevClients.map((client) =>
+              client._id === userDetails._id
+                ? { ...client, speaking: newIsSpeaking }
+                : client
+            )
+          );
+        }
+      };
+
+      const monitorAudioLevels = async () => {
         if (!localMediaStream.current) return;
 
         const audioLevel = await getAudioLevel();
-        console.log(audioLevel); // This should now print the audio level
 
-        if (audioLevel > 0.15) {
-          // Adjust the threshold based on your needs
-          if (!isSpeaking) {
-            setIsSpeaking(true);
-            socket.current.emit(ACTIONS.TALK, {
-              userId: userDetails._id,
-              roomId,
-              isTalk: true,
-            });
-
-            // Set speaking key to true in the client object
-            setClients((prevClients) =>
-              prevClients.map((client) =>
-                client._id === userDetails._id
-                  ? { ...client, speaking: true }
-                  : client
-              )
-            );
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+          if (audioLevel > 0.15) {
+            // Adjust the threshold based on your needs
+            updateSpeakingStatus(true);
+          } else {
+            updateSpeakingStatus(false);
           }
-        } else {
-          if (audioLevel <= 0.15 && isSpeaking) {
-            setIsSpeaking(false);
-            socket.current.emit(ACTIONS.TALK, {
-              userId: userDetails._id,
-              roomId,
-              isTalk: false,
-            });
+        }, debounceDelay);
+      };
 
-            // Set speaking key to false in the client object
-            setClients((prevClients) =>
-              prevClients.map((client) =>
-                client._id === userDetails._id
-                  ? { ...client, speaking: false }
-                  : client
-              )
-            );
-          }
-        }
-      }, 200);
+      const interval = setInterval(monitorAudioLevels, 200);
 
       return () => clearInterval(interval);
     };
