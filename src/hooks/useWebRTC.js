@@ -16,7 +16,7 @@ export const useWebRTC = (roomId, userDetails) => {
   const [handRaiseRequests, setHandRaiseRequests] = useState([]);
   const [messages, setMessages] = useState([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const monitoringInterval = useRef(null);
+  const monitoringInterval = useRef(null); // Store the interval ID
 
   const addNewClient = useCallback(
     (newClient, cb) => {
@@ -50,6 +50,7 @@ export const useWebRTC = (roomId, userDetails) => {
         return;
       }
 
+      // Define socket event handlers
       socket.current.on(ACTIONS.MUTE_INFO, ({ userId, isMute }) =>
         handleSetMute(isMute, userId)
       );
@@ -73,7 +74,11 @@ export const useWebRTC = (roomId, userDetails) => {
         toast(message)
       );
       socket.current.on(ACTIONS.APPROVE_SPEAK, handleApproveSpeak);
+
+      // Add message handling
       socket.current.on(ACTIONS.MESSAGE, handleMessageReceived);
+
+      // Add speaking status handling
       socket.current.on(ACTIONS.TALK, handleTalk);
 
       await captureMedia();
@@ -102,6 +107,7 @@ export const useWebRTC = (roomId, userDetails) => {
           });
         });
 
+        // Start monitoring audio levels
         startMonitoringAudioLevels();
       } else {
         console.error("Invalid userDetails");
@@ -128,11 +134,11 @@ export const useWebRTC = (roomId, userDetails) => {
         socket.current.off(ACTIONS.MUTE);
         socket.current.off(ACTIONS.UNMUTE);
         socket.current.off(ACTIONS.MESSAGE);
-        socket.current.off(ACTIONS.TALK);
         socket.current.emit(ACTIONS.LEAVE, { roomId });
         socket.current = null;
       }
 
+      // Clear the monitoring interval
       if (monitoringInterval.current) {
         clearInterval(monitoringInterval.current);
         monitoringInterval.current = null;
@@ -155,7 +161,6 @@ export const useWebRTC = (roomId, userDetails) => {
         alert(
           "Error capturing media. Please ensure your browser has permission to access the microphone."
         );
-        console.error("Error capturing media:", error);
       }
     };
 
@@ -313,21 +318,27 @@ export const useWebRTC = (roomId, userDetails) => {
     };
 
     const handleSetMute = (mute, userId) => {
-      setClients((prevClients) =>
-        prevClients.map((client) =>
-          client._id === userId
-            ? { ...client, muted: mute, speaking: !mute && client.speaking }
-            : client
-        )
-      );
-
-      if (userId === userDetails._id) {
-        setIsSpeaking(!mute);
-        socket.current.emit(ACTIONS.TALK, {
-          userId: userId,
-          roomId,
-          isTalk: !mute,
-        });
+      const clientIdx = clientsRef.current
+        .map((client) => client._id)
+        .indexOf(userId);
+      const connectedClients = JSON.parse(JSON.stringify(clientsRef.current));
+      if (clientIdx > -1) {
+        connectedClients[clientIdx].muted = mute;
+        setClients(connectedClients);
+        if (userId === userDetails._id) {
+          // Ensure speaking is set to false when muted
+          setClients((prevClients) =>
+            prevClients.map((client) =>
+              client._id === userId ? { ...client, speaking: false } : client
+            )
+          );
+          setIsSpeaking(false);
+          socket.current.emit(ACTIONS.TALK, {
+            userId: userId,
+            roomId,
+            isTalk: false,
+          });
+        }
       }
     };
 
@@ -379,6 +390,7 @@ export const useWebRTC = (roomId, userDetails) => {
         console.log(audioLevel); // This should now print the audio level
 
         if (audioLevel > 0.1) {
+          // Adjust the threshold based on your needs
           if (!isSpeaking) {
             setIsSpeaking(true);
             socket.current.emit(ACTIONS.TALK, {
@@ -387,6 +399,7 @@ export const useWebRTC = (roomId, userDetails) => {
               isTalk: true,
             });
 
+            // Set speaking key to true in the client object
             setClients((prevClients) =>
               prevClients.map((client) =>
                 client._id === userDetails._id
@@ -396,7 +409,7 @@ export const useWebRTC = (roomId, userDetails) => {
             );
           }
         } else {
-          if (isSpeaking) {
+          if (audioLevel <= 0.1 && isSpeaking) {
             setIsSpeaking(false);
             socket.current.emit(ACTIONS.TALK, {
               userId: userDetails._id,
@@ -404,6 +417,7 @@ export const useWebRTC = (roomId, userDetails) => {
               isTalk: false,
             });
 
+            // Set speaking key to false in the client object
             setClients((prevClients) =>
               prevClients.map((client) =>
                 client._id === userDetails._id
