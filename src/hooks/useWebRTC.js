@@ -309,7 +309,6 @@ export const useWebRTC = (roomId, userDetails) => {
         }
       }
     };
-
     const handleSetMute = (mute, userId) => {
       const clientIdx = clientsRef.current
         .map((client) => client._id)
@@ -318,6 +317,20 @@ export const useWebRTC = (roomId, userDetails) => {
       if (clientIdx > -1) {
         connectedClients[clientIdx].muted = mute;
         setClients(connectedClients);
+        if (userId === userDetails._id) {
+          // Ensure speaking is set to false when muted
+          setClients((prevClients) =>
+            prevClients.map((client) =>
+              client._id === userId ? { ...client, speaking: false } : client
+            )
+          );
+          setIsSpeaking(false);
+          socket.current.emit("TALK", {
+            userId: userId,
+            roomId,
+            isTalk: false,
+          });
+        }
       }
     };
 
@@ -388,7 +401,7 @@ export const useWebRTC = (roomId, userDetails) => {
             );
           }
         } else {
-          if (isSpeaking) {
+          if (audioLevel <= 0.2 && isSpeaking) {
             setIsSpeaking(false);
             socket.current.emit("TALK", {
               userId: userDetails._id,
