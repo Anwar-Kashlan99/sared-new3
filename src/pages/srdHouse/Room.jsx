@@ -377,7 +377,6 @@ const Room = () => {
                     height: "75px",
                     borderRadius: "50%",
                     border: "3px solid #c0c0c0",
-                    transition: "all ease-in-out 0.3s",
                     position: " relative",
                     "&::before": {
                       borderColor: client.speaking ? "#eb7635" : "#eee",
