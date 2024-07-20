@@ -374,7 +374,32 @@ export const useWebRTC = (roomId, userDetails) => {
       );
     };
 
+    function debounce(func, wait) {
+      let timeout;
+      return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+
     const startMonitoringAudioLevels = () => {
+      const updateSpeakingState = debounce((isSpeaking) => {
+        setIsSpeaking(isSpeaking);
+        socket.current.emit("TALK", {
+          userId: userDetails._id,
+          roomId,
+          isTalk: isSpeaking,
+        });
+
+        setClients((prevClients) =>
+          prevClients.map((client) =>
+            client._id === userDetails._id
+              ? { ...client, speaking: isSpeaking }
+              : client
+          )
+        );
+      }, 500); // Adjust the debounce delay as needed
+
       const interval = setInterval(async () => {
         if (!localMediaStream.current) return;
 
@@ -384,39 +409,11 @@ export const useWebRTC = (roomId, userDetails) => {
         if (audioLevel > 0.2) {
           // Adjust the threshold based on your needs
           if (!isSpeaking) {
-            setIsSpeaking(true);
-            socket.current.emit("TALK", {
-              userId: userDetails._id,
-              roomId,
-              isTalk: true,
-            });
-
-            // Set speaking key to true in the client object
-            setClients((prevClients) =>
-              prevClients.map((client) =>
-                client._id === userDetails._id
-                  ? { ...client, speaking: true }
-                  : client
-              )
-            );
+            updateSpeakingState(true);
           }
         } else {
           if (audioLevel <= 0.2 && isSpeaking) {
-            setIsSpeaking(false);
-            socket.current.emit("TALK", {
-              userId: userDetails._id,
-              roomId,
-              isTalk: false,
-            });
-
-            // Set speaking key to false in the client object
-            setClients((prevClients) =>
-              prevClients.map((client) =>
-                client._id === userDetails._id
-                  ? { ...client, speaking: false }
-                  : client
-              )
-            );
+            updateSpeakingState(false);
           }
         }
       }, 200);
