@@ -14,9 +14,15 @@ import {
 import EmojiPicker from "emoji-picker-react";
 import React, { Fragment, useEffect, useRef, useState } from "react";
 
-const ChatRoom = ({ reverse, sendMessage, messages, currentUserId }) => {
+const ChatRoom = ({
+  reverse,
+  sendMessage,
+  messages,
+  currentUserId,
+  isCurtainClose,
+  setIsCurtainClose,
+}) => {
   const [newMessage, setNewMessage] = useState("");
-  const [isCurtainClose, setIsCurtainClose] = useState(true);
   const [dragStartX, setDragStartX] = useState(0);
   const [showPicker, setShowPicker] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");

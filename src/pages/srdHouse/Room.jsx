@@ -46,6 +46,7 @@ import {
 import upArrow from "../../assets/up-arrow.svg";
 import downArrow from "../../assets/down-arrow.svg";
 import ChatRoom from "../../components/ChatRoom";
+import commentIcon from "../../assets/commentimg.png";
 
 const Room = () => {
   const { id: roomId } = useParams();
@@ -84,6 +85,7 @@ const Room = () => {
   const [isAudience, setIsAudience] = useState(false);
   const [isSpeaker, setIsSpeaker] = useState(false);
   const [isHandRaised, setIsHandRaised] = useState(false);
+  const [isCurtainClose, setIsCurtainClose] = useState(true);
 
   useEffect(() => {
     if (currentUser && currentUser.role === "admin") {
@@ -240,6 +242,8 @@ const Room = () => {
             messages={messages}
             sendMessage={sendMessage}
             currentUserId={currentUser}
+            setIsCurtainClose={setIsCurtainClose}
+            isCurtainClose={isCurtainClose}
           />
 
           <Box
@@ -639,6 +643,20 @@ const Room = () => {
                         columnGap: "10px",
                       }}
                     >
+                      <IconButton
+                        onClick={() => setIsCurtainClose((priv) => !priv)}
+                      >
+                        <img
+                          alt="commentIcon"
+                          src={commentIcon}
+                          style={{
+                            width: "28px",
+                            height: "28px",
+                            objectFit: "cover",
+                          }}
+                        />
+                      </IconButton>
+
                       {(isAdmin || isSpeaker) && (
                         <IconButton
                           sx={{ mr: "5px" }}
