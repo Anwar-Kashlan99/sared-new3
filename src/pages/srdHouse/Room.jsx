@@ -640,7 +640,7 @@ const Room = () => {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        columnGap: "2px",
+                        columnGap: "5px",
                       }}
                     >
                       <IconButton

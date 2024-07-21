@@ -169,6 +169,13 @@ export const useWebRTC = (roomId, userDetails) => {
           autoGainControl: true,
         },
       });
+
+      // Add local tracks to all existing peer connections
+      Object.values(connections.current).forEach(({ connection }) => {
+        localMediaStream.current.getTracks().forEach((track) => {
+          connection.addTrack(track, localMediaStream.current);
+        });
+      });
     } catch (error) {
       alert(
         "Error capturing media. Please ensure your browser has permission to access the microphone."
@@ -418,6 +425,18 @@ export const useWebRTC = (roomId, userDetails) => {
     );
   };
 
+  // const handleApproveSpeak = ({ userId }) => {
+  //   toast(`User ${userId} has been approved to speak.`);
+  //   setHandRaiseRequests((requests) =>
+  //     requests.filter((req) => req.userId !== userId)
+  //   );
+  //   setClients((prevClients) =>
+  //     prevClients.map((client) =>
+  //       client._id === userId ? { ...client, role: "speaker" } : client
+  //     )
+  //   );
+  // };
+
   const handleApproveSpeak = ({ userId }) => {
     toast(`User ${userId} has been approved to speak.`);
     setHandRaiseRequests((requests) =>
@@ -428,6 +447,15 @@ export const useWebRTC = (roomId, userDetails) => {
         client._id === userId ? { ...client, role: "speaker" } : client
       )
     );
+
+    // If the current user is the one being approved, add local tracks to peer connection
+    if (userId === userDetails._id) {
+      Object.values(connections.current).forEach(({ connection }) => {
+        localMediaStream.current.getTracks().forEach((track) => {
+          connection.addTrack(track, localMediaStream.current);
+        });
+      });
+    }
   };
 
   const handleTalk = ({ userId, isTalk }) => {
