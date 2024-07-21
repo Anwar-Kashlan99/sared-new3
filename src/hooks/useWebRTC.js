@@ -322,9 +322,7 @@ export const useWebRTC = (roomId, userDetails) => {
     const handleSetMute = (mute, userId) => {
       setClients((prevClients) =>
         prevClients.map((client) =>
-          client._id === userId
-            ? { ...client, muted: mute, speaking: !mute && client.speaking }
-            : client
+          client._id === userId ? { ...client, muted: mute } : client
         )
       );
 
