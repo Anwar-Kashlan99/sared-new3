@@ -311,7 +311,11 @@ export const useWebRTC = (roomId, userDetails) => {
       });
     };
 
-    if (localMediaStream.current) {
+    // Add local tracks if the user is a speaker or admin
+    if (
+      localMediaStream.current &&
+      (userDetails.role === "speaker" || userDetails.role === "admin")
+    ) {
       localMediaStream.current.getTracks().forEach((track) => {
         connection.addTrack(track, localMediaStream.current);
       });
@@ -438,6 +442,7 @@ export const useWebRTC = (roomId, userDetails) => {
   // };
 
   const handleApproveSpeak = ({ userId }) => {
+    console.log(`Approving speak for user: ${userId}`);
     toast(`User ${userId} has been approved to speak.`);
     setHandRaiseRequests((requests) =>
       requests.filter((req) => req.userId !== userId)
@@ -450,8 +455,17 @@ export const useWebRTC = (roomId, userDetails) => {
 
     // If the current user is the one being approved, add local tracks to peer connection
     if (userId === userDetails._id) {
+      console.log("Adding local tracks to peers for current user");
+      addLocalTracksToPeers();
+    }
+  };
+
+  // Helper function to add local tracks to all peer connections
+  const addLocalTracksToPeers = () => {
+    if (localMediaStream.current) {
       Object.values(connections.current).forEach(({ connection }) => {
         localMediaStream.current.getTracks().forEach((track) => {
+          console.log("Adding track to connection:", track);
           connection.addTrack(track, localMediaStream.current);
         });
       });
