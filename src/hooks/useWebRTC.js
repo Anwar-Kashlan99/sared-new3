@@ -171,11 +171,7 @@ export const useWebRTC = (roomId, userDetails) => {
       });
 
       // Add local tracks to all existing peer connections
-      Object.values(connections.current).forEach(({ connection }) => {
-        localMediaStream.current.getTracks().forEach((track) => {
-          connection.addTrack(track, localMediaStream.current);
-        });
-      });
+      addLocalTracksToPeers();
     } catch (error) {
       alert(
         "Error capturing media. Please ensure your browser has permission to access the microphone."
@@ -459,6 +455,7 @@ export const useWebRTC = (roomId, userDetails) => {
     if (localMediaStream.current) {
       Object.values(connections.current).forEach(({ connection }) => {
         localMediaStream.current.getTracks().forEach((track) => {
+          console.log("Adding track to connection:", track);
           connection.addTrack(track, localMediaStream.current);
         });
       });
