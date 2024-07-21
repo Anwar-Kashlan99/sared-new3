@@ -640,7 +640,7 @@ const Room = () => {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        columnGap: "5px",
+                        columnGap: "2px",
                       }}
                     >
                       <IconButton
@@ -659,7 +659,6 @@ const Room = () => {
 
                       {(isAdmin || isSpeaker) && (
                         <IconButton
-                          sx={{ mr: "5px" }}
                           onClick={() => handleMuteClick(currentUser?._id)}
                         >
                           <MicOutlined sx={{ fontSize: "28px" }} />
