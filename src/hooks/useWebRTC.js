@@ -4,6 +4,7 @@ import socketInit from "../socket";
 import { useStateWithCallback } from "./useStateWithCallback";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import freeice from "freeice";
 
 export const useWebRTC = (roomId, userDetails) => {
   const [clients, setClients] = useStateWithCallback([]);
@@ -162,7 +163,11 @@ export const useWebRTC = (roomId, userDetails) => {
 
     try {
       localMediaStream.current = await navigator.mediaDevices.getUserMedia({
-        audio: true,
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
       });
     } catch (error) {
       alert(
@@ -191,25 +196,83 @@ export const useWebRTC = (roomId, userDetails) => {
     ]);
   };
 
+  // const handleNewPeer = async ({ peerId, createOffer, user: remoteUser }) => {
+  //   if (connections.current[peerId]) {
+  //     return;
+  //   }
+
+  //   const connection = new RTCPeerConnection({
+  //     iceServers: [
+  //       { urls: "stun:stun.l.google.com:19302" },
+  //       { urls: "stun:stun1.l.google.com:19302" },
+  //       { urls: "stun:stun2.l.google.com:19302" },
+  //       { urls: "stun:stun3.l.google.com:19302" },
+  //       { urls: "stun:stun4.l.google.com:19302" },
+  //       {
+  //         urls: "turn:turn.anyfirewall.com:443?transport=tcp",
+  //         username: "webrtc",
+  //         credential: "webrtc",
+  //       },
+  //     ],
+  //   });
+
+  //   connections.current[peerId] = { connection, iceCandidatesQueue: [] };
+
+  //   connection.onicecandidate = (event) => {
+  //     console.log("ICE candidate event:", event);
+  //     if (event.candidate) {
+  //       socket.current.emit(ACTIONS.RELAY_ICE, {
+  //         peerId,
+  //         icecandidate: event.candidate,
+  //       });
+  //     }
+  //   };
+
+  //   connection.ontrack = ({ streams: [remoteStream] }) => {
+  //     console.log("Track event:", remoteStream);
+  //     addNewClient({ ...remoteUser, muted: true }, () => {
+  //       const audioElement = audioElements.current[remoteUser._id];
+  //       if (audioElement) {
+  //         audioElement.srcObject = remoteStream;
+  //       } else {
+  //         const interval = setInterval(() => {
+  //           const element = audioElements.current[remoteUser._id];
+  //           if (element) {
+  //             element.srcObject = remoteStream;
+  //             clearInterval(interval);
+  //           }
+  //         }, 300);
+  //       }
+  //     });
+  //   };
+
+  //   if (localMediaStream.current) {
+  //     localMediaStream.current.getTracks().forEach((track) => {
+  //       connection.addTrack(track, localMediaStream.current);
+  //     });
+  //   }
+
+  //   if (createOffer) {
+  //     try {
+  //       const offer = await connection.createOffer();
+  //       await connection.setLocalDescription(offer);
+  //       socket.current.emit(ACTIONS.RELAY_SDP, {
+  //         peerId,
+  //         sessionDescription: offer,
+  //       });
+  //     } catch (error) {
+  //       console.error("Error creating offer: ", error);
+  //     }
+  //   }
+  // };
+
   const handleNewPeer = async ({ peerId, createOffer, user: remoteUser }) => {
     if (connections.current[peerId]) {
       return;
     }
 
-    const connection = new RTCPeerConnection({
-      iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-        { urls: "stun:stun1.l.google.com:19302" },
-        { urls: "stun:stun2.l.google.com:19302" },
-        { urls: "stun:stun3.l.google.com:19302" },
-        { urls: "stun:stun4.l.google.com:19302" },
-        {
-          urls: "turn:turn.anyfirewall.com:443?transport=tcp",
-          username: "webrtc",
-          credential: "webrtc",
-        },
-      ],
-    });
+    const iceServers = freeice();
+    const connection = new RTCPeerConnection({ iceServers });
 
     connections.current[peerId] = { connection, iceCandidatesQueue: [] };
 
