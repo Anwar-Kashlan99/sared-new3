@@ -108,7 +108,12 @@ export const useWebRTC = (roomId, userDetails) => {
         });
 
         // Start monitoring audio levels
-        startMonitoringAudioLevels();
+        if (
+          !clientsRef.current.find((client) => client._id === userDetails._id)
+            .muted
+        ) {
+          startMonitoringAudioLevels();
+        }
       } else {
         console.error("Invalid userDetails");
       }
@@ -327,21 +332,20 @@ export const useWebRTC = (roomId, userDetails) => {
       );
 
       if (userId === userDetails._id) {
-        setIsSpeaking(!mute);
-        socket.current.emit(ACTIONS.TALK, {
-          userId: userId,
-          roomId,
-          isTalk: !mute,
-        });
-
         if (mute) {
           // Ensure speaking is set to false when muted
+          setIsSpeaking(false);
+          socket.current.emit(ACTIONS.TALK, {
+            userId: userId,
+            roomId,
+            isTalk: false,
+          });
+
           setClients((prevClients) =>
             prevClients.map((client) =>
               client._id === userId ? { ...client, speaking: false } : client
             )
           );
-          setIsSpeaking(false);
         }
       }
     };
@@ -393,43 +397,44 @@ export const useWebRTC = (roomId, userDetails) => {
         const audioLevel = await getAudioLevel();
         console.log(audioLevel); // This should now print the audio level
 
-        if (audioLevel > 0.1) {
+        if (
+          audioLevel > 0.1 &&
+          !isSpeaking &&
+          !clientsRef.current.find((client) => client._id === userDetails._id)
+            .muted
+        ) {
           // Adjust the threshold based on your needs
-          if (!isSpeaking) {
-            setIsSpeaking(true);
-            socket.current.emit(ACTIONS.TALK, {
-              userId: userDetails._id,
-              roomId,
-              isTalk: true,
-            });
+          setIsSpeaking(true);
+          socket.current.emit(ACTIONS.TALK, {
+            userId: userDetails._id,
+            roomId,
+            isTalk: true,
+          });
 
-            // Set speaking key to true in the client object
-            setClients((prevClients) =>
-              prevClients.map((client) =>
-                client._id === userDetails._id
-                  ? { ...client, speaking: true }
-                  : client
-              )
-            );
-          }
-        } else {
-          if (audioLevel <= 0.1 && isSpeaking) {
-            setIsSpeaking(false);
-            socket.current.emit(ACTIONS.TALK, {
-              userId: userDetails._id,
-              roomId,
-              isTalk: false,
-            });
+          // Set speaking key to true in the client object
+          setClients((prevClients) =>
+            prevClients.map((client) =>
+              client._id === userDetails._id
+                ? { ...client, speaking: true }
+                : client
+            )
+          );
+        } else if (audioLevel <= 0.1 && isSpeaking) {
+          setIsSpeaking(false);
+          socket.current.emit(ACTIONS.TALK, {
+            userId: userDetails._id,
+            roomId,
+            isTalk: false,
+          });
 
-            // Set speaking key to false in the client object
-            setClients((prevClients) =>
-              prevClients.map((client) =>
-                client._id === userDetails._id
-                  ? { ...client, speaking: false }
-                  : client
-              )
-            );
-          }
+          // Set speaking key to false in the client object
+          setClients((prevClients) =>
+            prevClients.map((client) =>
+              client._id === userDetails._id
+                ? { ...client, speaking: false }
+                : client
+            )
+          );
         }
       }, 200);
     };
