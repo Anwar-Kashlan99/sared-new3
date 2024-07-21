@@ -497,7 +497,6 @@ const Room = () => {
                         backgroundColor: "#ddd",
                       }}
                     />
-
                     {client.muted && (
                       <Box
                         sx={{
