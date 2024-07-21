@@ -598,7 +598,7 @@ const Room = () => {
                   padding: !isOpen
                     ? ""
                     : isMobile
-                    ? "1rem 1.5rem 0.8rem"
+                    ? "1rem 1rem 0.8rem"
                     : "0.8rem 4rem 0.4rem",
                   transform: "translateX(-50%)",
                   display: "flex",
@@ -640,7 +640,7 @@ const Room = () => {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        columnGap: "10px",
+                        columnGap: "5px",
                       }}
                     >
                       <IconButton
@@ -673,7 +673,7 @@ const Room = () => {
                             outline: "none",
                             display: "flex",
                             alignItems: "center",
-                            padding: "0.5rem 1rem",
+                            padding: "0.5rem 0.8rem",
                             border: "none",
                             borderRadius: "20px",
                             transition: "all 0.3s ease-in-out",
@@ -686,13 +686,13 @@ const Room = () => {
                           <img
                             alt="hand"
                             src={hand}
-                            style={{ width: "30px" }}
+                            style={{ width: "28px" }}
                           />
                           <Typography
                             sx={{
                               fontWeight: "bold",
-                              ml: "10px",
-                              fontSize: "13px",
+                              ml: "7px",
+                              fontSize: "12px",
                             }}
                           >
                             {t("Requests")}
@@ -726,7 +726,7 @@ const Room = () => {
                           <img
                             alt="hand"
                             src={hand}
-                            style={{ width: "30px" }}
+                            style={{ width: "28px" }}
                           />
                         </Button>
                       )}
