@@ -85,7 +85,7 @@ const ChatRoom = ({
           : isBigSecreen
           ? "450px"
           : isMobile
-          ? "350px"
+          ? "325px"
           : "400px",
         borderRadius: isMobile ? "30px 0px 0px 30px" : "30px 50px 50px 30px",
         transition: "width 0.5s ease",
@@ -194,9 +194,9 @@ const ChatRoom = ({
             <Box sx={{ position: "relative" }}>
               <Input
                 type="text"
-                placeholder="Write a comment"
+                placeholder="Write a massage"
                 sx={{
-                  width: isBigSecreen ? "330px" : "230px",
+                  width: isBigSecreen ? "330px" : "210px",
                   padding: "10px 20px 10px 20px",
                   fontSize: "16px",
                   borderRadius: "20px",
