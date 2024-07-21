@@ -171,7 +171,11 @@ export const useWebRTC = (roomId, userDetails) => {
       });
 
       // Add local tracks to all existing peer connections
-      addLocalTracksToPeers();
+      Object.values(connections.current).forEach(({ connection }) => {
+        localMediaStream.current.getTracks().forEach((track) => {
+          connection.addTrack(track, localMediaStream.current);
+        });
+      });
     } catch (error) {
       alert(
         "Error capturing media. Please ensure your browser has permission to access the microphone."
