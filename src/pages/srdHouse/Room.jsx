@@ -497,6 +497,12 @@ const Room = () => {
                         backgroundColor: "#ddd",
                       }}
                     />
+                    <audio
+                      autoPlay
+                      ref={(instance) => {
+                        provideRef(instance, client?._id);
+                      }}
+                    />
                     {client.muted && (
                       <Box
                         sx={{
