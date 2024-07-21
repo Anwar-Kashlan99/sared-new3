@@ -191,85 +191,6 @@ export const useWebRTC = (roomId, userDetails) => {
     ]);
   };
 
-  // const handleNewPeer = async ({ peerId, createOffer, user: remoteUser }) => {
-  //   if (connections.current[peerId]) {
-  //     return;
-  //   }
-
-  //   const connection = new RTCPeerConnection({
-  //     iceServers: [
-  //       { urls: "stun:stun.l.google.com:19302" },
-  //       { urls: "stun:stun1.l.google.com:19302" },
-  //       { urls: "stun:stun2.l.google.com:19302" },
-  //       { urls: "stun:stun3.l.google.com:19302" },
-  //       { urls: "stun:stun4.l.google.com:19302" },
-  //       {
-  //         urls: "turn:turn.anyfirewall.com:443?transport=tcp",
-  //         username: "webrtc",
-  //         credential: "webrtc",
-  //       },
-  //     ],
-  //   });
-
-  //   connections.current[peerId] = { connection, iceCandidatesQueue: [] };
-
-  //   connection.onicecandidate = (event) => {
-  //     if (event.candidate) {
-  //       socket.current.emit(ACTIONS.RELAY_ICE, {
-  //         peerId,
-  //         icecandidate: event.candidate,
-  //       });
-  //     }
-  //   };
-
-  //   connection.ontrack = ({ streams: [remoteStream] }) => {
-  //     addNewClient({ ...remoteUser, muted: true }, () => {
-  //       const currentUser = clientsRef.current.find(
-  //         (client) => client._id === userDetails._id
-  //       );
-  //       if (currentUser) {
-  //         socket.current.emit(ACTIONS.MUTE_INFO, {
-  //           userId: userDetails._id,
-  //           roomId,
-  //           isMute: currentUser.muted,
-  //         });
-  //       }
-
-  //       const audioElement = audioElements.current[remoteUser._id];
-  //       if (audioElement) {
-  //         audioElement.srcObject = remoteStream;
-  //       } else {
-  //         const interval = setInterval(() => {
-  //           const element = audioElements.current[remoteUser._id];
-  //           if (element) {
-  //             element.srcObject = remoteStream;
-  //             clearInterval(interval);
-  //           }
-  //         }, 300);
-  //       }
-  //     });
-  //   };
-
-  //   if (localMediaStream.current) {
-  //     localMediaStream.current.getTracks().forEach((track) => {
-  //       connection.addTrack(track, localMediaStream.current);
-  //     });
-  //   }
-
-  //   if (createOffer) {
-  //     try {
-  //       const offer = await connection.createOffer();
-  //       await connection.setLocalDescription(offer);
-  //       socket.current.emit(ACTIONS.RELAY_SDP, {
-  //         peerId,
-  //         sessionDescription: offer,
-  //       });
-  //     } catch (error) {
-  //       console.error("Error creating offer: ", error);
-  //     }
-  //   }
-  // };
-
   const handleNewPeer = async ({ peerId, createOffer, user: remoteUser }) => {
     if (connections.current[peerId]) {
       return;
@@ -465,7 +386,7 @@ export const useWebRTC = (roomId, userDetails) => {
         // Adjust the threshold based on your needs
         if (
           !isSpeaking &&
-          !clientsRef.current.find((c) => c._id === userDetails._id).muted
+          !clientsRef.current.find((c) => c._id === userDetails._id)?.muted
         ) {
           setIsSpeaking(true);
           socket.current.emit(ACTIONS.TALK, {
