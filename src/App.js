@@ -39,6 +39,9 @@ const PodcastDetail = React.lazy(() =>
 const AllBroadcasts = React.lazy(() => import("./pages/live/AllBroadcasts"));
 const Rooms = React.lazy(() => import("./pages/srdHouse/Rooms"));
 const Room = React.lazy(() => import("./pages/srdHouse/Room"));
+const ChatRoomPage = React.lazy(() =>
+  import("./pages/chatRoom/ChatRoomPage.jsx")
+);
 const GoLive = React.lazy(() => import("./pages/live/GoLive"));
 const BlogsList = React.lazy(() => import("./pages/blogs/BlogsList"));
 const BlogDetail = React.lazy(() => import("./pages/blogs/BlogDetail"));
@@ -290,6 +293,14 @@ function App() {
             <Route
               path="*"
               element={<ErrorPage errorMsg="Error 404 Page Not Found" />}
+            />
+            <Route
+              path="/chat"
+              element={
+                <PrivateRoute>
+                  <ChatRoomPage />
+                </PrivateRoute>
+              }
             />
           </Routes>
           <Footer />

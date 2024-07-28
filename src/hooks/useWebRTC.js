@@ -145,6 +145,7 @@ export const useWebRTC = (roomId, userDetails) => {
       socket.current.off(ACTIONS.TALK);
       socket.current.emit(ACTIONS.LEAVE, { roomId });
       socket.current = null;
+      console.log("cleanup Connections");
     }
 
     if (monitoringInterval.current) {
