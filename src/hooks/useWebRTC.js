@@ -408,12 +408,16 @@ export const useWebRTC = (roomId, userDetails) => {
     navigate("/srdhouse");
   };
 
-  const handleRaiseHand = ({ peerId, userId, username, profile }) => {
-    setHandRaiseRequests((requests) => [
-      ...requests,
-      { peerId, userId, username, profile },
-    ]);
-    toast(`User ${username} has raised their hand.`);
+  const handleRaiseHand = ({ userId, username, profile, peerId }) => {
+    if (handRaiseRequests.find((request) => request.userId === userId)) {
+      toast(`${username} has already raised their hand.`);
+    } else {
+      setHandRaiseRequests((prevRequests) => [
+        ...prevRequests,
+        { peerId, userId, username, profile },
+      ]);
+      toast(`User ${username} has raised their hand.`);
+    }
   };
 
   const handleRejectSpeak = ({ userId }) => {
