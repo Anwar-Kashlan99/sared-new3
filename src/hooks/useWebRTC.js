@@ -20,25 +20,33 @@ export const useWebRTC = (roomId, userDetails) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const monitoringInterval = useRef(null);
 
-  const { data: rooms, refetch } = useGetAllRoomsQuery({ key: "value" });
+  const { data: rooms } = useGetAllRoomsQuery({ key: "value" });
 
-  const checkRoomExists = (roomId) => {
-    const roomExists = rooms.some((room) => room._id === roomId);
-    if (!roomExists) {
-      toast("This room does not exist or has been canceled.", {
-        icon: "❌",
-        style: {
-          background: "#ff4d4f",
-          color: "#fff",
-        },
-      });
-      navigate("/srdhouse");
-      refetch();
-      console.log(roomExists);
-      return false;
-    }
-    return true;
-  };
+  const checkRoomExists = useCallback(
+    (roomId) => {
+      // Ensure rooms data is available
+      if (!rooms || rooms.length === 0) {
+        console.log("No room data available yet.");
+        return false;
+      }
+
+      const roomExists = rooms.some((room) => room._id === roomId);
+      if (!roomExists) {
+        toast("This room does not exist or has been canceled.", {
+          icon: "❌",
+          style: {
+            background: "#ff4d4f",
+            color: "#fff",
+          },
+        });
+        navigate("/srdhouse");
+        console.log("Room exists:", roomExists);
+        return false;
+      }
+      return true;
+    },
+    [rooms, navigate]
+  );
 
   const addNewClient = useCallback(
     (newClient, cb) => {
