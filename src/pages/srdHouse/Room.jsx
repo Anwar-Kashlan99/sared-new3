@@ -79,7 +79,7 @@ const Room = () => {
     messages,
     sendMessage,
     returnAudienceSpeak,
-  } = useWebRTC(roomId, userDetails);
+  } = useWebRTC(roomId, userDetails, room, roomLoading, roomError);
 
   const currentUser = clients.find((client) => client._id === userDetails._id);
   const [isAdmin, setIsAdmin] = useState(false);

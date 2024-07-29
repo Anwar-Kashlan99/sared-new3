@@ -5,9 +5,14 @@ import { useStateWithCallback } from "./useStateWithCallback";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import freeice from "freeice";
-import { useGetRoomQuery } from "../store/srdClubSlice";
 
-export const useWebRTC = (roomId, userDetails) => {
+export const useWebRTC = (
+  roomId,
+  userDetails,
+  room,
+  roomLoading,
+  roomError
+) => {
   const [clients, setClients] = useStateWithCallback([]);
   const audioElements = useRef({});
   const connections = useRef({});
@@ -20,22 +25,13 @@ export const useWebRTC = (roomId, userDetails) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const monitoringInterval = useRef(null);
 
-  // Fetch room data
-  const {
-    data: room,
-    isLoading,
-    error,
-  } = useGetRoomQuery(roomId, {
-    skip: !roomId,
-  });
-
   const checkRoomExists = useCallback(() => {
-    if (isLoading) {
+    if (roomLoading) {
       console.log("Loading room data...");
       return false;
     }
-    if (error) {
-      console.log("Error fetching room data:", error);
+    if (roomError) {
+      console.log("Error fetching room data:", roomError);
       toast("Error fetching room data. Please try again.", {
         icon: "⚠️",
         style: {
@@ -59,7 +55,7 @@ export const useWebRTC = (roomId, userDetails) => {
       return false;
     }
     return true;
-  }, [room, isLoading, error, navigate]);
+  }, [room, roomLoading, roomError, navigate]);
 
   const addNewClient = useCallback(
     (newClient, cb) => {
