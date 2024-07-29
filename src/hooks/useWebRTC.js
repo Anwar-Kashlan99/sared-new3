@@ -26,10 +26,6 @@ export const useWebRTC = (
   const monitoringInterval = useRef(null);
 
   const checkRoomExists = useCallback(() => {
-    if (roomLoading) {
-      console.log("Loading room data...");
-      return false;
-    }
     if (roomError) {
       console.log("Error fetching room data:", roomError);
       toast("Error fetching room data. Please try again.", {
@@ -55,7 +51,7 @@ export const useWebRTC = (
       return false;
     }
     return true;
-  }, [room, roomLoading, roomError, navigate]);
+  }, [room, roomError, navigate]);
 
   const addNewClient = useCallback(
     (newClient, cb) => {
