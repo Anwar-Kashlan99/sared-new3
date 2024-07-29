@@ -5,6 +5,7 @@ import { useStateWithCallback } from "./useStateWithCallback";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import freeice from "freeice";
+import { useGetAllRoomsQuery } from "../store/srdClubSlice";
 
 export const useWebRTC = (roomId, userDetails) => {
   const [clients, setClients] = useStateWithCallback([]);
@@ -18,6 +19,24 @@ export const useWebRTC = (roomId, userDetails) => {
   const [messages, setMessages] = useState([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const monitoringInterval = useRef(null);
+
+  const { data: rooms, refetch } = useGetAllRoomsQuery({ key: "value" });
+
+  const checkRoomExists = (roomId) => {
+    const roomExists = rooms.some((room) => room._id === roomId);
+    if (!roomExists) {
+      toast("This room does not exist or has been canceled.", {
+        icon: "❌",
+        style: {
+          background: "#ff4d4f",
+          color: "#fff",
+        },
+      });
+      refetch(); // Optionally refetch the list of rooms
+      return false;
+    }
+    return true;
+  };
 
   const addNewClient = useCallback(
     (newClient, cb) => {
@@ -61,7 +80,9 @@ export const useWebRTC = (roomId, userDetails) => {
             localElement.volume = 0;
             localElement.srcObject = localMediaStream.current;
           }
-          socket.current.emit(ACTIONS.JOIN, { roomId, user: userDetails });
+          if (checkRoomExists(roomId)) {
+            socket.current.emit(ACTIONS.JOIN, { roomId, user: userDetails });
+          }
         });
 
         socket.current.on(ACTIONS.JOIN, ({ user, isAdmin }) => {
