@@ -714,7 +714,7 @@ const Room = () => {
                           <MicOutlined sx={{ fontSize: "28px" }} />
                         </IconButton>
                       )}
-                      {isAdmin && !isAudience && (
+                      {isAdmin && (
                         <Button
                           variant="outlined"
                           sx={{

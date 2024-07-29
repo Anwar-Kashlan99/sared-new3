@@ -24,4 +24,5 @@ export const ACTIONS = {
   MESSAGE: "message",
   TALK: "talk",
   RETURN_AUDIENCE: "return_audience",
+  ERROR: "error",
 };

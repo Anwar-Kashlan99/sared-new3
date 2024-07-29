@@ -121,6 +121,7 @@ export const useWebRTC = (roomId, userDetails) => {
     socket.current.on(ACTIONS.MESSAGE, handleMessageReceived);
     socket.current.on(ACTIONS.TALK, handleTalk);
     socket.current.on(ACTIONS.RETURN_AUDIENCE, handleReturnAudience);
+    socket.current.on(ACTIONS.ERROR, handleErrorRoom);
   };
 
   const cleanupConnections = () => {
@@ -180,6 +181,11 @@ export const useWebRTC = (roomId, userDetails) => {
       );
       console.error("Error capturing media:", error);
     }
+  };
+
+  const handleErrorRoom = () => {
+    toast("You are blocked from this room");
+    navigate("/srdhouse");
   };
 
   const handleMessageReceived = (data) => {
