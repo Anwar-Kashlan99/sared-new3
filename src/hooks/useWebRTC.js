@@ -105,9 +105,7 @@ export const useWebRTC = (
       }
     };
 
-    if (!roomLoading && !roomError) {
-      initChat();
-    }
+    initChat();
 
     return () => {
       if (localMediaStream.current) {
