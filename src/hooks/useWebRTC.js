@@ -409,15 +409,11 @@ export const useWebRTC = (roomId, userDetails) => {
   };
 
   const handleRaiseHand = ({ userId, username, profile, peerId }) => {
-    if (handRaiseRequests.find((request) => request.userId === userId)) {
-      toast(`${username} has already raised their hand.`);
-    } else {
-      setHandRaiseRequests((prevRequests) => [
-        ...prevRequests,
-        { peerId, userId, username, profile },
-      ]);
-      toast(`User ${username} has raised their hand.`);
-    }
+    setHandRaiseRequests((prevRequests) => [
+      ...prevRequests,
+      { peerId, userId, username, profile },
+    ]);
+    toast(`User ${username} has raised their hand.`);
   };
 
   const handleRejectSpeak = ({ userId }) => {
