@@ -21,11 +21,31 @@ export const useWebRTC = (roomId, userDetails) => {
   const monitoringInterval = useRef(null);
 
   // Fetch room data
-  const { data: room } = useGetRoomQuery(roomId, {
-    skip: !roomId, // Skip query if no roomId
+  const {
+    data: room,
+    isLoading,
+    error,
+  } = useGetRoomQuery(roomId, {
+    skip: !roomId,
   });
 
   const checkRoomExists = useCallback(() => {
+    if (isLoading) {
+      console.log("Loading room data...");
+      return false;
+    }
+    if (error) {
+      console.log("Error fetching room data:", error);
+      toast("Error fetching room data. Please try again.", {
+        icon: "⚠️",
+        style: {
+          background: "#ffcc00",
+          color: "#000",
+        },
+      });
+      navigate("/srdhouse");
+      return false;
+    }
     if (!room) {
       toast("This room does not exist or has been canceled.", {
         icon: "❌",

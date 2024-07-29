@@ -17,26 +17,6 @@ const Rooms = () => {
     key: "value",
   });
 
-  // useEffect(() => {
-  //   const socket = socketInit();
-
-  //   const handleRoomCreated = () => {
-  //     refetch();
-  //   };
-
-  //   const handleRoomDeleted = () => {
-  //     refetch();
-  //   };
-
-  //   socket.on(ACTIONS.ROOM_CREATED, handleRoomCreated);
-  //   socket.on(ACTIONS.ROOM_DELETED, handleRoomDeleted);
-
-  //   return () => {
-  //     socket.off(ACTIONS.ROOM_CREATED, handleRoomCreated);
-  //     socket.off(ACTIONS.ROOM_DELETED, handleRoomDeleted);
-  //   };
-  // }, [refetch]);
-
   const handleSearch = (event) => {
     setSearchValue(event.target.value);
   };
