@@ -5,7 +5,7 @@ import { useStateWithCallback } from "./useStateWithCallback";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import freeice from "freeice";
-import { useGetAllRoomsQuery } from "../store/srdClubSlice";
+import { useGetRoomQuery } from "../store/srdClubSlice";
 
 export const useWebRTC = (roomId, userDetails) => {
   const [clients, setClients] = useStateWithCallback([]);
@@ -20,34 +20,26 @@ export const useWebRTC = (roomId, userDetails) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const monitoringInterval = useRef(null);
 
-  const { data: rooms, isLoading } = useGetAllRoomsQuery({ key: "value" });
+  // Fetch room data
+  const { data: room } = useGetRoomQuery(roomId, {
+    skip: !roomId, // Skip query if no roomId
+  });
 
-  const checkRoomExists = useCallback(
-    (roomId) => {
-      console.log("Rooms Data:", rooms);
-      const roomExists = rooms?.some((room) => room._id === roomId);
-      console.log("Room exists:", roomExists);
-      if (!roomExists) {
-        toast("This room does not exist or has been canceled.", {
-          icon: "❌",
-          style: {
-            background: "#ff4d4f",
-            color: "#fff",
-          },
-        });
-        navigate("/srdhouse");
-        console.log("Room exists:", roomExists);
-        return false;
-      }
-      return true;
-    },
-    [rooms, navigate]
-  );
-  useEffect(() => {
-    if (rooms.length > 0 && roomId) {
-      checkRoomExists(roomId);
+  const checkRoomExists = useCallback(() => {
+    if (!room) {
+      toast("This room does not exist or has been canceled.", {
+        icon: "❌",
+        style: {
+          background: "#ff4d4f",
+          color: "#fff",
+        },
+      });
+      navigate("/srdhouse");
+      console.log("Room exists:", !!room);
+      return false;
     }
-  }, [rooms, roomId, checkRoomExists]);
+    return true;
+  }, [room, navigate]);
 
   const addNewClient = useCallback(
     (newClient, cb) => {
@@ -91,7 +83,7 @@ export const useWebRTC = (roomId, userDetails) => {
             localElement.volume = 0;
             localElement.srcObject = localMediaStream.current;
           }
-          if (checkRoomExists(roomId)) {
+          if (checkRoomExists()) {
             socket.current.emit(ACTIONS.JOIN, { roomId, user: userDetails });
           }
         });
