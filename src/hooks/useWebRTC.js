@@ -657,7 +657,7 @@ export const useWebRTC = (roomId, userDetails) => {
 
   const returnAudienceSpeak = (userId) => {
     console.log(`return audience ${userId}`);
-    socket.current.emit("return_audience", { roomId, userId });
+    socket.current.emit(ACTIONS.RETURN_AUDIENCE, { roomId, userId });
   };
 
   return {

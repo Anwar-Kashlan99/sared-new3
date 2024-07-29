@@ -23,4 +23,5 @@ export const ACTIONS = {
   ROOM_DELETED: "room_deleted",
   MESSAGE: "message",
   TALK: "talk",
+  RETURN_AUDIENCE: "return_audience",
 };
