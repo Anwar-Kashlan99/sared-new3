@@ -24,12 +24,6 @@ export const useWebRTC = (roomId, userDetails) => {
 
   const checkRoomExists = useCallback(
     (roomId) => {
-      // Ensure rooms data is available
-      if (!rooms || rooms.length === 0) {
-        console.log("No room data available yet.");
-        return false;
-      }
-
       const roomExists = rooms.some((room) => room._id === roomId);
       if (!roomExists) {
         toast("This room does not exist or has been canceled.", {
