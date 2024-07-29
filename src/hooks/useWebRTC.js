@@ -5,6 +5,7 @@ import { useStateWithCallback } from "./useStateWithCallback";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import freeice from "freeice";
+import { useGetAllRoomsQuery } from "../store/srdClubSlice";
 
 export const useWebRTC = (
   roomId,
@@ -25,34 +26,6 @@ export const useWebRTC = (
   const [isSpeaking, setIsSpeaking] = useState(false);
   const monitoringInterval = useRef(null);
 
-  const checkRoomExists = useCallback(() => {
-    if (roomError) {
-      console.log("Error fetching room data:", roomError);
-      toast("Error fetching room data. Please try again.", {
-        icon: "⚠️",
-        style: {
-          background: "#ffcc00",
-          color: "#000",
-        },
-      });
-      navigate("/srdhouse");
-      return false;
-    }
-    if (!room) {
-      toast("This room does not exist or has been canceled.", {
-        icon: "❌",
-        style: {
-          background: "#ff4d4f",
-          color: "#fff",
-        },
-      });
-      navigate("/srdhouse");
-      console.log("Room exists:", !!room);
-      return false;
-    }
-    return true;
-  }, [room, roomError, navigate]);
-
   const addNewClient = useCallback(
     (newClient, cb) => {
       setClients((existingClients) => {
@@ -72,6 +45,14 @@ export const useWebRTC = (
     clientsRef.current = clients;
   }, [clients]);
 
+  const {
+    data: rooms,
+    error: roomsError,
+    isLoading: roomsLoading,
+  } = useGetAllRoomsQuery({
+    key: "value",
+  });
+
   useEffect(() => {
     const initChat = async () => {
       if (socket.current) {
@@ -86,37 +67,49 @@ export const useWebRTC = (
       }
 
       setupSocketEventHandlers();
+
       await captureMedia();
 
-      if (userDetails && userDetails._id) {
-        addNewClient({ ...userDetails, muted: true }, () => {
-          const localElement = audioElements.current[userDetails._id];
-          if (localElement) {
-            localElement.volume = 0;
-            localElement.srcObject = localMediaStream.current;
-          }
-          if (checkRoomExists()) {
-            socket.current.emit(ACTIONS.JOIN, { roomId, user: userDetails });
-          }
-        });
+      if (rooms.some((room) => room._Id === roomId)) {
+        await captureMedia();
 
-        socket.current.on(ACTIONS.JOIN, ({ user, isAdmin }) => {
-          const updatedUserDetails = { ...user, isAdmin };
-          addNewClient(updatedUserDetails, () => {
-            const existingClient = clientsRef.current.find(
-              (client) => client._id === user._id
-            );
-            if (!existingClient) {
-              console.log(
-                `User ${user._id} joined as ${isAdmin ? "admin" : "audience"}`
-              );
+        if (userDetails && userDetails._id) {
+          addNewClient({ ...userDetails, muted: true }, () => {
+            const localElement = audioElements.current[userDetails._id];
+            if (localElement) {
+              localElement.volume = 0;
+              localElement.srcObject = localMediaStream.current;
             }
-          });
-        });
 
-        startMonitoringAudioLevels();
+            socket.current.emit(ACTIONS.JOIN, { roomId, user: userDetails });
+          });
+
+          socket.current.on(ACTIONS.JOIN, ({ user, isAdmin }) => {
+            const updatedUserDetails = { ...user, isAdmin };
+            addNewClient(updatedUserDetails, () => {
+              const existingClient = clientsRef.current.find(
+                (client) => client._id === user._id
+              );
+              if (!existingClient) {
+                console.log(
+                  `User ${user._id} joined as ${isAdmin ? "admin" : "audience"}`
+                );
+              }
+            });
+          });
+
+          startMonitoringAudioLevels();
+        } else {
+          console.error("Invalid userDetails");
+        }
       } else {
-        console.error("Invalid userDetails");
+        console.error("Room does not exist or has been cancelled");
+        toast("This room does not exist or has been cancelled", {
+          duration: 4000,
+          position: "center",
+          style: { backgroundColor: "red", color: "white" },
+        });
+        navigate("/srdhouse");
       }
     };
 
@@ -128,7 +121,16 @@ export const useWebRTC = (
       }
       cleanupConnections();
     };
-  }, [roomId, userDetails, addNewClient, setClients, navigate]);
+  }, [
+    roomId,
+    userDetails,
+    addNewClient,
+    setClients,
+    navigate,
+    rooms,
+    roomsLoading,
+    roomsError,
+  ]);
 
   const setupSocketEventHandlers = () => {
     socket.current.on(ACTIONS.MUTE_INFO, ({ userId, isMute }) =>
