@@ -606,17 +606,6 @@ export const useWebRTC = (roomId, userDetails) => {
   };
 
   const raiseHand = () => {
-    const existingRequest = handRaiseRequests.find(
-      (request) => request.userId === userDetails._id
-    );
-
-    if (existingRequest) {
-      toast(
-        "You have already raised your hand. Please wait for the admin to approve or reject."
-      );
-      return;
-    }
-
     const newRequest = {
       peerId: socket.current.id,
       userId: userDetails._id,
