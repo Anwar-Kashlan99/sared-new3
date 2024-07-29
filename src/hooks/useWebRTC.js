@@ -116,7 +116,14 @@ export const useWebRTC = (roomId, userDetails) => {
       }
       cleanupConnections();
     };
-  }, [roomId, userDetails, addNewClient, setClients, navigate]);
+  }, [
+    roomId,
+    userDetails,
+    addNewClient,
+    setClients,
+    navigate,
+    checkRoomExists,
+  ]);
 
   const setupSocketEventHandlers = () => {
     socket.current.on(ACTIONS.MUTE_INFO, ({ userId, isMute }) =>
