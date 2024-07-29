@@ -7,13 +7,7 @@ import toast from "react-hot-toast";
 import freeice from "freeice";
 import { useGetAllRoomsQuery } from "../store/srdClubSlice";
 
-export const useWebRTC = (
-  roomId,
-  userDetails,
-  room,
-  roomLoading,
-  roomError
-) => {
+export const useWebRTC = (roomId, userDetails) => {
   const [clients, setClients] = useStateWithCallback([]);
   const audioElements = useRef({});
   const connections = useRef({});
@@ -113,7 +107,9 @@ export const useWebRTC = (
       }
     };
 
-    initChat();
+    if (!roomsLoading && !roomsError) {
+      initChat();
+    }
 
     return () => {
       if (localMediaStream.current) {
