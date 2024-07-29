@@ -120,6 +120,7 @@ export const useWebRTC = (roomId, userDetails) => {
     socket.current.on(ACTIONS.APPROVE_SPEAK, handleApproveSpeak);
     socket.current.on(ACTIONS.MESSAGE, handleMessageReceived);
     socket.current.on(ACTIONS.TALK, handleTalk);
+    socket.current.on(ACTIONS.RETURN_AUDIENCE, handleReturnAudience);
   };
 
   const cleanupConnections = () => {
@@ -451,6 +452,18 @@ export const useWebRTC = (roomId, userDetails) => {
     }
   };
 
+  const handleReturnAudience = () => {
+    // Mute local audio tracks
+    if (localMediaStream.current) {
+      localMediaStream.current.getTracks().forEach((track) => {
+        track.enabled = false;
+      });
+    }
+
+    // Display toast message
+    toast("You have been moved back to the audience.");
+  };
+
   // Helper function to add local tracks to all peer connections
   const addLocalTracksToPeers = () => {
     if (localMediaStream.current) {
@@ -637,6 +650,11 @@ export const useWebRTC = (roomId, userDetails) => {
     }
   };
 
+  const returnAudienceSpeak = (userId) => {
+    console.log(`return audience ${userId}`);
+    socket.current.emit("return_audience", { roomId, userId });
+  };
+
   return {
     clients,
     provideRef,
@@ -649,5 +667,6 @@ export const useWebRTC = (roomId, userDetails) => {
     rejectSpeakRequest,
     messages,
     sendMessage,
+    returnAudienceSpeak,
   };
 };

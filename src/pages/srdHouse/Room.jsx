@@ -78,6 +78,7 @@ const Room = () => {
     rejectSpeakRequest,
     messages,
     sendMessage,
+    returnAudienceSpeak,
   } = useWebRTC(roomId, userDetails);
 
   const currentUser = clients.find((client) => client._id === userDetails._id);
@@ -426,6 +427,56 @@ const Room = () => {
                       <MicOffOutlined sx={{ fontSize: "18px" }} />
                     </Box>
                   )}
+                  {isAdmin && (
+                    <IconButton
+                      id="fade-button"
+                      aria-controls={openAud ? "fade-menu-aud" : undefined}
+                      aria-haspopup="true"
+                      aria-expanded={openAud ? "true" : undefined}
+                      onClick={(event) => handleClickAud(event, client._id)}
+                      sx={{
+                        position: "absolute",
+                        right: "-40px",
+                        top: "-10px",
+                      }}
+                    >
+                      <MoreVert sx={{ color: "#f25f0c", cursor: "pointer" }} />
+                    </IconButton>
+                  )}
+                  <Menu
+                    id="fade-menu-aud"
+                    MenuListProps={{
+                      "aria-labelledby": "fade-button",
+                    }}
+                    anchorEl={anchorElAud?.anchor || null}
+                    open={openAud}
+                    onClose={handleCloseAud}
+                    TransitionComponent={Fade}
+                    sx={{ ml: "-8px", mt: "5px" }}
+                  >
+                    {isAdmin && anchorElAud && (
+                      <>
+                        <MenuItem
+                          sx={{ color: "red" }}
+                          onClick={() => {
+                            blockUser(anchorElAud.clientId);
+                            handleCloseAud();
+                          }}
+                        >
+                          Block the user
+                        </MenuItem>
+                        <MenuItem
+                          sx={{ color: "red" }}
+                          onClick={() => {
+                            returnAudienceSpeak(anchorElAud.clientId);
+                            handleCloseAud();
+                          }}
+                        >
+                          Return to audience
+                        </MenuItem>
+                      </>
+                    )}
+                  </Menu>
                 </Box>
                 <Typography
                   sx={{
