@@ -466,7 +466,6 @@ const Room = () => {
                           Block the user
                         </MenuItem>
                         <MenuItem
-                          sx={{ color: "red" }}
                           onClick={() => {
                             returnAudienceSpeak(anchorElAud.clientId);
                             handleCloseAud();

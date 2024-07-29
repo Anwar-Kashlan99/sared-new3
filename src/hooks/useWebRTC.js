@@ -460,6 +460,11 @@ export const useWebRTC = (roomId, userDetails) => {
       });
     }
 
+    // Remove the user's hand raise request
+    setHandRaiseRequests((requests) =>
+      requests.filter((req) => req.userId !== userDetails._id)
+    );
+
     // Display toast message
     toast("You have been moved back to the audience.");
   };
