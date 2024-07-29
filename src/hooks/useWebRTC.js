@@ -59,7 +59,7 @@ export const useWebRTC = (roomId, userDetails) => {
       return false;
     }
     return true;
-  }, [room, navigate]);
+  }, [room, isLoading, error, navigate]);
 
   const addNewClient = useCallback(
     (newClient, cb) => {
@@ -152,9 +152,10 @@ export const useWebRTC = (roomId, userDetails) => {
     socket.current.on(ACTIONS.UNMUTE, ({ userId }) =>
       handleSetMute(false, userId)
     );
-    socket.current.on(ACTIONS.ROOM_CLIENTS, ({ roomId, clients }) =>
-      setClients(clients)
-    );
+    socket.current.on(ACTIONS.ROOM_CLIENTS, ({ roomId, clients }) => {
+      console.log("ROOM_CLIENTS event received:", { roomId, clients });
+      setClients(clients);
+    });
     socket.current.on("ROOM_ENDED_REDIRECT", handleRoomEnded);
     socket.current.on(ACTIONS.RAISE_HAND, handleRaiseHand);
     socket.current.on(ACTIONS.REJECT_SPEAK, handleRejectSpeak);
