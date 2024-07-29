@@ -714,75 +714,71 @@ const Room = () => {
                           <MicOutlined sx={{ fontSize: "28px" }} />
                         </IconButton>
                       )}
-                      {isAdmin &&
-                        !isAudience &&
-                        !isSpeaker(
-                          <Button
-                            variant="outlined"
-                            sx={{
-                              background: "#f5f5f5",
-                              outline: "none",
-                              display: "flex",
-                              alignItems: "center",
-                              padding: "0.5rem 0.8rem",
+                      {isAdmin && !isAudience && !isSpeaker && (
+                        <Button
+                          variant="outlined"
+                          sx={{
+                            background: "#f5f5f5",
+                            outline: "none",
+                            display: "flex",
+                            alignItems: "center",
+                            padding: "0.5rem 0.8rem",
+                            border: "none",
+                            borderRadius: "20px",
+                            transition: "all 0.3s ease-in-out",
+                            "&:hover": {
                               border: "none",
-                              borderRadius: "20px",
-                              transition: "all 0.3s ease-in-out",
-                              "&:hover": {
-                                border: "none",
-                              },
+                            },
+                          }}
+                          onClick={handleRaiseHandDialogOpen}
+                        >
+                          <img
+                            alt="hand"
+                            src={hand}
+                            style={{ width: "28px" }}
+                          />
+                          <Typography
+                            sx={{
+                              fontWeight: "bold",
+                              ml: "7px",
+                              fontSize: "12px",
                             }}
-                            onClick={handleRaiseHandDialogOpen}
                           >
-                            <img
-                              alt="hand"
-                              src={hand}
-                              style={{ width: "28px" }}
-                            />
-                            <Typography
-                              sx={{
-                                fontWeight: "bold",
-                                ml: "7px",
-                                fontSize: "12px",
-                              }}
-                            >
-                              {t("Requests")}
-                            </Typography>
-                          </Button>
-                        )}
+                            {t("Requests")}
+                          </Typography>
+                        </Button>
+                      )}
 
-                      {isAudience &&
-                        !isAdmin &&
-                        !isSpeaker(
-                          <Button
-                            variant="outlined"
-                            sx={{
-                              background: isHandRaised ? "#eb7635" : "#f5f5f5",
-                              outline: "none",
-                              display: "flex",
-                              minWidth: "20px",
-                              alignItems: "center",
-                              padding: "0.5rem 0.7rem",
+                      {isAudience && !isAdmin && !isSpeaker && (
+                        <Button
+                          variant="outlined"
+                          sx={{
+                            background: isHandRaised ? "#eb7635" : "#f5f5f5",
+                            outline: "none",
+                            display: "flex",
+                            minWidth: "20px",
+                            alignItems: "center",
+                            padding: "0.5rem 0.7rem",
+                            border: "none",
+                            borderRadius: "20px",
+                            transition: "all 0.3s ease-in-out",
+                            "&:hover": {
                               border: "none",
-                              borderRadius: "20px",
-                              transition: "all 0.3s ease-in-out",
-                              "&:hover": {
-                                border: "none",
-                              },
-                              "&.Mui-disabled": {
-                                border: "none",
-                              },
-                            }}
-                            disabled={isHandRaised}
-                            onClick={raiseHand}
-                          >
-                            <img
-                              alt="hand"
-                              src={hand}
-                              style={{ width: "28px" }}
-                            />
-                          </Button>
-                        )}
+                            },
+                            "&.Mui-disabled": {
+                              border: "none",
+                            },
+                          }}
+                          disabled={isHandRaised}
+                          onClick={raiseHand}
+                        >
+                          <img
+                            alt="hand"
+                            src={hand}
+                            style={{ width: "28px" }}
+                          />
+                        </Button>
+                      )}
 
                       <IconButton
                         id="fade-button"
