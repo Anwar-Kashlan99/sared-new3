@@ -20,11 +20,12 @@ export const useWebRTC = (roomId, userDetails) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const monitoringInterval = useRef(null);
 
-  const { data: rooms } = useGetAllRoomsQuery({ key: "value" });
+  const { data: rooms, isLoading } = useGetAllRoomsQuery({ key: "value" });
 
   const checkRoomExists = useCallback(
     (roomId) => {
       const roomExists = rooms.some((room) => room._id === roomId);
+      console.log("Room exists:", roomExists);
       if (!roomExists) {
         toast("This room does not exist or has been canceled.", {
           icon: "❌",
@@ -41,6 +42,11 @@ export const useWebRTC = (roomId, userDetails) => {
     },
     [rooms, navigate]
   );
+  useEffect(() => {
+    if (rooms.length > 0 && roomId) {
+      checkRoomExists(roomId);
+    }
+  }, [rooms, roomId, checkRoomExists]);
 
   const addNewClient = useCallback(
     (newClient, cb) => {
