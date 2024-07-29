@@ -45,10 +45,6 @@ export const useWebRTC = (
     clientsRef.current = clients;
   }, [clients]);
 
-  const { data: rooms } = useGetAllRoomsQuery({
-    key: "value",
-  });
-
   useEffect(() => {
     const initChat = async () => {
       if (socket.current) {
@@ -65,8 +61,8 @@ export const useWebRTC = (
       setupSocketEventHandlers();
 
       await captureMedia();
-
-      if (rooms.some((room) => room._Id === roomId)) {
+      console.log(room._id);
+      if (room._id) {
         await captureMedia();
 
         if (userDetails && userDetails._id) {
@@ -119,7 +115,7 @@ export const useWebRTC = (
       }
       cleanupConnections();
     };
-  }, [roomId, userDetails, addNewClient, setClients, navigate, rooms]);
+  }, [roomId, userDetails, addNewClient, setClients, navigate]);
 
   const setupSocketEventHandlers = () => {
     socket.current.on(ACTIONS.MUTE_INFO, ({ userId, isMute }) =>
