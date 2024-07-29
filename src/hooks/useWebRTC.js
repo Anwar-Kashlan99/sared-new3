@@ -32,7 +32,9 @@ export const useWebRTC = (roomId, userDetails) => {
           color: "#fff",
         },
       });
-      refetch(); // Optionally refetch the list of rooms
+      navigate("/srdhouse");
+      refetch();
+      console.log(roomExists);
       return false;
     }
     return true;
