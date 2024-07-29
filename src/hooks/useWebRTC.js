@@ -7,7 +7,13 @@ import toast from "react-hot-toast";
 import freeice from "freeice";
 import { useGetAllRoomsQuery } from "../store/srdClubSlice";
 
-export const useWebRTC = (roomId, userDetails) => {
+export const useWebRTC = (
+  roomId,
+  userDetails,
+  room,
+  roomLoading,
+  roomError
+) => {
   const [clients, setClients] = useStateWithCallback([]);
   const audioElements = useRef({});
   const connections = useRef({});
@@ -39,11 +45,7 @@ export const useWebRTC = (roomId, userDetails) => {
     clientsRef.current = clients;
   }, [clients]);
 
-  const {
-    data: rooms,
-    error: roomsError,
-    isLoading: roomsLoading,
-  } = useGetAllRoomsQuery({
+  const { data: rooms } = useGetAllRoomsQuery({
     key: "value",
   });
 
@@ -107,7 +109,7 @@ export const useWebRTC = (roomId, userDetails) => {
       }
     };
 
-    if (!roomsLoading && !roomsError) {
+    if (!roomLoading && !roomError) {
       initChat();
     }
 
@@ -117,16 +119,7 @@ export const useWebRTC = (roomId, userDetails) => {
       }
       cleanupConnections();
     };
-  }, [
-    roomId,
-    userDetails,
-    addNewClient,
-    setClients,
-    navigate,
-    rooms,
-    roomsLoading,
-    roomsError,
-  ]);
+  }, [roomId, userDetails, addNewClient, setClients, navigate, rooms]);
 
   const setupSocketEventHandlers = () => {
     socket.current.on(ACTIONS.MUTE_INFO, ({ userId, isMute }) =>
