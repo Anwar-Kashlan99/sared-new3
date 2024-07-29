@@ -61,48 +61,48 @@ export const useWebRTC = (
       setupSocketEventHandlers();
 
       await captureMedia();
-      console.log(room._id);
-      if (room._id) {
-        await captureMedia();
+      console.log("roomsss" + room);
+      // if (room._id) {
+      await captureMedia();
 
-        if (userDetails && userDetails._id) {
-          addNewClient({ ...userDetails, muted: true }, () => {
-            const localElement = audioElements.current[userDetails._id];
-            if (localElement) {
-              localElement.volume = 0;
-              localElement.srcObject = localMediaStream.current;
-            }
+      if (userDetails && userDetails._id) {
+        addNewClient({ ...userDetails, muted: true }, () => {
+          const localElement = audioElements.current[userDetails._id];
+          if (localElement) {
+            localElement.volume = 0;
+            localElement.srcObject = localMediaStream.current;
+          }
 
-            socket.current.emit(ACTIONS.JOIN, { roomId, user: userDetails });
-          });
-
-          socket.current.on(ACTIONS.JOIN, ({ user, isAdmin }) => {
-            const updatedUserDetails = { ...user, isAdmin };
-            addNewClient(updatedUserDetails, () => {
-              const existingClient = clientsRef.current.find(
-                (client) => client._id === user._id
-              );
-              if (!existingClient) {
-                console.log(
-                  `User ${user._id} joined as ${isAdmin ? "admin" : "audience"}`
-                );
-              }
-            });
-          });
-
-          startMonitoringAudioLevels();
-        } else {
-          console.error("Invalid userDetails");
-        }
-      } else {
-        console.error("Room does not exist or has been cancelled");
-        toast("This room does not exist or has been cancelled", {
-          duration: 4000,
-          position: "center",
-          style: { backgroundColor: "red", color: "white" },
+          socket.current.emit(ACTIONS.JOIN, { roomId, user: userDetails });
         });
-        navigate("/srdhouse");
+
+        socket.current.on(ACTIONS.JOIN, ({ user, isAdmin }) => {
+          const updatedUserDetails = { ...user, isAdmin };
+          addNewClient(updatedUserDetails, () => {
+            const existingClient = clientsRef.current.find(
+              (client) => client._id === user._id
+            );
+            if (!existingClient) {
+              console.log(
+                `User ${user._id} joined as ${isAdmin ? "admin" : "audience"}`
+              );
+            }
+          });
+        });
+
+        startMonitoringAudioLevels();
+      } else {
+        console.error("Invalid userDetails");
       }
+      // } else {
+      //   console.error("Room does not exist or has been cancelled");
+      //   toast("This room does not exist or has been cancelled", {
+      //     duration: 4000,
+      //     position: "center",
+      //     style: { backgroundColor: "red", color: "white" },
+      //   });
+      //   navigate("/srdhouse");
+      // }
     };
 
     initChat();
