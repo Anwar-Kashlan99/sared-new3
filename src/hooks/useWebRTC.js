@@ -5,15 +5,8 @@ import { useStateWithCallback } from "./useStateWithCallback";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import freeice from "freeice";
-import { useGetAllRoomsQuery } from "../store/srdClubSlice";
 
-export const useWebRTC = (
-  roomId,
-  userDetails,
-  room,
-  roomLoading,
-  roomError
-) => {
+export const useWebRTC = (roomId, userDetails) => {
   const [clients, setClients] = useStateWithCallback([]);
   const audioElements = useRef({});
   const connections = useRef({});
@@ -61,8 +54,7 @@ export const useWebRTC = (
       setupSocketEventHandlers();
 
       await captureMedia();
-      console.log("roomsss" + room);
-      // if (room._id) {
+
       await captureMedia();
 
       if (userDetails && userDetails._id) {
@@ -94,15 +86,6 @@ export const useWebRTC = (
       } else {
         console.error("Invalid userDetails");
       }
-      // } else {
-      //   console.error("Room does not exist or has been cancelled");
-      //   toast("This room does not exist or has been cancelled", {
-      //     duration: 4000,
-      //     position: "center",
-      //     style: { backgroundColor: "red", color: "white" },
-      //   });
-      //   navigate("/srdhouse");
-      // }
     };
 
     initChat();
