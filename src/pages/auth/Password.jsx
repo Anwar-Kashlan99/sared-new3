@@ -1,7 +1,7 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import avatar from "../../assets/profile.png";
-import { Box, Button, Typography, useMediaQuery } from "@mui/material";
+import { Avatar, Box, Button, Typography, useMediaQuery } from "@mui/material";
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import * as Yup from "yup";
 import toast, { Toaster } from "react-hot-toast";
@@ -111,8 +111,7 @@ export default function Password() {
               <Typography
                 sx={{ fontWeight: "bold", fontSize: "20px", color: "#707070" }}
               >
-                {t("Hello")}
-                {userDetails?.username}
+                {t("Hello")} {userDetails?.username}
               </Typography>
             </Box>
             <Formik
@@ -130,15 +129,17 @@ export default function Password() {
                 <Box
                   sx={{
                     width: "175px",
+                    height: "175px",
                     borderRadius: "50%",
-                    mb: "25px",
+                    mb: "35px",
                   }}
                 >
-                  <img
+                  <Avatar
                     src={userDetails?.profile || avatar}
                     alt="avatar"
                     style={{
                       width: "100%",
+                      height: "100%",
                       objectFit: "cover",
                       backdropFilter: "blur(7.1px)",
                     }}

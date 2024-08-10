@@ -70,7 +70,7 @@ const userApi = createApi({
             dispatch(setUserToken(data.token));
           }
           dispatch(userApi.util.invalidateTags(["User"]));
-          dispatch(userApi.endpoints.generateOTP.initiate(arg.email));
+          // dispatch(userApi.endpoints.generateOTP.initiate(arg.email));
           toast.success("User registered successfully!");
         } catch (error) {
           toast.error("Failed to register user.");

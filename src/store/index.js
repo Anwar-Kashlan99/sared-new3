@@ -1,11 +1,11 @@
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
 
-import blogReducer from "./blogSlice";
 import podcastReducer from "./podcastSlice";
 import userApi from "./authSlice";
 import { roomApi } from "./srdClubSlice";
 import userReducer from "./userSlice";
 import storage from "redux-persist/lib/storage";
+import { blogApi } from "./blogSlice";
 import {
   persistStore,
   persistReducer,
@@ -25,10 +25,10 @@ const persistConfig = {
 // Combine reducers
 const rootReducer = combineReducers({
   user: userReducer,
-  blog: blogReducer,
   podcast: podcastReducer,
   [userApi.reducerPath]: userApi.reducer,
   [roomApi.reducerPath]: roomApi.reducer,
+  [blogApi.reducerPath]: blogApi.reducer,
 });
 
 // Persisted reducer
@@ -44,7 +44,8 @@ export const store = configureStore({
       },
     })
       .concat(userApi.middleware)
-      .concat(roomApi.middleware),
+      .concat(roomApi.middleware)
+      .concat(blogApi.middleware),
 });
 
 // Persistor for the store

@@ -39,17 +39,22 @@ import StarterKit from "@tiptap/starter-kit";
 import EditorMenuBar from "./EditorMenuBar";
 import TextAlign from "@tiptap/extension-text-align";
 import Link from "@tiptap/extension-link";
-import { editBlog } from "../../store/blogSlice";
+import { editBlog, useGetBlogQuery } from "../../store/blogSlice";
 import { useDispatch } from "react-redux";
 import blogimg from "../../assets/data/blog/mohammed habash.jpg";
 import blogeCover from "../../assets/data/blog/mohammed habash cover.jpg";
 
 const BlogDetail = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const { id: blogId } = useParams();
   const { t } = useTranslation();
-  const dispatch = useDispatch();
+  const {
+    data: blog,
+    isError: roomError,
+    isLoading: roomLoading,
+  } = useGetBlogQuery(blogId);
 
-  const [blog, setBlog] = useState(null);
+  console.log(blog);
 
   // Save blog
 
@@ -89,12 +94,12 @@ const BlogDetail = () => {
   const [titleError, setTitleError] = useState("");
   const [tempTitle, setTempTitle] = useState(title);
 
-  const [content, setContent] = useState(blog?.content);
+  // const [content, setContent] = useState(blog?.desription);
   const [contentError, setContentError] = useState("");
-  const [tempContent, setTempContent] = useState(content);
+  // const [tempContent, setTempContent] = useState(content);
 
-  const [selectedImage, setSelectedImage] = useState(blog?.img || blogeCover);
-  const [temporaryImage, setTemporaryImage] = useState(blog?.img || blogeCover);
+  // const [selectedImage, setSelectedImage] = useState(blog?.img || blogeCover);
+  // const [temporaryImage, setTemporaryImage] = useState(blog?.img || blogeCover);
 
   const handleIsEditable = (bool) => {
     setIsEditable(bool);
@@ -107,7 +112,7 @@ const BlogDetail = () => {
 
   const handleOnChangeContent = ({ editor }) => {
     if (!editor.isEmpty) setContentError("");
-    setContent(editor.getHTML());
+    // setContent(editor.getHTML());
   };
 
   const editor = useEditor({
@@ -127,9 +132,7 @@ const BlogDetail = () => {
         class: "editor",
       },
     },
-    // content: content,
-    content:
-      "خلينا نتفق بداية أن التسويق نشاط موجود من قديم الزمان، من حضارات الفراعنة وقبلها، والمبادئ العامة ما اختلفت عن اليوم، واستخدمه الكتيرين من شخصيات وحضارات وحتى جهات غير ربحية.المفهوم الواسع للتسويق يعني الاتصال مع الجمهور للتأثير فيه لعمل سلوك ما.فينك تطبقه على كتير مجالات حتى غير ربحية مثل فريق كرة سلة يأثر بالجمهور ليشجعه (حتى لو ما حضر بالملعب) أو ميتم أطفال يأثر بالجمهور ليتبرع أو يرسم البسمة على وجه الأطفال.لكن هاد مابيعني أن هالجهات ما تتعلم أو تطبق قوانين التسويق العلمية الصحيحة، لأن بدونها بكون نشاطها فوضوي عشوائي غير مدروس لن يحقق لها النتيجة المطلوبة.واليوم السوشيل ميديا ساعدت كتير جهات تسوق أنشطتها غير الربحية بفعالية أكبر، ومع قرب انتهاء شهر رمضان بترفع الجمعيات الخيرية وتيرة رسائلها التسويقية للتبرع ودفع الزكاة عن طريقها.لو كنت مسؤول عن صنع المحتوى التسويقي بإحدى المبادرات غير الربحية الخيرية (مهما كان نشاطها)، تواصل معي عبر رسائل الصفحة لتحصل على الدعم المناسب لشغلك",
+    content: blog?.desription,
     editable: isEditable,
   });
 
@@ -137,16 +140,16 @@ const BlogDetail = () => {
     setAnchorEl(null);
     handleIsEditable(!isEditable);
     setTempTitle(title);
-    setTempContent(editor?.getHTML() || "");
-    setTemporaryImage(selectedImage);
+    // setTempContent(editor?.getHTML() || "");
+    // setTemporaryImage(selectedImage);
   };
 
   const handleCancelEdit = () => {
     handleIsEditable(!isEditable);
     setTitle(tempTitle);
-    setSelectedImage(temporaryImage);
-    editor?.commands.setContent(tempContent);
-    setSelectedImage(temporaryImage);
+    // setSelectedImage(temporaryImage);
+    // editor?.commands.setContent(tempContent);
+    // setSelectedImage(temporaryImage);
   };
 
   const [anchorEl, setAnchorEl] = useState(null);
@@ -165,8 +168,8 @@ const BlogDetail = () => {
 
     reader.onload = () => {
       const image = reader.result;
-      setSelectedImage(image);
-      setTemporaryImage(image);
+      // setSelectedImage(image);
+      // setTemporaryImage(image);
     };
 
     if (file) {
@@ -294,8 +297,8 @@ const BlogDetail = () => {
                   onChange={handleImageChange}
                 />
                 <img
-                  alt={blog?.title || "blogImg"}
-                  src={selectedImage}
+                  alt={blog?.name || "blogImg"}
+                  // src={selectedImage}
                   style={{
                     width: "100%",
                     objectFit: "cover",
@@ -323,8 +326,8 @@ const BlogDetail = () => {
             ) : (
               <>
                 <img
-                  alt={blog?.title || "blogImg"}
-                  src={selectedImage}
+                  alt={blog?.name || "blogImg"}
+                  // src={selectedImage}
                   style={{
                     width: "100%",
                     objectFit: "cover",
@@ -371,7 +374,7 @@ const BlogDetail = () => {
                   mb: "25px",
                 }}
               >
-                {blog?.title || "التسويق غير الربحي"}
+                {blog?.name}
               </Typography>
             </Box>
           )}
@@ -500,7 +503,7 @@ const BlogDetail = () => {
             )}
             <EditorContent editor={editor} id="blogTextContent" />
 
-            {/* {contentError && <p className="mt-1 text-wh-900">{contentError}</p>}*/}
+            {contentError && <p className="mt-1 text-wh-900">{contentError}</p>}
           </Box>
           {isEditable && (
             <Box

@@ -14,8 +14,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BlogCard from "./BlogCard";
 import { useTranslation } from "react-i18next";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchBlogs } from "../../store/blogSlice";
+import { useGetAllBlogsQuery } from "../../store/blogSlice";
 
 const bolgs = [
   {
@@ -123,16 +122,11 @@ const BlogsList = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  // const dispatch = useDispatch();
-  // const blogs = useSelector((state) => state.blog.blogs);
-  // const blogStatus = useSelector((state) => state.blog.status);
-  // const blogError = useSelector((state) => state.blog.error);
+  const { data, error, isLoading, refetch } = useGetAllBlogsQuery({
+    key: "value",
+  });
 
-  // useEffect(() => {
-  //   if (blogStatus === "idle") {
-  //     dispatch(fetchBlogs());
-  //   }
-  // }, [blogStatus, dispatch]);
+  console.log(data);
 
   const handleCategoryFilter = (category) => {
     setFilterCategory(category);

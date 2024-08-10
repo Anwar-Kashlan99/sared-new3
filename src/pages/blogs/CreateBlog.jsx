@@ -17,36 +17,34 @@ import TextAlign from "@tiptap/extension-text-align";
 import Link from "@tiptap/extension-link";
 import { Fragment } from "react";
 import toast from "react-hot-toast";
-import { useDispatch, useSelector } from "react-redux";
-import { createBlog } from "../../store/blogSlice";
+import { useCreateBlogMutation } from "../../store/blogSlice";
+import { useNavigate } from "react-router-dom";
 
 const validationSchema = Yup.object().shape({
-  title: Yup.string().required("Title is required"),
-  category: Yup.string().required("Category is required"),
-  instalink: Yup.string(),
-  facebooklink: Yup.string(),
-  xlink: Yup.string(),
-  gmillink: Yup.string(),
-  telegramlink: Yup.string(),
+  name: Yup.string().required("Title is required"),
+  // category: Yup.string().required("Category is required"),
+  // instalink: Yup.string(),
+  // facebooklink: Yup.string(),
+  // xlink: Yup.string(),
+  // gmillink: Yup.string(),
+  // telegramlink: Yup.string(),
 });
 
 const initialValues = {
-  title: "",
-  category: "technology",
-  instalink: "",
-  facebooklink: "",
-  xlink: "",
-  gmillink: "",
-  telegramlink: "",
-  image: null,
+  name: "",
+  // category: "technology",
+  // instalink: "",
+  // facebooklink: "",
+  // xlink: "",
+  // gmillink: "",
+  // telegramlink: "",
+  // image: null,
 };
 
 const CreateBlog = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const isBigScreen = useMediaQuery("(min-width: 1600px)");
 
-  const dispatch = useDispatch();
-  const { status, error } = useSelector((state) => state.blog);
   const { t } = useTranslation();
 
   const categories = [
@@ -68,6 +66,9 @@ const CreateBlog = () => {
     { id: "other", name: t("Other") },
   ];
 
+  const [createBlog, { isLoading }] = useCreateBlogMutation();
+  const navigate = useNavigate();
+
   const handleSubmit = async (values, { setSubmitting, setErrors }) => {
     const contentHTML = editor.getHTML();
     if (!contentHTML || contentHTML.trim() === "<p></p>") {
@@ -75,21 +76,19 @@ const CreateBlog = () => {
       setSubmitting(false);
       return;
     }
+    const { name } = values;
 
-    const blogData = { ...values, content: contentHTML };
+    const blogData = { name, desription: contentHTML };
 
     try {
-      await dispatch(createBlog(blogData)).unwrap();
-      setErrors({});
-    } catch (error) {
-      if (error.data && error.data.errors) {
-        setErrors(error.data.errors);
-      } else {
-        setErrors({ _error: "An error occurred while creating the blog." });
-      }
+      const result = await createBlog(blogData);
+      navigate(`/blog/${result.data._id}`);
+      toast.success("Blog created successfully!");
+    } catch (e) {
+      toast.error("Failed to create blog");
+      setSubmitting(false);
+      console.error("Failed to create room:", e);
     }
-
-    setSubmitting(false);
   };
 
   const editor = useEditor({
@@ -141,8 +140,9 @@ const CreateBlog = () => {
               <Box
                 sx={{
                   display: "flex",
-                  justifyContent: isMobile ? "center" : "space-between",
+                  justifyContent: "center",
                   alignItems: "center",
+                  columnGap: "60px",
                   mb: isMobile ? undefined : "20px",
                   flexWrap: "wrap",
                 }}
@@ -268,8 +268,8 @@ const CreateBlog = () => {
                     <Field
                       placeholder={t("Title")}
                       type="text"
-                      id="title"
-                      name="title"
+                      id="name"
+                      name="name"
                       style={{
                         width: isBigScreen
                           ? "500px"
@@ -294,7 +294,7 @@ const CreateBlog = () => {
                     />
                     <ErrorMessage
                       style={{ color: "red" }}
-                      name="title"
+                      name="name"
                       component="div"
                     />
                   </Box>

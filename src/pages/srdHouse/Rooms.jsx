@@ -5,8 +5,6 @@ import RoomDetailModule from "./RoomDetailModule";
 import RoomsCard from "./RoomsCard";
 import { useTranslation } from "react-i18next";
 import { providesTags, useGetAllRoomsQuery } from "../../store/srdClubSlice";
-import socketInit from "../../socket";
-import { ACTIONS } from "../../actions";
 
 const Rooms = () => {
   const [searchValue, setSearchValue] = useState("");

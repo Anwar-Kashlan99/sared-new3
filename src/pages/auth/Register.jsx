@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import avatar from "../../assets/profile.png";
-import { Box, Button, Typography, useMediaQuery } from "@mui/material";
+import { Avatar, Box, Button, Typography, useMediaQuery } from "@mui/material";
 import { Field, Form, Formik, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import toast, { Toaster } from "react-hot-toast";
@@ -33,14 +33,14 @@ export default function Register() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [registerUserWithOTP, { isLoading }] = useRegisterUserWithOTPMutation();
-  const [file, setFile] = useState();
+  const [profile, setProfile] = useState();
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFile(reader.result);
+        setProfile(reader.result);
       };
       reader.readAsDataURL(file);
     }
@@ -50,13 +50,15 @@ export default function Register() {
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   const handleSubmit = async (values, { setSubmitting }) => {
+    console.log(values.profile);
     try {
-      const formValues = { ...values, profile: file };
+      const formValues = { ...values, profile };
       await registerUserWithOTP(formValues).unwrap();
-      toast.success(t("Registration successful! OTP sent to your email."));
-      navigate("/verify-otp", {
-        state: { email: values.email, operationContext: "register" },
-      });
+      // toast.success(t("Registration successful! OTP sent to your email."));
+      // navigate("/verify-otp", {
+      //   state: { email: values.email, operationContext: "register" },
+      // });
+      navigate("/login");
     } catch (error) {
       toast.error(
         t("Could not register. ") + (error.data?.message || t("Unknown error"))
@@ -146,9 +148,9 @@ export default function Register() {
                       mb: "25px",
                     }}
                   >
-                    <label htmlFor="file">
-                      <img
-                        src={file || avatar}
+                    <label htmlFor="profile">
+                      <Avatar
+                        src={profile || avatar}
                         style={{
                           width: "100%",
                           height: "100%",
@@ -162,10 +164,10 @@ export default function Register() {
                     <input
                       onChange={(event) => {
                         handleFileChange(event);
-                        setFieldValue("file", event.currentTarget.files[0]);
+                        setFieldValue("profile", event.currentTarget.files[0]);
                       }}
-                      id="file"
-                      name="file"
+                      id="profile"
+                      name="profile"
                       type="file"
                       accept="image/*"
                       style={{ display: "none" }}

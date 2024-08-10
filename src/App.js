@@ -235,7 +235,7 @@ function App() {
               }
             />
             <Route
-              path="/blog"
+              path="/blog/:id"
               element={
                 <PrivateRoute>
                   <BlogDetail />

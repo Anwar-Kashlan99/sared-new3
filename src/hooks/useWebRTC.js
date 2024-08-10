@@ -55,8 +55,6 @@ export const useWebRTC = (roomId, userDetails) => {
 
       await captureMedia();
 
-      await captureMedia();
-
       if (userDetails && userDetails._id) {
         addNewClient({ ...userDetails, muted: true }, () => {
           const localElement = audioElements.current[userDetails._id];
@@ -93,6 +91,7 @@ export const useWebRTC = (roomId, userDetails) => {
     return () => {
       if (localMediaStream.current) {
         localMediaStream.current.getTracks().forEach((track) => track.stop());
+        localMediaStream.current = null; // Explicitly clear the media stream reference
       }
       cleanupConnections();
     };
@@ -163,7 +162,7 @@ export const useWebRTC = (roomId, userDetails) => {
 
   const captureMedia = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      alert(
+      toast.error(
         "Your browser does not support WebRTC. Please use a modern browser such as Chrome, Firefox, or Edge."
       );
       return;
@@ -181,7 +180,7 @@ export const useWebRTC = (roomId, userDetails) => {
       // Add local tracks to all existing peer connections
       addLocalTracksToPeers();
     } catch (error) {
-      alert(
+      toast.error(
         "Error capturing media. Please ensure your browser has permission to access the microphone."
       );
       console.error("Error capturing media:", error);
@@ -546,7 +545,7 @@ export const useWebRTC = (roomId, userDetails) => {
           );
         }
       }
-    }, 200);
+    }, 300);
   };
 
   const getAudioLevel = async () => {
