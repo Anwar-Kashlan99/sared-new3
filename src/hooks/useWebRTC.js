@@ -326,6 +326,7 @@ export const useWebRTC = (roomId, userDetails) => {
     }
 
     if (createOffer) {
+      console.log(createOffer);
       try {
         const offer = await connection.createOffer();
         await connection.setLocalDescription(offer);
