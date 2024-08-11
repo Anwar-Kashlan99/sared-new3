@@ -45,7 +45,6 @@ export const roomApi = createApi({
     // You can add more endpoints here such as fetching rooms, updating, etc.
   }),
 });
-
 // Export hooks for use in components
 export const { useCreateRoomMutation, useGetAllRoomsQuery, useGetRoomQuery } =
   roomApi;

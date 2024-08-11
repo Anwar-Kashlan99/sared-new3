@@ -29,10 +29,15 @@ const AddRoomModal = ({ onClose }) => {
   const handleCreateRoom = async () => {
     if (!topic) return;
     try {
-      const result = await createRoom({ topic, roomType });
-      navigate(`/srdhouse/room/${result.data._id}`); // Navigate to the new room
-      onClose();
-      toast.success("Room created successfully!");
+      const result = await createRoom({ topic, roomType }).unwrap(); // Unwraps and handles errors more gracefully
+      if (result && result._id) {
+        navigate(`/srdhouse/room/${result._id}`); // Navigate to the new room
+        toast.success("Room created successfully!");
+        onClose();
+      } else {
+        toast.error("Failed to create room: No room ID received.");
+        console.error("Failed to create room: No room ID received.", result);
+      }
     } catch (error) {
       toast.error("Failed to create room");
       console.error("Failed to create room:", error);
