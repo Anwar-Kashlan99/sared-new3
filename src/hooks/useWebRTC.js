@@ -324,9 +324,8 @@ export const useWebRTC = (roomId, userDetails) => {
         connection.addTrack(track, localMediaStream.current);
       });
     }
-
+    console.log(createOffer);
     if (createOffer) {
-      console.log(createOffer);
       try {
         const offer = await connection.createOffer();
         await connection.setLocalDescription(offer);
