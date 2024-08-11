@@ -30,6 +30,7 @@ const AddRoomModal = ({ onClose }) => {
     if (!topic) return;
     try {
       const result = await createRoom({ topic, roomType }).unwrap(); // Unwraps and handles errors more gracefully
+      console.log("Room creation result:", result); // Debug log
       if (result && result._id) {
         navigate(`/srdhouse/room/${result._id}`); // Navigate to the new room
         toast.success("Room created successfully!");
