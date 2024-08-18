@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from "react";
-import { ACTIONS } from "../actions";
+import { ACTIONS } from "../actionsSrdHouse";
 import socketInit from "../socket";
 import { useStateWithCallback } from "./useStateWithCallback";
 import { useNavigate } from "react-router-dom";
@@ -325,18 +325,18 @@ export const useWebRTC = (roomId, userDetails) => {
       });
     }
     console.log(createOffer);
-    if (createOffer) {
-      try {
-        const offer = await connection.createOffer();
-        await connection.setLocalDescription(offer);
-        socket.current.emit(ACTIONS.RELAY_SDP, {
-          peerId,
-          sessionDescription: offer,
-        });
-      } catch (error) {
-        console.error("Error creating offer: ", error);
-      }
+    // if (createOffer) {
+    try {
+      const offer = await connection.createOffer();
+      await connection.setLocalDescription(offer);
+      socket.current.emit(ACTIONS.RELAY_SDP, {
+        peerId,
+        sessionDescription: offer,
+      });
+    } catch (error) {
+      console.error("Error creating offer: ", error);
     }
+    // }
   };
 
   const handleRemovePeer = ({ peerId, userId }) => {
