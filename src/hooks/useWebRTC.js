@@ -48,6 +48,7 @@ export const useWebRTC = (roomId, userDetails) => {
 
       if (!socket.current) {
         console.error("Socket initialization failed");
+        setTimeout(initChat, 3000);
         return;
       }
 
@@ -59,7 +60,7 @@ export const useWebRTC = (roomId, userDetails) => {
         addNewClient({ ...userDetails, muted: true }, () => {
           const localElement = audioElements.current[userDetails._id];
           if (localElement) {
-            localElement.volume = 0;
+            // localElement.volume = 0;
             localElement.srcObject = localMediaStream.current;
           }
 
@@ -95,7 +96,7 @@ export const useWebRTC = (roomId, userDetails) => {
       }
       cleanupConnections();
     };
-  }, [roomId, userDetails, addNewClient, setClients, navigate]);
+  }, [userDetails, addNewClient, setClients, navigate]);
 
   const setupSocketEventHandlers = () => {
     socket.current.on(ACTIONS.MUTE_INFO, ({ userId, isMute }) =>
@@ -128,37 +129,50 @@ export const useWebRTC = (roomId, userDetails) => {
     socket.current.on(ACTIONS.ERROR, handleErrorRoom);
   };
 
-  const cleanupConnections = () => {
-    for (let peerId in connections.current) {
-      if (connections.current[peerId]) {
-        connections.current[peerId].connection.close();
-        delete connections.current[peerId];
-      }
-    }
-    for (let userId in audioElements.current) {
+  const cleanupConnections = useCallback(() => {
+    // for (let peerId in connections.current) {
+    //   if (connections.current[peerId]) {
+    //     connections.current[peerId].connection.close();
+    //     delete connections.current[peerId];
+    //   }
+    // }
+    // for (let userId in audioElements.current) {
+    //   delete audioElements.current[userId];
+    // }
+    Object.keys(connections.current).forEach((peerId) => {
+      connections.current[peerId].connection.close();
+      delete connections.current[peerId];
+    });
+    Object.keys(audioElements.current).forEach((userId) => {
       delete audioElements.current[userId];
-    }
+    });
+    // if (socket.current) {
+    //   socket.current.off(ACTIONS.MUTE_INFO);
+    //   socket.current.off(ACTIONS.ADD_PEER);
+    //   socket.current.off(ACTIONS.REMOVE_PEER);
+    //   socket.current.off(ACTIONS.ICE_CANDIDATE);
+    //   socket.current.off(ACTIONS.SESSION_DESCRIPTION);
+    //   socket.current.off(ACTIONS.RAISE_HAND_DUPLICATE);
+    //   socket.current.off(ACTIONS.MUTE);
+    //   socket.current.off(ACTIONS.UNMUTE);
+    //   socket.current.off(ACTIONS.MESSAGE);
+    //   socket.current.off(ACTIONS.TALK);
+    //   socket.current.emit(ACTIONS.LEAVE, { roomId });
+    //   socket.current = null;
+    //   console.log("cleanup Connections");
+    // }
     if (socket.current) {
-      socket.current.off(ACTIONS.MUTE_INFO);
-      socket.current.off(ACTIONS.ADD_PEER);
-      socket.current.off(ACTIONS.REMOVE_PEER);
-      socket.current.off(ACTIONS.ICE_CANDIDATE);
-      socket.current.off(ACTIONS.SESSION_DESCRIPTION);
-      socket.current.off(ACTIONS.RAISE_HAND_DUPLICATE);
-      socket.current.off(ACTIONS.MUTE);
-      socket.current.off(ACTIONS.UNMUTE);
-      socket.current.off(ACTIONS.MESSAGE);
-      socket.current.off(ACTIONS.TALK);
-      socket.current.emit(ACTIONS.LEAVE, { roomId });
+      Object.values(ACTIONS).forEach((action) => socket.current.off(action));
+      socket.current.emit(ACTIONS.LEAVE_LIVE, { roomId });
       socket.current = null;
-      console.log("cleanup Connections");
+      console.log("All socket listeners removed and cleanup complete.");
     }
 
     if (monitoringInterval.current) {
       clearInterval(monitoringInterval.current);
       monitoringInterval.current = null;
     }
-  };
+  }, [roomId]);
 
   const captureMedia = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -189,7 +203,7 @@ export const useWebRTC = (roomId, userDetails) => {
 
   const handleErrorRoom = () => {
     toast("You are blocked from this room");
-    navigate("/srdhouse");
+    setTimeout(() => navigate("/srdhouse"), 3000);
   };
 
   const handleMessageReceived = (data) => {
@@ -308,14 +322,25 @@ export const useWebRTC = (roomId, userDetails) => {
         if (audioElement) {
           audioElement.srcObject = remoteStream;
         } else {
-          const interval = setInterval(() => {
+          const observer = new MutationObserver(() => {
             const element = audioElements.current[remoteUser._id];
             if (element) {
               element.srcObject = remoteStream;
-              clearInterval(interval);
+              observer.disconnect(); // Stop observing once element is found
             }
-          }, 300);
+          });
+          observer.observe(document.body, { childList: true, subtree: true });
         }
+
+        // else {
+        //   const interval = setInterval(() => {
+        //     const element = audioElements.current[remoteUser._id];
+        //     if (element) {
+        //       element.srcObject = remoteStream;
+        //       clearInterval(interval);
+        //     }
+        //   }, 300);
+        // }
       });
     };
 
@@ -415,7 +440,7 @@ export const useWebRTC = (roomId, userDetails) => {
 
   const handleRoomEnded = () => {
     toast("Room ended", { icon: "⚠️" });
-    navigate("/srdhouse");
+    setTimeout(() => navigate("/srdhouse"), 3000);
   };
 
   const handleRaiseHand = ({ userId, username, profile, peerId }) => {
