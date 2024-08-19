@@ -1,4 +1,10 @@
-import React, { Fragment, useEffect, useRef, useState } from "react";
+import React, {
+  Fragment,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   Box,
   useMediaQuery,
@@ -7,97 +13,140 @@ import {
   Avatar,
   Typography,
 } from "@mui/material";
-import goliveimg from "../../assets/goliveimg.jpg";
 import EmojiPicker from "emoji-picker-react";
 import { Add, EmojiEmotionsOutlined, Send, Share } from "@mui/icons-material";
 import toast, { Toaster } from "react-hot-toast";
 import ChatRoom from "../../components/ChatRoom";
 import { SharePopup } from "../../components/SharePopup";
-import vid from "../../assets/data/live/live1.mp4";
+import { useNavigate, useParams } from "react-router-dom";
+import { useGetRoomQuery } from "../../store/srdClubSlice";
+import { useWebRTCVideo } from "../../hooks/useWebRTCVideo";
+import { useSelector } from "react-redux";
 
 const GoLive = () => {
+  const { id: roomId } = useParams();
+  const navigate = useNavigate();
+  const userDetails = useSelector((state) => state.user.userDetails);
+  const [streamerId, setStreamerId] = useState(null);
+
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAudience, setIsAudience] = useState(false);
+  const [isMuted, setMuted] = useState(true);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [commentReactions, setCommentReactions] = useState({});
   const [showPicker, setShowPicker] = useState(false);
+  const [showPickerComment, setShowPickerComment] = useState(false);
+  const [showSharePopup, setShowSharePopup] = useState(false);
+
   const isMobile = useMediaQuery("(max-width: 768px)");
   const isNonMobile = useMediaQuery("(min-width: 1200px)");
-  const [showPickerComment, setShowPickerComment] = useState(false);
-
-  const isBigSecreen = useMediaQuery("(min-width: 1800px)");
-
-  // for the comment
-
-  const handleCommentChange = (event) => {
-    setNewComment(event.target.value);
-    setShowPicker(false);
-  };
-
-  const handleAddComment = () => {
-    if (newComment) {
-      const commentId = Date.now(); // Generate a unique comment ID
-      const updatedComments = [
-        ...comments,
-        { id: commentId, comment: newComment },
-      ];
-      setComments(updatedComments);
-      setNewComment("");
-      setCommentReactions((prevReactions) => ({
-        ...prevReactions,
-        [commentId]: {},
-      }));
-    }
-  };
-  const reversedComments = [...comments].reverse();
+  const isBigScreen = useMediaQuery("(min-width: 1800px)");
 
   const commentBoxRef = useRef(null);
 
+  const {
+    data: room,
+    isError: roomError,
+    isLoading: roomLoading,
+  } = useGetRoomQuery(roomId);
+
+  const { clients, provideRef, handleMute, endRoom, blockUser } =
+    useWebRTCVideo(roomId, userDetails);
+  const currentUser = clients.find((client) => client._id === userDetails._id);
+
+  // Effect to determine if the user is an admin or audience
   useEffect(() => {
-    // Scroll to the bottom of the comment box when a new comment is added
+    if (clients.length > 0) {
+      const firstAdmin = clients.find((client) => client.role === "admin");
+      if (firstAdmin) {
+        setStreamerId(firstAdmin._id);
+        setIsAdmin(true);
+      }
+
+      const currentUserRole = clients.find(
+        (client) => client._id === userDetails._id
+      )?.role;
+      if (currentUserRole === "audience") setIsAudience(true);
+    }
+  }, [clients, userDetails._id]);
+  // Effect to mute/unmute the user
+  useEffect(() => {
+    handleMute(isMuted, userDetails?._id);
+  }, [isMuted, handleMute, userDetails?._id]);
+
+  // Scroll to the bottom of the comments when a new comment is added
+  useEffect(() => {
     if (commentBoxRef.current) {
       commentBoxRef.current.scrollTop = commentBoxRef.current.scrollHeight;
     }
   }, [comments]);
 
-  // for the Emoji
-
-  const onEmojiClick = (event) => {
-    const { emoji } = event;
-    setNewComment((prevComment) => prevComment + emoji);
-  };
-  const handleReactionSelect = (commentId, emojiObject) => {
-    // Check if the comment already has the same reaction
-    if (commentReactions[commentId]?.emoji === emojiObject.emoji) {
-      // Remove the reaction if it already exists
-      const updatedReactions = { ...commentReactions };
-      delete updatedReactions[commentId];
-      setCommentReactions(updatedReactions);
-      setShowPickerComment(false);
-    } else {
-      // Add or update the reaction
-      const updatedReactions = {
-        ...commentReactions,
-        [commentId]: emojiObject,
-      };
-      setCommentReactions(updatedReactions);
-      setShowPickerComment(false);
+  const handleMuteClick = useCallback(() => {
+    if (isAdmin && currentUser) {
+      setMuted((prev) => !prev);
     }
+  }, [isAdmin, currentUser]);
+
+  const handleEndRoom = async () => {
+    await endRoom();
+    navigate("/srdhouse");
   };
 
-  // for Sharing
+  // const handleCommentChange = (event) => {
+  //   if (isAdmin) {
+  //     setNewComment(event.target.value);
+  //     setShowPicker(false);
+  //   }
+  // };
 
-  const [showSharePopup, setShowSharePopup] = useState(false);
+  // const handleAddComment = () => {
+  //   if (isAdmin && newComment) {
+  //     const commentId = Date.now(); // Unique comment ID
+  //     setComments((prevComments) => [
+  //       ...prevComments,
+  //       { id: commentId, comment: newComment },
+  //     ]);
+  //     setNewComment("");
+  //     setCommentReactions((prevReactions) => ({
+  //       ...prevReactions,
+  //       [commentId]: {},
+  //     }));
+  //   }
+  // };
+
+  // const onEmojiClick = (event) => {
+  //   setNewComment((prevComment) => prevComment + event.emoji);
+  // };
+
+  // const handleReactionSelect = (commentId, emojiObject) => {
+  //   setCommentReactions((prevReactions) => {
+  //     if (prevReactions[commentId]?.emoji === emojiObject.emoji) {
+  //       const updatedReactions = { ...prevReactions };
+  //       delete updatedReactions[commentId];
+  //       return updatedReactions;
+  //     }
+  //     return {
+  //       ...prevReactions,
+  //       [commentId]: emojiObject,
+  //     };
+  //   });
+  //   setShowPickerComment(false);
+  // };
+
   const handleShareClick = () => {
-    setShowSharePopup(!showSharePopup);
+    setShowSharePopup((prev) => !prev);
   };
+
+  // const reversedComments = [...comments].reverse();
+
+  console.log("Current user:", userDetails);
+  console.log("Clients list:", clients);
+  console.log("Streamer ID:", streamerId);
 
   return (
-    <Box
-      sx={{
-        minHeight: "calc(100vh - 56px)",
-      }}
-    >
-      <Toaster position="top-center" reverseOrder={false}></Toaster>
+    <Box sx={{ minHeight: "calc(100vh - 56px)" }}>
+      <Toaster position="top-center" reverseOrder={false} />
       <Box
         sx={{
           width: "90%",
@@ -109,15 +158,18 @@ const GoLive = () => {
           sx={{
             position: "relative",
             width: "100%",
-            height: isBigSecreen ? "950px" : "700px",
+            height: isBigScreen ? "950px" : "700px",
             borderRadius: "50px",
             overflow: "hidden",
           }}
         >
           <video
             alt="goliveimg"
-            src={vid}
-            controls
+            ref={(instance) => {
+              if (currentUser?._id === streamerId) {
+                provideRef(instance, currentUser?._id);
+              }
+            }}
             autoPlay
             style={{
               width: "100%",
@@ -127,7 +179,9 @@ const GoLive = () => {
               borderRadius: "50px",
             }}
           />
-          {isNonMobile ? (
+          {/**
+           
+          { isNonMobile ? (
             <ChatRoom
               comments={comments}
               setComments={setComments}
@@ -145,7 +199,7 @@ const GoLive = () => {
                 height: "275px",
                 width: "100%",
                 backgroundImage:
-                  " linear-gradient(to top, rgb(0 0 0 / 81%), rgb(0 0 0 / 3%))",
+                  "linear-gradient(to top, rgb(0 0 0 / 81%), rgb(0 0 0 / 3%))",
               }}
             >
               <Box
@@ -162,13 +216,13 @@ const GoLive = () => {
                   ref={commentBoxRef}
                   sx={{
                     display: "flex",
-                    height: "calc(100% - 100px)", // Set the height of the scrollable container
-                    overflowY: "scroll", // Enable vertical scrolling
-                    marginBottom: "1rem", // Add some spacing at the bottom
-                    flexDirection: "column-reverse", // Reverse the order of the comments
+                    height: "calc(100% - 100px)",
+                    overflowY: "scroll",
+                    marginBottom: "1rem",
+                    flexDirection: "column-reverse",
                   }}
                 >
-                  {reversedComments.map((comment, index) => (
+                  {reversedComments.map((comment) => (
                     <Box
                       key={comment.id}
                       sx={{
@@ -185,7 +239,7 @@ const GoLive = () => {
                         columnGap: "13px",
                       }}
                     >
-                      <Avatar sx={{}} src={comment.avatar} alt="User Avatar" />
+                      <Avatar src={comment.avatar} alt="User Avatar" />
                       <Box
                         sx={{
                           display: "flex",
@@ -200,10 +254,8 @@ const GoLive = () => {
                         >
                           {comment.username}
                         </Typography>
-
                         {comment.comment}
                       </Box>
-
                       <Box
                         sx={{
                           cursor: "pointer",
@@ -233,7 +285,6 @@ const GoLive = () => {
                           previewConfig={{
                             showPreview: false,
                           }}
-                          reactionsDefaultOpen
                           onEmojiClick={(emojiObject) =>
                             handleReactionSelect(comment.id, emojiObject)
                           }
@@ -262,27 +313,19 @@ const GoLive = () => {
                   }}
                 >
                   <IconButton onClick={handleShareClick}>
-                    <Share
-                      sx={{
-                        fontSize: "35px",
-                        color: "#f25f0c",
-                      }}
-                    />
+                    <Share sx={{ fontSize: "35px", color: "#f25f0c" }} />
                   </IconButton>
-
                   {showSharePopup && <SharePopup title={""} left={"-150px"} />}
                 </Box>
-
                 <Box
                   sx={{
                     display: "flex",
                     justifyContent: "space-between",
-                    position: "relative",
                     columnGap: "5px",
                     alignItems: "center",
                   }}
                 >
-                  <Box
+                  {<Box
                     sx={{
                       display: "flex",
                       justifyContent: "center",
@@ -308,25 +351,14 @@ const GoLive = () => {
                           padding: "10px 35px 10px 20px",
                           fontSize: "16px",
                           borderRadius: "20px",
-                          border: "none",
                           backgroundColor: "#0c0c0c54",
-                          position: "relative",
-                          outline: "none",
-                          "&::before, &::after": {
-                            border: "none",
-                          },
-                          "&:hover:not(.Mui-disabled):before": {
-                            border: "none",
-                          },
+                          "&::before, &::after": { border: "none" },
                         }}
                         value={newComment}
                         onChange={handleCommentChange}
                       />
                       <EmojiEmotionsOutlined
-                        sx={{
-                          cursor: "pointer",
-                          color: "#707070",
-                        }}
+                        sx={{ cursor: "pointer", color: "#707070" }}
                         onClick={() => setShowPicker((prev) => !prev)}
                       />
                     </Box>
@@ -341,9 +373,7 @@ const GoLive = () => {
                             position: "absolute",
                             bottom: "70px",
                           }}
-                          previewConfig={{
-                            showPreview: false,
-                          }}
+                          previewConfig={{ showPreview: false }}
                           onEmojiClick={onEmojiClick}
                         />
                         <Box
@@ -367,11 +397,13 @@ const GoLive = () => {
                     >
                       <Send sx={{ fontSize: "25px", color: "#f25f0c" }} />
                     </IconButton>
-                  </Box>
+                  </Box>}
                 </Box>
               </Box>
             </Box>
           )}
+
+           */}
         </Box>
       </Box>
     </Box>

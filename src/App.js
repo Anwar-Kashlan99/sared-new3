@@ -219,7 +219,7 @@ function App() {
               }
             />
             <Route
-              path="/golive"
+              path="/live/room/:id"
               element={
                 <PrivateRoute>
                   <GoLive />

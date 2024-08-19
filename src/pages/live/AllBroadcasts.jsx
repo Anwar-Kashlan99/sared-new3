@@ -14,58 +14,60 @@ import LiveDetailModule from "./LiveDetailModule";
 import { motion, useAnimation } from "framer-motion";
 import useIntersectionObserver from "@react-hook/intersection-observer";
 import { useNavigate } from "react-router-dom";
+import { useGetAllRoomsQuery } from "../../store/srdClubSlice";
+import avatar from "../../assets/avatar.svg";
 
-const liveCard = [
-  {
-    id: "1",
-    vid: require("../../assets/data/live/live6.mp4"),
-    title: "هل مهارة حل المشكلات مهمة للفرونت اند ديفيلوبر",
-    views: "10.4k",
-    userImg: require("../../assets/data/blog/osama Mohammed.jpg"),
-    username: "Osama Mohamed",
-  },
-  {
-    id: "2",
-    vid: require("../../assets/data/live/live1.mp4"),
-    title: "الخوف من الذكاء الإصطناعي",
-    views: "20.4k",
-    userImg: require("../../assets/data/blog/osama Mohammed.jpg"),
-    username: "Osama Mohamed",
-  },
-  {
-    id: "3",
-    vid: require("../../assets/data/live/live2.mp4"),
-    title: "بخصوص مسار التأسيس البرمجي",
-    views: "25.2k",
-    userImg: require("../../assets/data/blog/osama Mohammed.jpg"),
-    username: "Osama Mohamed",
-  },
+// const liveCard = [
+//   {
+//     id: "1",
+//     vid: require("../../assets/data/live/live6.mp4"),
+//     title: "هل مهارة حل المشكلات مهمة للفرونت اند ديفيلوبر",
+//     views: "10.4k",
+//     userImg: require("../../assets/data/blog/osama Mohammed.jpg"),
+//     username: "Osama Mohamed",
+//   },
+//   {
+//     id: "2",
+//     vid: require("../../assets/data/live/live1.mp4"),
+//     title: "الخوف من الذكاء الإصطناعي",
+//     views: "20.4k",
+//     userImg: require("../../assets/data/blog/osama Mohammed.jpg"),
+//     username: "Osama Mohamed",
+//   },
+//   {
+//     id: "3",
+//     vid: require("../../assets/data/live/live2.mp4"),
+//     title: "بخصوص مسار التأسيس البرمجي",
+//     views: "25.2k",
+//     userImg: require("../../assets/data/blog/osama Mohammed.jpg"),
+//     username: "Osama Mohamed",
+//   },
 
-  {
-    id: "4",
-    vid: require("../../assets/data/live/live3.mp4"),
-    title: "هل المفروض اتعلم عدة لغات برمجة",
-    views: "2.8k",
-    userImg: require("../../assets/data/blog/osama Mohammed.jpg"),
-    username: "Osama Mohamed",
-  },
-  {
-    id: "5",
-    vid: require("../../assets/data/live/live4.mp4"),
-    title: "هل مجال الفرونت اند هينتهي بعد سنتين",
-    views: "200.6k",
-    userImg: require("../../assets/data/blog/osama Mohammed.jpg"),
-    username: "Osama Mohamed",
-  },
-  {
-    id: "6",
-    vid: require("../../assets/data/live/live5.mp4"),
-    title: "هل محتاج أتأسس لو هتعلم مجال علوم البيانات",
-    views: "60.8k",
-    userImg: require("../../assets/data/blog/osama Mohammed.jpg"),
-    username: "Osama Mohamed",
-  },
-];
+//   {
+//     id: "4",
+//     vid: require("../../assets/data/live/live3.mp4"),
+//     title: "هل المفروض اتعلم عدة لغات برمجة",
+//     views: "2.8k",
+//     userImg: require("../../assets/data/blog/osama Mohammed.jpg"),
+//     username: "Osama Mohamed",
+//   },
+//   {
+//     id: "5",
+//     vid: require("../../assets/data/live/live4.mp4"),
+//     title: "هل مجال الفرونت اند هينتهي بعد سنتين",
+//     views: "200.6k",
+//     userImg: require("../../assets/data/blog/osama Mohammed.jpg"),
+//     username: "Osama Mohamed",
+//   },
+//   {
+//     id: "6",
+//     vid: require("../../assets/data/live/live5.mp4"),
+//     title: "هل محتاج أتأسس لو هتعلم مجال علوم البيانات",
+//     views: "60.8k",
+//     userImg: require("../../assets/data/blog/osama Mohammed.jpg"),
+//     username: "Osama Mohamed",
+//   },
+// ];
 
 const AllBroadcasts = () => {
   const [searchValue, setSearchValue] = useState("");
@@ -78,25 +80,31 @@ const AllBroadcasts = () => {
   const controls = useAnimation();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    controls.start({
-      opacity: 1,
-      x: 0,
-      transition: { duration: 0.6 },
-    });
-  }, [controls]);
+  const { data, error, isLoading, refetch } = useGetAllRoomsQuery({
+    key: "value",
+  });
+
+  // useEffect(() => {
+  //   controls.start({
+  //     opacity: 1,
+  //     x: 0,
+  //     transition: { duration: 0.6 },
+  //   });
+  // }, [controls]);
 
   const handleSearch = (event) => {
     setSearchValue(event.target.value);
   };
 
-  const filteredLive = liveCard.filter((live) => {
-    return (
-      searchValue === "" ||
-      live.username.toLowerCase().includes(searchValue.toLowerCase()) ||
-      live.title.toLowerCase().includes(searchValue.toLowerCase())
-    );
-  });
+  const filteredLives = data
+    ?.filter((card) => {
+      return (
+        searchValue === "" ||
+        card.topic.toLowerCase().includes(searchValue.toLowerCase()) ||
+        card._id.toLowerCase().includes(searchValue.toLowerCase())
+      );
+    })
+    .reverse();
 
   const handleModuleOpen = () => {
     setShowModule(true);
@@ -223,10 +231,10 @@ const AllBroadcasts = () => {
             alignItems: "center",
             gap: "30px",
             transition: "opacity 0.5s ease",
-            opacity: filteredLive.length > 0 ? 1 : 0, // Fade in/out effect
+            opacity: filteredLives?.length > 0 ? 1 : 0, // Fade in/out effect
           }}
         >
-          {filteredLive.map((card, index) => {
+          {filteredLives?.map((card, index) => {
             return (
               <motion.div
                 ref={cardRef}
@@ -240,7 +248,7 @@ const AllBroadcasts = () => {
                 <Box sx={cardStyles}>
                   <Card
                     sx={cardContainerStyles(isMobile, isTabScreen, isBigScreen)}
-                    onClick={() => navigate("/golive")}
+                    onClick={() => navigate(`/live/room/${card._id}`)}
                   >
                     <Box
                       sx={{
@@ -266,10 +274,10 @@ const AllBroadcasts = () => {
                         backgroundColor: "#000000b0",
                       }}
                     >
-                      {card.views}
+                      {/*card.views*/} 11
                     </Box>
                     <Box sx={{ width: "100%", height: "440px" }}>
-                      <video
+                      {/** <video
                         alt={`blog-${card.title}-${index}`}
                         src={card.vid}
                         style={{
@@ -279,7 +287,7 @@ const AllBroadcasts = () => {
                         }}
                         muted
                         autoPlay
-                      />
+                      /> */}
                     </Box>
                     <Box
                       sx={{
@@ -300,11 +308,11 @@ const AllBroadcasts = () => {
                           letterSpacing: "1.5px",
                         }}
                       >
-                        {card.title}
+                        {card.topic}
                       </Typography>
                       <Box sx={{ display: "flex", alignItems: "center" }}>
                         <Avatar
-                          src={card.userImg}
+                          src={avatar}
                           alt={`carousel-${index}`}
                           sx={{
                             marginRight: "25px",
@@ -322,7 +330,7 @@ const AllBroadcasts = () => {
                           <Typography
                             sx={{ color: "#fff", fontWeight: "bold" }}
                           >
-                            {card.username}
+                            sss
                           </Typography>
                         </Box>
                       </Box>

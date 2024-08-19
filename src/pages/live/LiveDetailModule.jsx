@@ -13,28 +13,36 @@ import {
 import { Close } from "@mui/icons-material";
 import toast, { Toaster } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { useCreateRoomMutation } from "../../store/srdClubSlice";
+import { Bars } from "react-loader-spinner";
 const AddLiveModal = ({ onClose }) => {
   const navigate = useNavigate();
 
   const [topic, setTopic] = useState("");
+  const [roomType, setRoomType] = useState("public");
   const isMobile = useMediaQuery("(max-width: 768px)");
+
   const { t } = useTranslation();
 
-  //   async function createBroadcast() {
-  //     try {
-  //       if (!topic) {
-  //         toast.error("Topic is required");
-  //         return;
-  //       }
-
-  //       const { data } = await create({ topic });
-  //       navigate(`/allbroadcasts/broadcast/${data.id}`);
-  //     } catch (err) {
-  //       console.log(err.message);
-  //       toast.error("An error occurred");
-  //     }
-  //   }
-
+  const [createRoom, { isLoading }] = useCreateRoomMutation();
+  const handleCreateLive = async () => {
+    if (!topic) return;
+    try {
+      const result = await createRoom({ topic, roomType }).unwrap(); // Unwraps and handles errors more gracefully
+      console.log("live creation result:", result); // Debug log
+      if (result && result._id) {
+        navigate(`/live/room/${result._id}`); // Navigate to the new room
+        toast.success("Room created successfully!");
+        onClose();
+      } else {
+        toast.error("Failed to create live: No room ID received.");
+        console.error("Failed to create live: No room ID received.", result);
+      }
+    } catch (error) {
+      toast.error("Failed to create live");
+      console.error("Failed to create live:", error);
+    }
+  };
   return (
     <Box
       sx={{
@@ -145,9 +153,9 @@ const AddLiveModal = ({ onClose }) => {
         </Box>
         <Box sx={{ padding: "15px 30px 30px 30px", textAlign: "center" }}>
           <Button
-            // onClick={createBroadcast}
+            onClick={handleCreateLive}
             sx={{
-              background: "#f25f0c",
+              background: isLoading ? "#ff9d66" : "#f25f0c",
               color: "#fff",
               display: "flex",
               alignItems: "center",
@@ -161,10 +169,23 @@ const AddLiveModal = ({ onClose }) => {
                 background: "#fabf9e",
               },
             }}
+            disabled={isLoading}
           >
-            <Typography sx={{ marginLeft: "5px", fontWeight: "bold" }}>
-              {t("Let's go")}
-            </Typography>
+            {isLoading ? (
+              <Bars
+                height="27"
+                width="45"
+                color="#f25f0c"
+                ariaLabel="bars-loading"
+                wrapperStyle={{}}
+                wrapperClass=""
+                visible={true}
+              />
+            ) : (
+              <Typography sx={{ marginLeft: "5px", fontWeight: "bold" }}>
+                {t("Let's go")}
+              </Typography>
+            )}
           </Button>
         </Box>
       </Box>
