@@ -54,11 +54,13 @@ const GoLive = () => {
   const { clients, provideRef, handleMute, endRoom, blockUser } =
     useWebRTCVideo(roomId, userDetails);
   const currentUser = clients.find((client) => client._id === userDetails._id);
+  console.log("Clients list:", clients);
 
   // Effect to determine if the user is an admin or audience
   useEffect(() => {
     if (clients.length > 0) {
       const firstAdmin = clients.find((client) => client.role === "admin");
+      console.log("Admin details:", firstAdmin);
       if (firstAdmin) {
         setStreamerId(firstAdmin._id);
         setIsAdmin(true);
