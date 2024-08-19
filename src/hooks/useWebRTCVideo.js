@@ -316,6 +316,7 @@ export const useWebRTCVideo = (roomId, userDetails) => {
   };
 
   const provideRef = (instance, userId) => {
+    console.log(`Received ref for userId: ${userId}`, instance);
     if (instance) {
       mediaElements.current[userId] = instance;
     } else {

@@ -95,6 +95,13 @@ const GoLive = () => {
     navigate("/srdhouse");
   };
 
+  const videoRef = (instance) => {
+    console.log("Video ref instance:", instance);
+    if (instance && currentUser?._id === streamerId) {
+      provideRef(instance, currentUser._id);
+    }
+  };
+
   // const handleCommentChange = (event) => {
   //   if (isAdmin) {
   //     setNewComment(event.target.value);
@@ -167,11 +174,7 @@ const GoLive = () => {
         >
           <video
             alt="goliveimg"
-            ref={(instance) => {
-              if (currentUser?._id === streamerId) {
-                provideRef(instance, currentUser?._id);
-              }
-            }}
+            ref={videoRef}
             autoPlay
             style={{
               width: "100%",
