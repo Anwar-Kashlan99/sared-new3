@@ -56,20 +56,23 @@ const GoLive = () => {
   const currentUser = clients.find((client) => client._id === userDetails._id);
   console.log("Clients list:", clients);
 
+  const videoRef = (instance) => {
+    provideRef(instance, currentUser?._id);
+  };
   // Effect to determine if the user is an admin or audience
   useEffect(() => {
-    if (clients.length > 0) {
-      const firstAdmin = clients.find((client) => client.role === "admin");
-      console.log("Admin details:", firstAdmin);
-      if (firstAdmin) {
-        setStreamerId(firstAdmin._id);
-        setIsAdmin(true);
-      }
+    console.log("Clients updated:", clients);
+    const firstAdmin = clients.find((client) => client.role === "admin");
+    if (firstAdmin) {
+      setStreamerId(firstAdmin._id);
+      setIsAdmin(true);
+    }
 
-      const currentUserRole = clients.find(
-        (client) => client._id === userDetails._id
-      )?.role;
-      if (currentUserRole === "audience") setIsAudience(true);
+    const currentUserRole = clients.find(
+      (client) => client._id === userDetails._id
+    )?.role;
+    if (currentUserRole === "audience") {
+      setIsAudience(true);
     }
   }, [clients, userDetails._id]);
   // Effect to mute/unmute the user
@@ -93,13 +96,6 @@ const GoLive = () => {
   const handleEndRoom = async () => {
     await endRoom();
     navigate("/srdhouse");
-  };
-
-  const videoRef = (instance) => {
-    console.log("Video ref instance:", instance);
-    if (instance && currentUser?._id === streamerId) {
-      provideRef(instance, currentUser._id);
-    }
   };
 
   // const handleCommentChange = (event) => {
