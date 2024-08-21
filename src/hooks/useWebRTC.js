@@ -340,7 +340,7 @@ export const useWebRTC = (roomId, userDetails) => {
         if (audioElement) {
           audioElement.srcObject = remoteStream;
           audioElement.volume = 1; // Ensure volume is not 0
-          audioElement.muted = true; // Ensure the element is not muted
+          audioElement.muted = false; // Ensure the element is not muted
           console.log(
             `Attached remote stream to audio element for user: ${remoteUser._id}, volume: ${audioElement.volume}`
           );
@@ -470,10 +470,6 @@ export const useWebRTC = (roomId, userDetails) => {
   };
 
   const handleSetMute = (mute, userId) => {
-    const audioElement = audioElements.current[userId];
-    if (audioElement) {
-      audioElement.muted = false;
-    }
     setClients((prevClients) =>
       prevClients.map((client) =>
         client._id === userId
@@ -644,11 +640,23 @@ export const useWebRTC = (roomId, userDetails) => {
   const provideRef = (instance, userId) => {
     if (instance) {
       audioElements.current[userId] = instance;
-      instance.muted = true; // Start with muted audio
-      instance.play().catch((error) => {
-        console.error(`Autoplay prevented for user ${userId}:`, error);
-        // Handle the error or provide a manual play option
-      });
+
+      // Ensure the audio element is connected to the document
+      if (document.body.contains(instance)) {
+        instance.volume = 1;
+        instance.muted = false;
+
+        // Wait for the element to be in the document before playing
+        instance.oncanplay = () => {
+          instance.play().catch((error) => {
+            console.error(`Autoplay prevented for user ${userId}:`, error);
+          });
+        };
+      } else {
+        console.warn(
+          `Audio element for user ${userId} is not attached to the document.`
+        );
+      }
     }
   };
 
