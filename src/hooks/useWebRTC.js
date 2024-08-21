@@ -329,12 +329,20 @@ export const useWebRTC = (roomId, userDetails) => {
     };
 
     connection.ontrack = ({ streams: [remoteStream] }) => {
+      console.log(
+        remoteStream
+          .getTracks()
+          .map((track) => ({ kind: track.kind, enabled: track.enabled }))
+      );
       console.log("Track event:", remoteStream);
       addNewClient({ ...remoteUser, muted: true }, () => {
         const audioElement = audioElements.current[remoteUser._id];
         if (audioElement) {
           audioElement.srcObject = remoteStream;
           audioElement.volume = 1; // Ensure volume is not 0
+          audioElement.play().catch((error) => {
+            console.error("Failed to play audio:", error);
+          });
           console.log("Audio element volume set to:", audioElement.volume);
           console.log(
             "Attached remote stream to audio element for user:",
@@ -371,6 +379,9 @@ export const useWebRTC = (roomId, userDetails) => {
     if (localMediaStream.current) {
       localMediaStream.current.getTracks().forEach((track) => {
         connection.addTrack(track, localMediaStream.current);
+        connection.oniceconnectionstatechange = () => {
+          console.log("ICE connection state:", connection.iceConnectionState);
+        };
         console.log(
           `Added ${track.kind} track to connection, enabled: ${track.enabled}`
         );
@@ -411,14 +422,8 @@ export const useWebRTC = (roomId, userDetails) => {
   const handleIceCandidate = async ({ peerId, icecandidate }) => {
     if (icecandidate) {
       const connectionData = connections.current[peerId];
-      console.log("icecandidate:", icecandidate);
       if (connectionData) {
-        console.log("connectionData:", connectionData);
         if (connectionData.connection.remoteDescription) {
-          console.log(
-            "connectionData.connection.remoteDescription:",
-            connectionData.connection.remoteDescription
-          );
           await connectionData.connection.addIceCandidate(icecandidate);
         } else {
           connectionData.iceCandidatesQueue.push(icecandidate);
