@@ -340,6 +340,10 @@ export const useWebRTC = (roomId, userDetails) => {
         if (audioElement) {
           audioElement.srcObject = remoteStream;
           audioElement.volume = 1; // Ensure volume is not 0
+          audioElement.muted = false; // Ensure the element is not muted
+          console.log(
+            `Attached remote stream to audio element for user: ${remoteUser._id}, volume: ${audioElement.volume}`
+          );
           audioElement.play().catch((error) => {
             console.error("Failed to play audio:", error);
           });
@@ -378,6 +382,7 @@ export const useWebRTC = (roomId, userDetails) => {
 
     if (localMediaStream.current) {
       localMediaStream.current.getTracks().forEach((track) => {
+        track.enabled = true;
         connection.addTrack(track, localMediaStream.current);
         connection.oniceconnectionstatechange = () => {
           console.log("ICE connection state:", connection.iceConnectionState);
@@ -633,7 +638,19 @@ export const useWebRTC = (roomId, userDetails) => {
   };
 
   const provideRef = (instance, userId) => {
-    audioElements.current[userId] = instance;
+    if (instance) {
+      audioElements.current[userId] = instance;
+
+      // Attempt to play the audio element
+      instance.volume = 1;
+      instance.muted = false;
+
+      // Handling autoplay restrictions
+      instance.play().catch((error) => {
+        console.error(`Autoplay prevented for user ${userId}:`, error);
+        // Handle the error, potentially showing a play button
+      });
+    }
   };
 
   const handleMute = (isMute, userId) => {
