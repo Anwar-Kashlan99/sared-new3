@@ -118,7 +118,7 @@ const Room = () => {
 
   const [isMuted, setMuted] = useState(true);
 
-  console.log(clients);
+  // console.log(clients);
 
   useEffect(() => {
     handleMute(isMuted, userDetails?._id);
@@ -454,7 +454,7 @@ const Room = () => {
                     TransitionComponent={Fade}
                     sx={{ ml: "-8px", mt: "5px" }}
                   >
-                    {isAdmin && anchorElAud && (
+                    {(isAdmin || isSpeaker) && anchorElAud && (
                       <>
                         <MenuItem
                           sx={{ color: "red" }}

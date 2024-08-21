@@ -130,15 +130,15 @@ export const useWebRTC = (roomId, userDetails) => {
   };
 
   const cleanupConnections = useCallback(() => {
-    // for (let peerId in connections.current) {
-    //   if (connections.current[peerId]) {
-    //     connections.current[peerId].connection.close();
-    //     delete connections.current[peerId];
-    //   }
-    // }
-    // for (let userId in audioElements.current) {
-    //   delete audioElements.current[userId];
-    // }
+    for (let peerId in connections.current) {
+      if (connections.current[peerId]) {
+        connections.current[peerId].connection.close();
+        delete connections.current[peerId];
+      }
+    }
+    for (let userId in audioElements.current) {
+      delete audioElements.current[userId];
+    }
     Object.keys(connections.current).forEach((peerId) => {
       connections.current[peerId].connection.close();
       delete connections.current[peerId];
@@ -146,21 +146,6 @@ export const useWebRTC = (roomId, userDetails) => {
     Object.keys(audioElements.current).forEach((userId) => {
       delete audioElements.current[userId];
     });
-    // if (socket.current) {
-    //   socket.current.off(ACTIONS.MUTE_INFO);
-    //   socket.current.off(ACTIONS.ADD_PEER);
-    //   socket.current.off(ACTIONS.REMOVE_PEER);
-    //   socket.current.off(ACTIONS.ICE_CANDIDATE);
-    //   socket.current.off(ACTIONS.SESSION_DESCRIPTION);
-    //   socket.current.off(ACTIONS.RAISE_HAND_DUPLICATE);
-    //   socket.current.off(ACTIONS.MUTE);
-    //   socket.current.off(ACTIONS.UNMUTE);
-    //   socket.current.off(ACTIONS.MESSAGE);
-    //   socket.current.off(ACTIONS.TALK);
-    //   socket.current.emit(ACTIONS.LEAVE, { roomId });
-    //   socket.current = null;
-    //   console.log("cleanup Connections");
-    // }
     if (socket.current) {
       Object.values(ACTIONS).forEach((action) => socket.current.off(action));
       socket.current.emit(ACTIONS.LEAVE_LIVE, { roomId });
@@ -225,83 +210,25 @@ export const useWebRTC = (roomId, userDetails) => {
     ]);
   };
 
-  const handleNewPeer = async ({ peerId, createOffer, user: remoteUser }) => {
-    if (connections.current[peerId]) {
-      return;
-    }
-
-    const connection = new RTCPeerConnection({
-      iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-        { urls: "stun:stun1.l.google.com:19302" },
-        { urls: "stun:stun2.l.google.com:19302" },
-        { urls: "stun:stun3.l.google.com:19302" },
-        { urls: "stun:stun4.l.google.com:19302" },
-        {
-          urls: "turn:turn.anyfirewall.com:443?transport=tcp",
-          username: "webrtc",
-          credential: "webrtc",
-        },
-      ],
-    });
-
-    connections.current[peerId] = { connection, iceCandidatesQueue: [] };
-
-    connection.onicecandidate = (event) => {
-      console.log("ICE candidate event:", event);
-      if (event.candidate) {
-        socket.current.emit(ACTIONS.RELAY_ICE, {
-          peerId,
-          icecandidate: event.candidate,
-        });
-      }
-    };
-
-    connection.ontrack = ({ streams: [remoteStream] }) => {
-      console.log("Track event:", remoteStream);
-      addNewClient({ ...remoteUser, muted: true }, () => {
-        const audioElement = audioElements.current[remoteUser._id];
-        if (audioElement) {
-          audioElement.srcObject = remoteStream;
-        } else {
-          const interval = setInterval(() => {
-            const element = audioElements.current[remoteUser._id];
-            if (element) {
-              element.srcObject = remoteStream;
-              clearInterval(interval);
-            }
-          }, 300);
-        }
-      });
-    };
-
-    if (localMediaStream.current) {
-      localMediaStream.current.getTracks().forEach((track) => {
-        connection.addTrack(track, localMediaStream.current);
-      });
-    }
-
-    if (createOffer) {
-      try {
-        const offer = await connection.createOffer();
-        await connection.setLocalDescription(offer);
-        socket.current.emit(ACTIONS.RELAY_SDP, {
-          peerId,
-          sessionDescription: offer,
-        });
-      } catch (error) {
-        console.error("Error creating offer: ", error);
-      }
-    }
-  };
-
   // const handleNewPeer = async ({ peerId, createOffer, user: remoteUser }) => {
   //   if (connections.current[peerId]) {
   //     return;
   //   }
 
-  //   const iceServers = freeice();
-  //   const connection = new RTCPeerConnection({ iceServers });
+  //   const connection = new RTCPeerConnection({
+  //     iceServers: [
+  //       { urls: "stun:stun.l.google.com:19302" },
+  //       { urls: "stun:stun1.l.google.com:19302" },
+  //       { urls: "stun:stun2.l.google.com:19302" },
+  //       { urls: "stun:stun3.l.google.com:19302" },
+  //       { urls: "stun:stun4.l.google.com:19302" },
+  //       {
+  //         urls: "turn:turn.anyfirewall.com:443?transport=tcp",
+  //         username: "webrtc",
+  //         credential: "webrtc",
+  //       },
+  //     ],
+  //   });
 
   //   connections.current[peerId] = { connection, iceCandidatesQueue: [] };
 
@@ -322,25 +249,14 @@ export const useWebRTC = (roomId, userDetails) => {
   //       if (audioElement) {
   //         audioElement.srcObject = remoteStream;
   //       } else {
-  //         const observer = new MutationObserver(() => {
+  //         const interval = setInterval(() => {
   //           const element = audioElements.current[remoteUser._id];
   //           if (element) {
   //             element.srcObject = remoteStream;
-  //             observer.disconnect(); // Stop observing once element is found
+  //             clearInterval(interval);
   //           }
-  //         });
-  //         observer.observe(document.body, { childList: true, subtree: true });
+  //         }, 300);
   //       }
-
-  //       // else {
-  //       //   const interval = setInterval(() => {
-  //       //     const element = audioElements.current[remoteUser._id];
-  //       //     if (element) {
-  //       //       element.srcObject = remoteStream;
-  //       //       clearInterval(interval);
-  //       //     }
-  //       //   }, 300);
-  //       // }
   //     });
   //   };
 
@@ -349,7 +265,7 @@ export const useWebRTC = (roomId, userDetails) => {
   //       connection.addTrack(track, localMediaStream.current);
   //     });
   //   }
-  //   console.log(createOffer);
+
   //   if (createOffer) {
   //     try {
   //       const offer = await connection.createOffer();
@@ -363,6 +279,77 @@ export const useWebRTC = (roomId, userDetails) => {
   //     }
   //   }
   // };
+
+  const handleNewPeer = async ({ peerId, createOffer, user: remoteUser }) => {
+    if (connections.current[peerId]) {
+      return;
+    }
+
+    const iceServers = freeice();
+    const connection = new RTCPeerConnection({ iceServers });
+
+    connections.current[peerId] = { connection, iceCandidatesQueue: [] };
+
+    connection.onicecandidate = (event) => {
+      console.log("ICE candidate event:", event);
+      if (event.candidate) {
+        socket.current.emit(ACTIONS.RELAY_ICE, {
+          peerId,
+          icecandidate: event.candidate,
+        });
+      }
+    };
+
+    connection.ontrack = ({ streams: [remoteStream] }) => {
+      console.log("Track event:", remoteStream);
+      addNewClient({ ...remoteUser, muted: true }, () => {
+        const audioElement = audioElements.current[remoteUser._id];
+        if (audioElement) {
+          audioElement.srcObject = remoteStream;
+        } else {
+          const observer = new MutationObserver(() => {
+            const element = audioElements.current[remoteUser._id];
+            if (element) {
+              console.log("element", element);
+              element.srcObject = remoteStream;
+              observer.disconnect(); // Stop observing once element is found
+            }
+          });
+          observer.observe(document.body, { childList: true, subtree: true });
+        }
+
+        // else {
+        //   const interval = setInterval(() => {
+        //     const element = audioElements.current[remoteUser._id];
+        //     if (element) {
+        //       element.srcObject = remoteStream;
+        //       clearInterval(interval);
+        //     }
+        //   }, 300);
+        // }
+      });
+    };
+
+    if (localMediaStream.current) {
+      localMediaStream.current.getTracks().forEach((track) => {
+        connection.addTrack(track, localMediaStream.current);
+      });
+    }
+    console.log(createOffer);
+    if (createOffer) {
+      try {
+        const offer = await connection.createOffer();
+        console.log("offer:", offer, "peerId:", peerId);
+        await connection.setLocalDescription(offer);
+        socket.current.emit(ACTIONS.RELAY_SDP, {
+          peerId,
+          sessionDescription: offer,
+        });
+      } catch (error) {
+        console.error("Error creating offer: ", error);
+      }
+    }
+  };
 
   const handleRemovePeer = ({ peerId, userId }) => {
     if (connections.current[peerId]) {
@@ -378,8 +365,14 @@ export const useWebRTC = (roomId, userDetails) => {
   const handleIceCandidate = async ({ peerId, icecandidate }) => {
     if (icecandidate) {
       const connectionData = connections.current[peerId];
+      console.log("icecandidate:", icecandidate);
       if (connectionData) {
+        console.log("connectionData:", connectionData);
         if (connectionData.connection.remoteDescription) {
+          console.log(
+            "connectionData.connection.remoteDescription:",
+            connectionData.connection.remoteDescription
+          );
           await connectionData.connection.addIceCandidate(icecandidate);
         } else {
           connectionData.iceCandidatesQueue.push(icecandidate);
@@ -402,6 +395,7 @@ export const useWebRTC = (roomId, userDetails) => {
 
         if (remoteSessionDescription.type === "offer") {
           const answer = await connection.createAnswer();
+          console.log("answer:", answer, "peerID:", peerId);
           await connection.setLocalDescription(answer);
           socket.current.emit(ACTIONS.RELAY_SDP, {
             peerId,
