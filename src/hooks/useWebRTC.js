@@ -637,57 +637,26 @@ export const useWebRTC = (roomId, userDetails) => {
     return audioLevel;
   };
 
-  //   const provideRef = (instance, userId) => {
-  //     if (instance) {
-  //         audioElements.current[userId] = instance;
-
-  //         // Ensure the audio element is connected to the document
-  //         if (document.body.contains(instance)) {
-  //             instance.volume = 1;
-  //             instance.muted = false;
-
-  //             // Wait for the element to be in the document before playing
-  //             instance.oncanplay = () => {
-  //                 instance.play().catch((error) => {
-  //                     console.error(`Autoplay prevented for user ${userId}:`, error);
-  //                 });
-  //             };
-  //         } else {
-  //             console.warn(`Audio element for user ${userId} is not attached to the document.`);
-  //         }
-  //     }
-  // };
-
   const provideRef = (instance, userId) => {
     if (instance) {
       audioElements.current[userId] = instance;
 
-      const tryPlay = () => {
-        if (document.body.contains(instance)) {
-          instance.play().catch((error) => {
-            if (error.name === "AbortError") {
-              console.warn(
-                `AbortError when trying to play audio for user ${userId}. Retrying...`
-              );
-              setTimeout(tryPlay, 1000); // Retry after a delay
-            } else {
-              console.error(
-                `Autoplay prevented or failed for user ${userId}:`,
-                error
-              );
-            }
-          });
-        } else {
-          console.warn(
-            `Audio element for user ${userId} is not yet attached to the document. Retrying...`
-          );
-          setTimeout(tryPlay, 1000); // Retry after a delay
-        }
-      };
+      // Ensure the audio element is connected to the document
+      if (document.body.contains(instance)) {
+        instance.volume = 1;
+        instance.muted = false;
 
-      instance.volume = 1;
-      instance.muted = false;
-      tryPlay();
+        // Wait for the element to be in the document before playing
+        instance.oncanplay = () => {
+          instance.play().catch((error) => {
+            console.error(`Autoplay prevented for user ${userId}:`, error);
+          });
+        };
+      } else {
+        console.warn(
+          `Audio element for user ${userId} is not attached to the document.`
+        );
+      }
     }
   };
 
