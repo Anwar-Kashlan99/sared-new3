@@ -23,6 +23,23 @@ export const useWebRTCVideo = (roomId, userDetails) => {
           (client) => client._id === newClient._id
         );
         if (!existing) {
+          if (mediaElements.current[newClient._id]) {
+            const assignStream = () => {
+              if (localMediaStream.current) {
+                mediaElements.current[newClient._id].srcObject =
+                  localMediaStream.current;
+              }
+            };
+
+            // Use MutationObserver to wait until the video element is in the DOM
+            const observer = new MutationObserver(() => {
+              if (mediaElements.current[newClient._id]) {
+                assignStream();
+                observer.disconnect(); // Stop observing after assignment
+              }
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+          }
           return [...existingClients, newClient];
         }
         return existingClients;
@@ -159,6 +176,12 @@ export const useWebRTCVideo = (roomId, userDetails) => {
         },
         video: true, // Capture video stream
       });
+      const videoTracks = localMediaStream.current.getVideoTracks();
+      if (videoTracks.length === 0) {
+        console.warn("No video tracks found");
+      } else {
+        console.log("Video tracks found:", videoTracks);
+      }
 
       // Add local tracks to all existing peer connections
       addLocalTracksToPeers();

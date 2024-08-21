@@ -57,7 +57,12 @@ const GoLive = () => {
   console.log("Clients list:", clients);
 
   const videoRef = (instance) => {
-    provideRef(instance, currentUser?._id);
+    if (streamerId && instance) {
+      console.log(`Received video ref for streamerId: ${streamerId}`);
+      provideRef(instance, streamerId);
+    } else {
+      console.warn("Video ref or streamerId is invalid:", instance, streamerId);
+    }
   };
   // Effect to determine if the user is an admin or audience
   useEffect(() => {
@@ -168,18 +173,22 @@ const GoLive = () => {
             overflow: "hidden",
           }}
         >
-          <video
-            alt="goliveimg"
-            ref={videoRef}
-            autoPlay
-            style={{
-              width: "100%",
-              display: "block",
-              objectFit: "cover",
-              height: "100%",
-              borderRadius: "50px",
-            }}
-          />
+          {streamerId ? (
+            <video
+              alt="goliveimg"
+              ref={videoRef}
+              autoPlay
+              style={{
+                width: "100%",
+                display: "block",
+                objectFit: "cover",
+                height: "100%",
+                borderRadius: "50px",
+              }}
+            />
+          ) : (
+            <p>Loading video...</p> // Or any other loading state
+          )}
           {/**
            
           { isNonMobile ? (
