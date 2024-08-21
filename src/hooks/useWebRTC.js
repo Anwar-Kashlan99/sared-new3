@@ -285,7 +285,35 @@ export const useWebRTC = (roomId, userDetails) => {
       return;
     }
 
-    const iceServers = freeice();
+    // const iceServers = freeice();
+    const iceServers = [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" },
+      { urls: "stun:stun2.l.google.com:19302" },
+      { urls: "stun:stun3.l.google.com:19302" },
+      { urls: "stun:stun4.l.google.com:19302" },
+      { urls: "stun:stun.relay.metered.ca:80" },
+      {
+        urls: "turn:global.relay.metered.ca:80",
+        username: "c8090ecaa7eb2bc0bb45fcd3",
+        credential: "dr9/NfX7eSdwKpFF",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:80?transport=tcp",
+        username: "c8090ecaa7eb2bc0bb45fcd3",
+        credential: "dr9/NfX7eSdwKpFF",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:443",
+        username: "c8090ecaa7eb2bc0bb45fcd3",
+        credential: "dr9/NfX7eSdwKpFF",
+      },
+      {
+        urls: "turns:global.relay.metered.ca:443?transport=tcp",
+        username: "c8090ecaa7eb2bc0bb45fcd3",
+        credential: "dr9/NfX7eSdwKpFF",
+      },
+    ];
     const connection = new RTCPeerConnection({ iceServers });
 
     connections.current[peerId] = { connection, iceCandidatesQueue: [] };
@@ -306,12 +334,22 @@ export const useWebRTC = (roomId, userDetails) => {
         const audioElement = audioElements.current[remoteUser._id];
         if (audioElement) {
           audioElement.srcObject = remoteStream;
+          audioElement.volume = 1; // Ensure volume is not 0
+          console.log("Audio element volume set to:", audioElement.volume);
+          console.log(
+            "Attached remote stream to audio element for user:",
+            remoteUser._id
+          );
         } else {
           const observer = new MutationObserver(() => {
             const element = audioElements.current[remoteUser._id];
             if (element) {
               console.log("element", element);
               element.srcObject = remoteStream;
+              console.log(
+                "Attached remote stream after observer found the element:",
+                element
+              );
               observer.disconnect(); // Stop observing once element is found
             }
           });
@@ -333,6 +371,9 @@ export const useWebRTC = (roomId, userDetails) => {
     if (localMediaStream.current) {
       localMediaStream.current.getTracks().forEach((track) => {
         connection.addTrack(track, localMediaStream.current);
+        console.log(
+          `Added ${track.kind} track to connection, enabled: ${track.enabled}`
+        );
       });
     }
     console.log(
@@ -354,6 +395,10 @@ export const useWebRTC = (roomId, userDetails) => {
         console.error("Error creating offer: ", error);
       }
     }
+  };
+
+  RTCPeerConnection.prototype.oniceconnectionstatechange = function () {
+    console.log("ICE connection state: " + this.iceConnectionState);
   };
 
   const handleRemovePeer = ({ peerId, userId }) => {
