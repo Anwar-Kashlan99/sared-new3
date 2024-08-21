@@ -19,6 +19,7 @@ export const useWebRTC = (roomId, userDetails) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const monitoringInterval = useRef(null);
 
+  // Function to add a new client to the list of clients
   const addNewClient = useCallback(
     (newClient, cb) => {
       setClients((existingClients) => {
@@ -34,6 +35,7 @@ export const useWebRTC = (roomId, userDetails) => {
     [setClients]
   );
 
+  // Keep the clients list in sync with a ref to avoid stale closures
   useEffect(() => {
     clientsRef.current = clients;
   }, [clients]);
@@ -60,7 +62,6 @@ export const useWebRTC = (roomId, userDetails) => {
         addNewClient({ ...userDetails, muted: true }, () => {
           const localElement = audioElements.current[userDetails._id];
           if (localElement) {
-            // localElement.volume = 0;
             localElement.srcObject = localMediaStream.current;
           }
 
@@ -139,16 +140,9 @@ export const useWebRTC = (roomId, userDetails) => {
     for (let userId in audioElements.current) {
       delete audioElements.current[userId];
     }
-    Object.keys(connections.current).forEach((peerId) => {
-      connections.current[peerId].connection.close();
-      delete connections.current[peerId];
-    });
-    Object.keys(audioElements.current).forEach((userId) => {
-      delete audioElements.current[userId];
-    });
     if (socket.current) {
       Object.values(ACTIONS).forEach((action) => socket.current.off(action));
-      socket.current.emit(ACTIONS.LEAVE_LIVE, { roomId });
+      socket.current.emit(ACTIONS.LEAVE, { roomId });
       socket.current = null;
       console.log("All socket listeners removed and cleanup complete.");
     }
@@ -159,6 +153,7 @@ export const useWebRTC = (roomId, userDetails) => {
     }
   }, [roomId]);
 
+  // Capture user's media (audio)
   const captureMedia = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       toast.error(
@@ -670,12 +665,21 @@ export const useWebRTC = (roomId, userDetails) => {
       const tryPlay = () => {
         if (document.body.contains(instance)) {
           instance.play().catch((error) => {
-            console.error(`Autoplay prevented for user ${userId}:`, error);
-            setTimeout(tryPlay, 1000); // Retry after a delay
+            if (error.name === "AbortError") {
+              console.warn(
+                `AbortError when trying to play audio for user ${userId}. Retrying...`
+              );
+              setTimeout(tryPlay, 1000); // Retry after a delay
+            } else {
+              console.error(
+                `Autoplay prevented or failed for user ${userId}:`,
+                error
+              );
+            }
           });
         } else {
           console.warn(
-            `Audio element for user ${userId} is not attached to the document.`
+            `Audio element for user ${userId} is not yet attached to the document. Retrying...`
           );
           setTimeout(tryPlay, 1000); // Retry after a delay
         }
