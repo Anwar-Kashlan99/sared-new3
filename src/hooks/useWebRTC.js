@@ -559,8 +559,13 @@ export const useWebRTC = (roomId, userDetails) => {
     if (localMediaStream.current) {
       Object.values(connections.current).forEach(({ connection }) => {
         localMediaStream.current.getTracks().forEach((track) => {
-          console.log("Adding track to connection:", track);
-          connection.addTrack(track, localMediaStream.current);
+          const sender = connection.getSenders().find((s) => s.track === track);
+          if (!sender) {
+            console.log("Adding track to connection:", track);
+            connection.addTrack(track, localMediaStream.current);
+          } else {
+            console.log("Track already added:", track);
+          }
         });
       });
     }
@@ -663,22 +668,22 @@ export const useWebRTC = (roomId, userDetails) => {
       audioElements.current[userId] = instance;
 
       const tryPlay = () => {
-        instance.play().catch((error) => {
-          console.error(`Autoplay prevented for user ${userId}:`, error);
+        if (document.body.contains(instance)) {
+          instance.play().catch((error) => {
+            console.error(`Autoplay prevented for user ${userId}:`, error);
+            setTimeout(tryPlay, 1000); // Retry after a delay
+          });
+        } else {
+          console.warn(
+            `Audio element for user ${userId} is not attached to the document.`
+          );
           setTimeout(tryPlay, 1000); // Retry after a delay
-        });
+        }
       };
 
-      // If the element is in the document, try to play immediately
-      if (document.body.contains(instance)) {
-        instance.volume = 1;
-        instance.muted = false;
-        tryPlay();
-      } else {
-        console.warn(
-          `Audio element for user ${userId} is not attached to the document.`
-        );
-      }
+      instance.volume = 1;
+      instance.muted = false;
+      tryPlay();
     }
   };
 
