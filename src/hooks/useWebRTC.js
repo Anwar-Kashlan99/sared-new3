@@ -637,21 +637,43 @@ export const useWebRTC = (roomId, userDetails) => {
     return audioLevel;
   };
 
+  //   const provideRef = (instance, userId) => {
+  //     if (instance) {
+  //         audioElements.current[userId] = instance;
+
+  //         // Ensure the audio element is connected to the document
+  //         if (document.body.contains(instance)) {
+  //             instance.volume = 1;
+  //             instance.muted = false;
+
+  //             // Wait for the element to be in the document before playing
+  //             instance.oncanplay = () => {
+  //                 instance.play().catch((error) => {
+  //                     console.error(`Autoplay prevented for user ${userId}:`, error);
+  //                 });
+  //             };
+  //         } else {
+  //             console.warn(`Audio element for user ${userId} is not attached to the document.`);
+  //         }
+  //     }
+  // };
+
   const provideRef = (instance, userId) => {
     if (instance) {
       audioElements.current[userId] = instance;
 
-      // Ensure the audio element is connected to the document
+      const tryPlay = () => {
+        instance.play().catch((error) => {
+          console.error(`Autoplay prevented for user ${userId}:`, error);
+          setTimeout(tryPlay, 1000); // Retry after a delay
+        });
+      };
+
+      // If the element is in the document, try to play immediately
       if (document.body.contains(instance)) {
         instance.volume = 1;
         instance.muted = false;
-
-        // Wait for the element to be in the document before playing
-        instance.oncanplay = () => {
-          instance.play().catch((error) => {
-            console.error(`Autoplay prevented for user ${userId}:`, error);
-          });
-        };
+        tryPlay();
       } else {
         console.warn(
           `Audio element for user ${userId} is not attached to the document.`
