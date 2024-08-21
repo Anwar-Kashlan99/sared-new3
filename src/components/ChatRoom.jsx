@@ -69,8 +69,6 @@ const ChatRoom = ({
     }
   }, [messages]);
 
-  console.log(messages);
-
   return (
     <Box
       sx={{
