@@ -397,10 +397,6 @@ export const useWebRTC = (roomId, userDetails) => {
     }
   };
 
-  RTCPeerConnection.prototype.oniceconnectionstatechange = function () {
-    console.log("ICE connection state: " + this.iceConnectionState);
-  };
-
   const handleRemovePeer = ({ peerId, userId }) => {
     if (connections.current[peerId]) {
       connections.current[peerId].connection.close();
