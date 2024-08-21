@@ -335,6 +335,11 @@ export const useWebRTC = (roomId, userDetails) => {
         connection.addTrack(track, localMediaStream.current);
       });
     }
+    console.log(
+      localMediaStream.current
+        .getTracks()
+        .map((track) => ({ kind: track.kind, enabled: track.enabled }))
+    );
     console.log(createOffer);
     if (createOffer) {
       try {
