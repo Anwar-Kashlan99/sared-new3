@@ -382,10 +382,6 @@ export const useWebRTC = (roomId, userDetails) => {
         connection.addTrack(track, localMediaStream.current);
         connection.oniceconnectionstatechange = () => {
           console.log("ICE connection state:", connection.iceConnectionState);
-          if (connection.iceConnectionState === "failed") {
-            console.error("ICE connection failed. Trying to restart ICE.");
-            connection.restartIce();
-          }
         };
         console.log(
           `Added ${track.kind} track to connection, enabled: ${track.enabled}`
@@ -423,22 +419,14 @@ export const useWebRTC = (roomId, userDetails) => {
 
     setClients((list) => list.filter((c) => c._id !== userId));
   };
+
   const handleIceCandidate = async ({ peerId, icecandidate }) => {
     if (icecandidate) {
       const connectionData = connections.current[peerId];
       if (connectionData) {
-        const connection = connectionData.connection;
-        if (connection.remoteDescription && connection.remoteDescription.type) {
-          try {
-            await connection.addIceCandidate(icecandidate);
-            console.log("Added ICE candidate successfully");
-          } catch (e) {
-            console.error("Failed to add ICE candidate", e);
-          }
+        if (connectionData.connection.remoteDescription) {
+          await connectionData.connection.addIceCandidate(icecandidate);
         } else {
-          console.log(
-            "Queueing ICE candidate as remote description is not set"
-          );
           connectionData.iceCandidatesQueue.push(icecandidate);
         }
       }
@@ -453,28 +441,23 @@ export const useWebRTC = (roomId, userDetails) => {
     if (connectionData) {
       const connection = connectionData.connection;
       try {
-        if (connection.signalingState !== "stable") {
-          await connection.setRemoteDescription(
-            new RTCSessionDescription(remoteSessionDescription)
-          );
+        await connection.setRemoteDescription(
+          new RTCSessionDescription(remoteSessionDescription)
+        );
 
-          if (remoteSessionDescription.type === "offer") {
-            const answer = await connection.createAnswer();
-            await connection.setLocalDescription(answer);
-            socket.current.emit(ACTIONS.RELAY_SDP, {
-              peerId,
-              sessionDescription: answer,
-            });
-          }
+        if (remoteSessionDescription.type === "offer") {
+          const answer = await connection.createAnswer();
+          console.log("answer:", answer, "peerID:", peerId);
+          await connection.setLocalDescription(answer);
+          socket.current.emit(ACTIONS.RELAY_SDP, {
+            peerId,
+            sessionDescription: answer,
+          });
+        }
 
-          while (connectionData.iceCandidatesQueue.length > 0) {
-            const candidate = connectionData.iceCandidatesQueue.shift();
-            await connection.addIceCandidate(candidate);
-          }
-        } else {
-          console.warn(
-            "Skipping setting remote description, as the connection is already stable"
-          );
+        while (connectionData.iceCandidatesQueue.length > 0) {
+          const candidate = connectionData.iceCandidatesQueue.shift();
+          await connection.addIceCandidate(candidate);
         }
       } catch (error) {
         console.error("Error setting remote description: ", error);
