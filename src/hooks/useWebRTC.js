@@ -172,14 +172,14 @@ export const useWebRTC = (roomId, userDetails) => {
       });
     }
     console.log("createOffer:", createOffer);
-    if (createOffer) {
-      const offer = await connection.createOffer();
-      await connection.setLocalDescription(offer);
-      socket.current.emit(ACTIONS.RELAY_SDP, {
-        peerId,
-        sessionDescription: offer,
-      });
-    }
+    // if (createOffer) {
+    const offer = await connection.createOffer();
+    await connection.setLocalDescription(offer);
+    socket.current.emit(ACTIONS.RELAY_SDP, {
+      peerId,
+      sessionDescription: offer,
+    });
+    // }
   };
 
   const setRemoteMedia = async ({ peerId, sessionDescription }) => {
@@ -218,7 +218,6 @@ export const useWebRTC = (roomId, userDetails) => {
   };
 
   const handleSetMute = (mute, userId) => {
-    console.log(`Setting mute: ${mute} for user: ${userId}`);
     setClients((prevClients) =>
       prevClients.map((client) =>
         client._id === userId
@@ -233,7 +232,6 @@ export const useWebRTC = (roomId, userDetails) => {
       localMediaStream.current.getTracks().forEach((track) => {
         if (track.kind === "audio") {
           track.enabled = !mute;
-          console.log(`Track kind: ${track.kind}, enabled: ${track.enabled}`);
         }
       });
       socket.current.emit(ACTIONS.TALK, {
@@ -243,24 +241,6 @@ export const useWebRTC = (roomId, userDetails) => {
       });
     }
   };
-  const logMediaStreamInfo = () => {
-    if (localMediaStream.current) {
-      console.log(
-        "Local Media Stream Tracks:",
-        localMediaStream.current.getTracks()
-      );
-    } else {
-      console.error("No local media stream available");
-    }
-
-    Object.values(connections.current).forEach((connection, peerId) => {
-      console.log(
-        `Connection state for peer ${peerId}:`,
-        connection.connectionState
-      );
-    });
-  };
-  logMediaStreamInfo();
 
   const handleMessageReceived = (data) => {
     console.log("Received message data:", data);
