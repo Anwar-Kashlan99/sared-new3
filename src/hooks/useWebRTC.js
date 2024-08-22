@@ -351,15 +351,57 @@ export const useWebRTC = (roomId, userDetails) => {
     setClients((list) => list.filter((c) => c._id !== userId));
   };
 
+  //   const handleIceCandidate = async ({ peerId, icecandidate }) => {
+  //     if (icecandidate) {
+  //       const connectionData = connections.current[peerId];
+  //       if (connectionData) {
+  //         if (connectionData.connection.remoteDescription) {
+  //           await connectionData.connection.addIceCandidate(icecandidate);
+  //         } else {
+  //           connectionData.iceCandidatesQueue.push(icecandidate);
+  //         }
+  //       }
+  //     }
+  //   };
+
+  //   const setRemoteMedia = async ({
+  //     peerId,
+  //     sessionDescription: remoteSessionDescription,
+  //   }) => {
+  //     const connectionData = connections.current[peerId];
+  //     if (connectionData) {
+  //       const connection = connectionData.connection;
+  //       try {
+  //         await connection.setRemoteDescription(
+  //           new RTCSessionDescription(remoteSessionDescription)
+  //         );
+
+  //         if (remoteSessionDescription.type === "offer") {
+  //           const answer = await connection.createAnswer();
+  //           await connection.setLocalDescription(answer);
+  //           socket.current.emit(ACTIONS.RELAY_SDP, {
+  //             peerId,
+  //             sessionDescription: answer,
+  //           });
+  //         }
+
+  //         while (connectionData.iceCandidatesQueue.length > 0) {
+  //           const candidate = connectionData.iceCandidatesQueue.shift();
+  //           await connection.addIceCandidate(candidate);
+  //         }
+  //       } catch (error) {
+  //         console.error("Error setting remote description: ", error);
+  //       }
+  //     }
+  //   };
+
   const handleIceCandidate = async ({ peerId, icecandidate }) => {
-    if (icecandidate) {
-      const connectionData = connections.current[peerId];
-      if (connectionData) {
-        if (connectionData.connection.remoteDescription) {
-          await connectionData.connection.addIceCandidate(icecandidate);
-        } else {
-          connectionData.iceCandidatesQueue.push(icecandidate);
-        }
+    const connectionData = connections.current[peerId];
+    if (connectionData && icecandidate) {
+      if (connectionData.connection.remoteDescription) {
+        await connectionData.connection.addIceCandidate(icecandidate);
+      } else {
+        connectionData.iceCandidatesQueue.push(icecandidate);
       }
     }
   };
@@ -371,6 +413,21 @@ export const useWebRTC = (roomId, userDetails) => {
     const connectionData = connections.current[peerId];
     if (connectionData) {
       const connection = connectionData.connection;
+
+      // Ensure we are in the right state
+      if (connection.signalingState !== "stable") {
+        console.warn("Connection not in stable state, delaying SDP setting");
+        setTimeout(
+          () =>
+            setRemoteMedia({
+              peerId,
+              sessionDescription: remoteSessionDescription,
+            }),
+          100
+        );
+        return;
+      }
+
       try {
         await connection.setRemoteDescription(
           new RTCSessionDescription(remoteSessionDescription)
