@@ -441,23 +441,28 @@ export const useWebRTC = (roomId, userDetails) => {
     if (connectionData) {
       const connection = connectionData.connection;
       try {
-        await connection.setRemoteDescription(
-          new RTCSessionDescription(remoteSessionDescription)
-        );
+        if (connection.signalingState !== "stable") {
+          await connection.setRemoteDescription(
+            new RTCSessionDescription(remoteSessionDescription)
+          );
 
-        if (remoteSessionDescription.type === "offer") {
-          const answer = await connection.createAnswer();
-          console.log("answer:", answer, "peerID:", peerId);
-          await connection.setLocalDescription(answer);
-          socket.current.emit(ACTIONS.RELAY_SDP, {
-            peerId,
-            sessionDescription: answer,
-          });
-        }
+          if (remoteSessionDescription.type === "offer") {
+            const answer = await connection.createAnswer();
+            await connection.setLocalDescription(answer);
+            socket.current.emit(ACTIONS.RELAY_SDP, {
+              peerId,
+              sessionDescription: answer,
+            });
+          }
 
-        while (connectionData.iceCandidatesQueue.length > 0) {
-          const candidate = connectionData.iceCandidatesQueue.shift();
-          await connection.addIceCandidate(candidate);
+          while (connectionData.iceCandidatesQueue.length > 0) {
+            const candidate = connectionData.iceCandidatesQueue.shift();
+            await connection.addIceCandidate(candidate);
+          }
+        } else {
+          console.warn(
+            "Skipping setting remote description, as the connection is already stable"
+          );
         }
       } catch (error) {
         console.error("Error setting remote description: ", error);
