@@ -154,6 +154,7 @@ export const useWebRTC = (roomId, userDetails) => {
     }
 
     if (createOffer) {
+      console.log("createOffer:", createOffer);
       const offer = await connection.createOffer();
       await connection.setLocalDescription(offer);
       socket.current.emit(ACTIONS.RELAY_SDP, {
@@ -272,20 +273,20 @@ export const useWebRTC = (roomId, userDetails) => {
     );
 
     if (userId === userDetails._id) {
-      setShowStartSpeakingPrompt(true);
+      addLocalTracksToPeers();
     }
   };
 
-  const handleStartSpeaking = () => {
-    setShowStartSpeakingPrompt(false);
-    addLocalTracksToPeers();
-    const audioElement = audioElements.current[userDetails._id];
-    if (audioElement) {
-      audioElement.play().catch((error) => {
-        console.error("Failed to play audio:", error);
-      });
-    }
-  };
+  //   const handleStartSpeaking = () => {
+  //     setShowStartSpeakingPrompt(false);
+  //     addLocalTracksToPeers();
+  //     const audioElement = audioElements.current[userDetails._id];
+  //     if (audioElement) {
+  //       audioElement.play().catch((error) => {
+  //         console.error("Failed to play audio:", error);
+  //       });
+  //     }
+  //   };
 
   const handleReturnAudience = () => {
     if (localMediaStream.current) {
@@ -480,7 +481,7 @@ export const useWebRTC = (roomId, userDetails) => {
     messages,
     sendMessage,
     returnAudienceSpeak,
-    handleStartSpeaking,
-    showStartSpeakingPrompt,
+    // handleStartSpeaking,
+    // showStartSpeakingPrompt,
   };
 };
