@@ -279,6 +279,7 @@ export const useWebRTC = (roomId, userDetails) => {
 
   const handleStartSpeaking = () => {
     setShowStartSpeakingPrompt(false);
+    // Add local tracks to peers and ensure audio playback starts
     addLocalTracksToPeers();
     const audioElement = audioElements.current[userDetails._id];
     if (audioElement) {
@@ -299,9 +300,15 @@ export const useWebRTC = (roomId, userDetails) => {
 
   const addLocalTracksToPeers = () => {
     if (localMediaStream.current) {
-      Object.values(connections.current).forEach((connection) => {
+      Object.values(connections.current).forEach(({ connection }) => {
         localMediaStream.current.getTracks().forEach((track) => {
-          connection.addTrack(track, localMediaStream.current);
+          // Check if the track is already added
+          const senders = connection.getSenders();
+          const senderExists = senders.some((sender) => sender.track === track);
+          if (!senderExists) {
+            console.log("Adding track to connection:", track);
+            connection.addTrack(track, localMediaStream.current);
+          }
         });
       });
     }
