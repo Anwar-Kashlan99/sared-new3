@@ -111,6 +111,15 @@ export const useWebRTC = (roomId, userDetails) => {
       localMediaStream.current = await navigator.mediaDevices.getUserMedia({
         audio: true,
       });
+      // Make sure the track is enabled right after capture
+      localMediaStream.current.getTracks().forEach((track) => {
+        if (track.kind === "audio") {
+          track.enabled = true;
+          console.log(
+            `Captured track kind: ${track.kind}, enabled: ${track.enabled}`
+          );
+        }
+      });
 
       // Handle audio tracks
       localMediaStream.current.getTracks().forEach((track) => {
@@ -220,6 +229,13 @@ export const useWebRTC = (roomId, userDetails) => {
 
     if (userId === userDetails._id) {
       setIsSpeaking(!mute && isSpeaking);
+      // Enable or disable the audio track based on mute status
+      localMediaStream.current.getTracks().forEach((track) => {
+        if (track.kind === "audio") {
+          track.enabled = !mute;
+          console.log(`Track kind: ${track.kind}, enabled: ${track.enabled}`);
+        }
+      });
       socket.current.emit(ACTIONS.TALK, {
         userId,
         roomId,
@@ -305,18 +321,31 @@ export const useWebRTC = (roomId, userDetails) => {
     }
   };
 
-  const handleStartSpeaking = () => {
-    setShowStartSpeakingPrompt(false);
-    // Add local tracks to peers and ensure audio playback starts
-    addLocalTracksToPeers();
+  const enableLocalAudioTrack = () => {
     if (localMediaStream.current) {
       localMediaStream.current.getTracks().forEach((track) => {
         if (track.kind === "audio") {
-          track.enabled = true;
+          track.enabled = true; // Ensure the audio track is enabled
+          console.log(
+            `Enabled track kind: ${track.kind}, enabled: ${track.enabled}`
+          );
         }
       });
+    } else {
+      console.error("No local media stream available to enable tracks.");
     }
+  };
 
+  const handleStartSpeaking = () => {
+    setShowStartSpeakingPrompt(false);
+
+    // Enable the local audio track explicitly
+    enableLocalAudioTrack();
+
+    // Add tracks to peers
+    addLocalTracksToPeers();
+
+    // Optionally start playing the local audio element (if needed)
     const audioElement = audioElements.current[userDetails._id];
     if (audioElement) {
       audioElement.play().catch((error) => {
@@ -324,7 +353,6 @@ export const useWebRTC = (roomId, userDetails) => {
       });
     }
   };
-
   const handleReturnAudience = () => {
     if (localMediaStream.current) {
       localMediaStream.current.getTracks().forEach((track) => {
