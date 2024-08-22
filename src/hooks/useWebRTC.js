@@ -406,50 +406,96 @@ export const useWebRTC = (roomId, userDetails) => {
     }
   };
 
+  //   const setRemoteMedia = async ({
+  //     peerId,
+  //     sessionDescription: remoteSessionDescription,
+  //   }) => {
+  //     const connectionData = connections.current[peerId];
+  //     if (connectionData) {
+  //       const connection = connectionData.connection;
+
+  //       // Ensure we are in the right state
+  //       if (connection.signalingState !== "stable") {
+  //         console.warn("Connection not in stable state, delaying SDP setting");
+  //         setTimeout(
+  //           () =>
+  //             setRemoteMedia({
+  //               peerId,
+  //               sessionDescription: remoteSessionDescription,
+  //             }),
+  //           100
+  //         );
+  //         return;
+  //       }
+
+  //       try {
+  //         await connection.setRemoteDescription(
+  //           new RTCSessionDescription(remoteSessionDescription)
+  //         );
+
+  //         if (remoteSessionDescription.type === "offer") {
+  //           const answer = await connection.createAnswer();
+  //           await connection.setLocalDescription(answer);
+  //           socket.current.emit(ACTIONS.RELAY_SDP, {
+  //             peerId,
+  //             sessionDescription: answer,
+  //           });
+  //         }
+
+  //         while (connectionData.iceCandidatesQueue.length > 0) {
+  //           const candidate = connectionData.iceCandidatesQueue.shift();
+  //           await connection.addIceCandidate(candidate);
+  //         }
+  //       } catch (error) {
+  //         console.error("Error setting remote description: ", error);
+  //       }
+  //     }
+  //   };
+
   const setRemoteMedia = async ({
     peerId,
     sessionDescription: remoteSessionDescription,
   }) => {
     const connectionData = connections.current[peerId];
-    if (connectionData) {
-      const connection = connectionData.connection;
+    if (!connectionData) return;
 
-      // Ensure we are in the right state
-      if (connection.signalingState !== "stable") {
-        console.warn("Connection not in stable state, delaying SDP setting");
-        setTimeout(
-          () =>
-            setRemoteMedia({
+    const connection = connectionData.connection;
+
+    // Use a debounce to avoid multiple retries in quick succession
+    let retryTimeout;
+
+    const trySettingRemoteDescription = async () => {
+      if (connection.signalingState === "stable") {
+        clearTimeout(retryTimeout); // Clear any previous retries
+        try {
+          await connection.setRemoteDescription(
+            new RTCSessionDescription(remoteSessionDescription)
+          );
+
+          if (remoteSessionDescription.type === "offer") {
+            const answer = await connection.createAnswer();
+            await connection.setLocalDescription(answer);
+            socket.current.emit(ACTIONS.RELAY_SDP, {
               peerId,
-              sessionDescription: remoteSessionDescription,
-            }),
-          100
-        );
-        return;
-      }
+              sessionDescription: answer,
+            });
+          }
 
-      try {
-        await connection.setRemoteDescription(
-          new RTCSessionDescription(remoteSessionDescription)
-        );
-
-        if (remoteSessionDescription.type === "offer") {
-          const answer = await connection.createAnswer();
-          await connection.setLocalDescription(answer);
-          socket.current.emit(ACTIONS.RELAY_SDP, {
-            peerId,
-            sessionDescription: answer,
-          });
+          // Process any queued ICE candidates
+          while (connectionData.iceCandidatesQueue.length > 0) {
+            const candidate = connectionData.iceCandidatesQueue.shift();
+            await connection.addIceCandidate(candidate);
+          }
+        } catch (error) {
+          console.error("Error setting remote description: ", error);
         }
-
-        while (connectionData.iceCandidatesQueue.length > 0) {
-          const candidate = connectionData.iceCandidatesQueue.shift();
-          await connection.addIceCandidate(candidate);
-        }
-      } catch (error) {
-        console.error("Error setting remote description: ", error);
+      } else {
+        console.warn("Connection not in stable state, delaying SDP setting");
+        retryTimeout = setTimeout(trySettingRemoteDescription, 500); // Retry after a delay
       }
-    }
+    };
+
+    trySettingRemoteDescription();
   };
 
   const handleSetMute = (mute, userId) => {
