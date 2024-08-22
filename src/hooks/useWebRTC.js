@@ -207,7 +207,14 @@ export const useWebRTC = (roomId, userDetails) => {
   const handleIceCandidate = async ({ peerId, icecandidate }) => {
     const connection = connections.current[peerId];
     if (connection) {
-      await connection.addIceCandidate(new RTCIceCandidate(icecandidate));
+      try {
+        await connection.addIceCandidate(new RTCIceCandidate(icecandidate));
+        console.log(`ICE candidate added for peer ${peerId}`);
+      } catch (error) {
+        console.error(`Error adding ICE candidate for peer ${peerId}:`, error);
+      }
+    } else {
+      console.error(`Connection not found for peer ${peerId}`);
     }
   };
 
