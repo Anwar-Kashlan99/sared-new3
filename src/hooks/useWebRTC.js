@@ -281,8 +281,20 @@ export const useWebRTC = (roomId, userDetails) => {
     setShowStartSpeakingPrompt(false);
     // Add local tracks to peers and ensure audio playback starts
     addLocalTracksToPeers();
-    // Retry after a short delay if necessary
-    setTimeout(addLocalTracksToPeers, 500);
+    if (localMediaStream.current) {
+      localMediaStream.current.getTracks().forEach((track) => {
+        if (track.kind === "audio") {
+          track.enabled = true;
+        }
+      });
+    }
+
+    const audioElement = audioElements.current[userDetails._id];
+    if (audioElement) {
+      audioElement.play().catch((error) => {
+        console.error("Failed to play audio:", error);
+      });
+    }
   };
 
   const handleReturnAudience = () => {
@@ -298,12 +310,13 @@ export const useWebRTC = (roomId, userDetails) => {
     if (localMediaStream.current) {
       Object.keys(connections.current).forEach((peerId) => {
         const connection = connections.current[peerId];
+        console.log(
+          `Peer connection state for ${peerId}: ${connection.connectionState}`
+        );
 
         if (connection) {
-          // Get the existing senders
           const senders = connection.getSenders();
 
-          // Add local tracks to the peer connection if not already added
           localMediaStream.current.getTracks().forEach((track) => {
             const trackAlreadyAdded = senders.some(
               (sender) => sender.track === track
@@ -314,7 +327,15 @@ export const useWebRTC = (roomId, userDetails) => {
                 `Adding track to connection for peer ${peerId}:`,
                 track
               );
-              connection.addTrack(track, localMediaStream.current);
+              try {
+                connection.addTrack(track, localMediaStream.current);
+              } catch (error) {
+                console.error(`Failed to add track to peer ${peerId}:`, error);
+              }
+            } else {
+              console.log(
+                `Track already added to connection for peer ${peerId}`
+              );
             }
           });
         } else {
