@@ -79,8 +79,8 @@ const Room = () => {
     messages,
     sendMessage,
     returnAudienceSpeak,
-    handleStartSpeaking,
-    showStartSpeakingPrompt,
+    // handleStartSpeaking,
+    // showStartSpeakingPrompt,
   } = useWebRTC(roomId, userDetails);
 
   const currentUser = clients.find((client) => client._id === userDetails._id);
@@ -965,7 +965,7 @@ const Room = () => {
           </Box>
         </DialogContent>
       </Dialog>
-      <Dialog
+      {/**       <Dialog
         open={showStartSpeakingPrompt}
         onClose={!showStartSpeakingPrompt}
         aria-labelledby="alert-dialog-title"
@@ -990,7 +990,7 @@ const Room = () => {
             </Button>
           </Box>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </Box>
   );
 };
