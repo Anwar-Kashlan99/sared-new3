@@ -382,6 +382,10 @@ export const useWebRTC = (roomId, userDetails) => {
         connection.addTrack(track, localMediaStream.current);
         connection.oniceconnectionstatechange = () => {
           console.log("ICE connection state:", connection.iceConnectionState);
+          if (connection.iceConnectionState === "failed") {
+            console.error("ICE connection failed. Trying to restart ICE.");
+            connection.restartIce();
+          }
         };
         console.log(
           `Added ${track.kind} track to connection, enabled: ${track.enabled}`
@@ -419,14 +423,22 @@ export const useWebRTC = (roomId, userDetails) => {
 
     setClients((list) => list.filter((c) => c._id !== userId));
   };
-
   const handleIceCandidate = async ({ peerId, icecandidate }) => {
     if (icecandidate) {
       const connectionData = connections.current[peerId];
       if (connectionData) {
-        if (connectionData.connection.remoteDescription) {
-          await connectionData.connection.addIceCandidate(icecandidate);
+        const connection = connectionData.connection;
+        if (connection.remoteDescription && connection.remoteDescription.type) {
+          try {
+            await connection.addIceCandidate(icecandidate);
+            console.log("Added ICE candidate successfully");
+          } catch (e) {
+            console.error("Failed to add ICE candidate", e);
+          }
         } else {
+          console.log(
+            "Queueing ICE candidate as remote description is not set"
+          );
           connectionData.iceCandidatesQueue.push(icecandidate);
         }
       }
