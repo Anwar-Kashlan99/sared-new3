@@ -143,8 +143,17 @@ export const useWebRTC = (roomId, userDetails) => {
     };
 
     connection.ontrack = ({ streams: [remoteStream] }) => {
+      console.log(`Received remote stream for user ${user._id}`);
       addNewClient({ ...user, muted: true });
-      audioElements.current[user._id].srcObject = remoteStream;
+      // Provide a reference to the audio element if not already provided
+      if (!audioElements.current[user._id]) {
+        console.error(`Audio element for user ${user._id} not found!`);
+      } else {
+        audioElements.current[user._id].srcObject = remoteStream;
+        audioElements.current[user._id].play().catch((error) => {
+          console.error(`Error playing audio for user ${user._id}:`, error);
+        });
+      }
     };
 
     if (localMediaStream.current) {
@@ -200,6 +209,7 @@ export const useWebRTC = (roomId, userDetails) => {
   };
 
   const handleSetMute = (mute, userId) => {
+    console.log(`Setting mute: ${mute} for user: ${userId}`);
     setClients((prevClients) =>
       prevClients.map((client) =>
         client._id === userId
@@ -217,6 +227,24 @@ export const useWebRTC = (roomId, userDetails) => {
       });
     }
   };
+  const logMediaStreamInfo = () => {
+    if (localMediaStream.current) {
+      console.log(
+        "Local Media Stream Tracks:",
+        localMediaStream.current.getTracks()
+      );
+    } else {
+      console.error("No local media stream available");
+    }
+
+    Object.values(connections.current).forEach((connection, peerId) => {
+      console.log(
+        `Connection state for peer ${peerId}:`,
+        connection.connectionState
+      );
+    });
+  };
+  logMediaStreamInfo();
 
   const handleMessageReceived = (data) => {
     console.log("Received message data:", data);
@@ -400,6 +428,17 @@ export const useWebRTC = (roomId, userDetails) => {
       }
     }, 300);
   };
+
+  const verifyTrackStatus = () => {
+    if (localMediaStream.current) {
+      localMediaStream.current.getTracks().forEach((track) => {
+        console.log(`Track kind: ${track.kind}, enabled: ${track.enabled}`);
+      });
+    }
+  };
+
+  // Call this function after starting to speak
+  verifyTrackStatus();
 
   const getAudioLevel = async () => {
     let audioLevel = 0.0;
