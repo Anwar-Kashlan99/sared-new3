@@ -172,14 +172,14 @@ export const useWebRTC = (roomId, userDetails) => {
       });
     }
     console.log("createOffer:", createOffer);
-    // if (createOffer) {
-    const offer = await connection.createOffer();
-    await connection.setLocalDescription(offer);
-    socket.current.emit(ACTIONS.RELAY_SDP, {
-      peerId,
-      sessionDescription: offer,
-    });
-    // }
+    if (createOffer) {
+      const offer = await connection.createOffer();
+      await connection.setLocalDescription(offer);
+      socket.current.emit(ACTIONS.RELAY_SDP, {
+        peerId,
+        sessionDescription: offer,
+      });
+    }
   };
 
   const setRemoteMedia = async ({ peerId, sessionDescription }) => {
@@ -436,17 +436,6 @@ export const useWebRTC = (roomId, userDetails) => {
       }
     }, 300);
   };
-
-  const verifyTrackStatus = () => {
-    if (localMediaStream.current) {
-      localMediaStream.current.getTracks().forEach((track) => {
-        console.log(`Track kind: ${track.kind}, enabled: ${track.enabled}`);
-      });
-    }
-  };
-
-  // Call this function after starting to speak
-  verifyTrackStatus();
 
   const getAudioLevel = async () => {
     let audioLevel = 0.0;
