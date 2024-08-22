@@ -218,6 +218,23 @@ export const useWebRTC = (roomId, userDetails) => {
     }
   };
 
+  const handleAutoplay = (userId) => {
+    const audioElement = audioElements.current[userId];
+    if (audioElement) {
+      audioElement.play().catch((error) => {
+        if (error.name === "NotAllowedError" || error.name === "AbortError") {
+          console.log("Autoplay prevented, waiting for user interaction.");
+          // Display UI to ask user to click to play
+        } else {
+          console.error("Error during playback:", error);
+        }
+      });
+    }
+  };
+
+  // Call this function when the audio element is ready
+  handleAutoplay(userDetails._id);
+
   const handleRemovePeer = ({ peerId, userId }) => {
     if (connections.current[peerId]) {
       connections.current[peerId].close();

@@ -617,6 +617,7 @@ const Room = () => {
                       )}
                     </Menu>
                     <audio
+                      autoPlay
                       ref={(instance) => {
                         provideRef(instance, client?._id);
                       }}
