@@ -172,19 +172,23 @@ export const useWebRTC = (roomId, userDetails) => {
       });
     }
     console.log("createOffer:", createOffer);
-    // if (createOffer) {
-    const offer = await connection.createOffer();
-    await connection.setLocalDescription(offer);
-    socket.current.emit(ACTIONS.RELAY_SDP, {
-      peerId,
-      sessionDescription: offer,
-    });
-    // }
+    if (createOffer) {
+      console.log("Creating offer for peer:", peerId);
+      const offer = await connection.createOffer();
+      await connection.setLocalDescription(offer);
+      socket.current.emit(ACTIONS.RELAY_SDP, {
+        peerId,
+        sessionDescription: offer,
+      });
+    }
   };
 
   const setRemoteMedia = async ({ peerId, sessionDescription }) => {
     const connection = connections.current[peerId];
     if (!connection) return;
+
+    const currentState = connection.signalingState;
+    console.log(`Current signaling state: ${currentState}`);
 
     await connection.setRemoteDescription(
       new RTCSessionDescription(sessionDescription)
