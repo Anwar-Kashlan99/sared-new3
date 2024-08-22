@@ -550,7 +550,6 @@ const Room = () => {
                       }}
                     />
                     <audio
-                      autoPlay
                       ref={(instance) => {
                         provideRef(instance, client?._id);
                       }}
@@ -966,12 +965,32 @@ const Room = () => {
           </Box>
         </DialogContent>
       </Dialog>
-      {showStartSpeakingPrompt && (
-        <div className="start-speaking-prompt">
-          <p>Your hand raise request has been approved!</p>
-          <button onClick={() => handleStartSpeaking()}>Start Speaking</button>
-        </div>
-      )}
+      <Dialog
+        open={showStartSpeakingPrompt}
+        onClose={!showStartSpeakingPrompt}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogContent>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              flexDirection: "column",
+              p: "1rem",
+              maxWidth: "500px",
+            }}
+          >
+            <Typography sx={{ fontSize: "18px", mb: "10px" }}>
+              Your hand raise request has been approved!
+            </Typography>
+            <Button color="primary" onClick={() => handleStartSpeaking()}>
+              Start Speaking
+            </Button>
+          </Box>
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };
