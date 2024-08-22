@@ -394,19 +394,19 @@ export const useWebRTC = (roomId, userDetails) => {
         .map((track) => ({ kind: track.kind, enabled: track.enabled }))
     );
     console.log(createOffer);
-    if (createOffer) {
-      try {
-        const offer = await connection.createOffer();
-        console.log("offer:", offer, "peerId:", peerId);
-        await connection.setLocalDescription(offer);
-        socket.current.emit(ACTIONS.RELAY_SDP, {
-          peerId,
-          sessionDescription: offer,
-        });
-      } catch (error) {
-        console.error("Error creating offer: ", error);
-      }
+    // if (createOffer) {
+    try {
+      const offer = await connection.createOffer();
+      console.log("offer:", offer, "peerId:", peerId);
+      await connection.setLocalDescription(offer);
+      socket.current.emit(ACTIONS.RELAY_SDP, {
+        peerId,
+        sessionDescription: offer,
+      });
+    } catch (error) {
+      console.error("Error creating offer: ", error);
     }
+    // }
   };
 
   const handleRemovePeer = ({ peerId, userId }) => {
