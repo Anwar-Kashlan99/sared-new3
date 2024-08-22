@@ -172,14 +172,14 @@ export const useWebRTC = (roomId, userDetails) => {
       });
     }
     console.log("createOffer:", createOffer);
-    // if (createOffer) {
-    const offer = await connection.createOffer();
-    await connection.setLocalDescription(offer);
-    socket.current.emit(ACTIONS.RELAY_SDP, {
-      peerId,
-      sessionDescription: offer,
-    });
-    // }
+    if (createOffer) {
+      const offer = await connection.createOffer();
+      await connection.setLocalDescription(offer);
+      socket.current.emit(ACTIONS.RELAY_SDP, {
+        peerId,
+        sessionDescription: offer,
+      });
+    }
   };
 
   const setRemoteMedia = async ({ peerId, sessionDescription }) => {
@@ -203,16 +203,10 @@ export const useWebRTC = (roomId, userDetails) => {
   const handleIceCandidate = async ({ peerId, icecandidate }) => {
     const connection = connections.current[peerId];
     if (connection) {
-      try {
-        await connection.addIceCandidate(new RTCIceCandidate(icecandidate));
-        console.log(`ICE candidate added for peer ${peerId}`);
-      } catch (error) {
-        console.error(`Error adding ICE candidate for peer ${peerId}:`, error);
-      }
-    } else {
-      console.error(`Connection not found for peer ${peerId}`);
+      await connection.addIceCandidate(new RTCIceCandidate(icecandidate));
     }
   };
+
   const handleRemovePeer = ({ peerId, userId }) => {
     if (connections.current[peerId]) {
       connections.current[peerId].close();
@@ -249,6 +243,24 @@ export const useWebRTC = (roomId, userDetails) => {
       });
     }
   };
+  const logMediaStreamInfo = () => {
+    if (localMediaStream.current) {
+      console.log(
+        "Local Media Stream Tracks:",
+        localMediaStream.current.getTracks()
+      );
+    } else {
+      console.error("No local media stream available");
+    }
+
+    Object.values(connections.current).forEach((connection, peerId) => {
+      console.log(
+        `Connection state for peer ${peerId}:`,
+        connection.connectionState
+      );
+    });
+  };
+  logMediaStreamInfo();
 
   const handleMessageReceived = (data) => {
     console.log("Received message data:", data);
@@ -292,48 +304,6 @@ export const useWebRTC = (roomId, userDetails) => {
       requests.filter((req) => req.userId !== userId)
     );
   };
-
-  //   const ensureAudioPlayback = (userId) => {
-  //     const audioElement = audioElements.current[userId];
-  //     if (audioElement) {
-  //       audioElement
-  //         .play()
-  //         .then(() => {
-  //           console.log(`Audio playing for user ${userId}`);
-  //         })
-  //         .catch((error) => {
-  //           console.error(`Error playing audio for user ${userId}:`, error);
-  //         });
-  //     }
-  //   };
-
-  //   // Call this function after setting the remote stream
-  //   ensureAudioPlayback(userDetails._id);
-
-  //   const monitorWebRTCStats = async () => {
-  //     if (connections.current) {
-  //       Object.keys(connections.current).forEach(async (peerId) => {
-  //         const connection = connections.current[peerId];
-  //         if (connection) {
-  //           const stats = await connection.getStats();
-  //           stats.forEach((report) => {
-  //             if (report.type === "outbound-rtp" && report.kind === "audio") {
-  //               console.log(
-  //                 `Outbound audio RTP: packetsSent=${report.packetsSent}, bytesSent=${report.bytesSent}`
-  //               );
-  //             }
-  //             if (report.type === "inbound-rtp" && report.kind === "audio") {
-  //               console.log(
-  //                 `Inbound audio RTP: packetsReceived=${report.packetsReceived}, bytesReceived=${report.bytesReceived}`
-  //               );
-  //             }
-  //           });
-  //         }
-  //       });
-  //     }
-  //   };
-  //   // Call this function periodically to monitor
-  //   setInterval(monitorWebRTCStats, 5000);
 
   const handleApproveSpeak = ({ userId }) => {
     toast(`User ${userId} has been approved to speak.`);
@@ -487,16 +457,16 @@ export const useWebRTC = (roomId, userDetails) => {
     }, 300);
   };
 
-  //   const verifyTrackStatus = () => {
-  //     if (localMediaStream.current) {
-  //       localMediaStream.current.getTracks().forEach((track) => {
-  //         console.log(`Track kind: ${track.kind}, enabled: ${track.enabled}`);
-  //       });
-  //     }
-  //   };
+  const verifyTrackStatus = () => {
+    if (localMediaStream.current) {
+      localMediaStream.current.getTracks().forEach((track) => {
+        console.log(`Track kind: ${track.kind}, enabled: ${track.enabled}`);
+      });
+    }
+  };
 
-  //   // Call this function after starting to speak
-  //   verifyTrackStatus();
+  // Call this function after starting to speak
+  verifyTrackStatus();
 
   const getAudioLevel = async () => {
     let audioLevel = 0.0;
