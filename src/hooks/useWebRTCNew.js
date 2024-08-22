@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from "react";
-import { ACTIONS } from "../actions";
+import { ACTIONS } from "../actionsSrdHouse";
 import socketInit from "../socket";
 import { useStateWithCallback } from "./useStateWithCallback";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +20,7 @@ export const useWebRTC = (roomId, userDetails) => {
   const [showStartSpeakingPrompt, setShowStartSpeakingPrompt] = useState(false);
   const monitoringInterval = useRef(null);
 
+  // Function to add a new client to the list of clients
   const addNewClient = useCallback(
     (newClient, cb) => {
       setClients((existingClients) => {
@@ -35,6 +36,7 @@ export const useWebRTC = (roomId, userDetails) => {
     [setClients]
   );
 
+  // Keep the clients list in sync with a ref to avoid stale closures
   useEffect(() => {
     clientsRef.current = clients;
   }, [clients]);
@@ -49,6 +51,7 @@ export const useWebRTC = (roomId, userDetails) => {
 
       if (!socket.current) {
         console.error("Socket initialization failed");
+        setTimeout(initChat, 3000);
         return;
       }
 
@@ -60,7 +63,6 @@ export const useWebRTC = (roomId, userDetails) => {
         addNewClient({ ...userDetails, muted: true }, () => {
           const localElement = audioElements.current[userDetails._id];
           if (localElement) {
-            localElement.volume = 0;
             localElement.srcObject = localMediaStream.current;
           }
 
@@ -96,7 +98,7 @@ export const useWebRTC = (roomId, userDetails) => {
       }
       cleanupConnections();
     };
-  }, [roomId, userDetails, addNewClient, setClients, navigate]);
+  }, [userDetails, addNewClient, setClients, navigate]);
 
   const setupSocketEventHandlers = () => {
     socket.current.on(ACTIONS.MUTE_INFO, ({ userId, isMute }) =>
@@ -129,7 +131,7 @@ export const useWebRTC = (roomId, userDetails) => {
     socket.current.on(ACTIONS.ERROR, handleErrorRoom);
   };
 
-  const cleanupConnections = () => {
+  const cleanupConnections = useCallback(() => {
     for (let peerId in connections.current) {
       if (connections.current[peerId]) {
         connections.current[peerId].connection.close();
@@ -140,27 +142,19 @@ export const useWebRTC = (roomId, userDetails) => {
       delete audioElements.current[userId];
     }
     if (socket.current) {
-      socket.current.off(ACTIONS.MUTE_INFO);
-      socket.current.off(ACTIONS.ADD_PEER);
-      socket.current.off(ACTIONS.REMOVE_PEER);
-      socket.current.off(ACTIONS.ICE_CANDIDATE);
-      socket.current.off(ACTIONS.SESSION_DESCRIPTION);
-      socket.current.off(ACTIONS.RAISE_HAND_DUPLICATE);
-      socket.current.off(ACTIONS.MUTE);
-      socket.current.off(ACTIONS.UNMUTE);
-      socket.current.off(ACTIONS.MESSAGE);
-      socket.current.off(ACTIONS.TALK);
+      Object.values(ACTIONS).forEach((action) => socket.current.off(action));
       socket.current.emit(ACTIONS.LEAVE, { roomId });
       socket.current = null;
-      console.log("cleanup Connections");
+      console.log("All socket listeners removed and cleanup complete.");
     }
 
     if (monitoringInterval.current) {
       clearInterval(monitoringInterval.current);
       monitoringInterval.current = null;
     }
-  };
+  }, [roomId]);
 
+  // Capture user's media (audio)
   const captureMedia = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       toast.error(
@@ -190,7 +184,7 @@ export const useWebRTC = (roomId, userDetails) => {
 
   const handleErrorRoom = () => {
     toast("You are blocked from this room");
-    navigate("/srdhouse");
+    setTimeout(() => navigate("/srdhouse"), 1000);
   };
 
   const handleMessageReceived = (data) => {
@@ -287,7 +281,35 @@ export const useWebRTC = (roomId, userDetails) => {
       return;
     }
 
-    const iceServers = freeice();
+    // const iceServers = freeice();
+    const iceServers = [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" },
+      { urls: "stun:stun2.l.google.com:19302" },
+      { urls: "stun:stun3.l.google.com:19302" },
+      { urls: "stun:stun4.l.google.com:19302" },
+      { urls: "stun:stun.relay.metered.ca:80" },
+      {
+        urls: "turn:global.relay.metered.ca:80",
+        username: "c8090ecaa7eb2bc0bb45fcd3",
+        credential: "dr9/NfX7eSdwKpFF",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:80?transport=tcp",
+        username: "c8090ecaa7eb2bc0bb45fcd3",
+        credential: "dr9/NfX7eSdwKpFF",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:443",
+        username: "c8090ecaa7eb2bc0bb45fcd3",
+        credential: "dr9/NfX7eSdwKpFF",
+      },
+      {
+        urls: "turns:global.relay.metered.ca:443?transport=tcp",
+        username: "c8090ecaa7eb2bc0bb45fcd3",
+        credential: "dr9/NfX7eSdwKpFF",
+      },
+    ];
     const connection = new RTCPeerConnection({ iceServers });
 
     connections.current[peerId] = { connection, iceCandidatesQueue: [] };
@@ -303,41 +325,88 @@ export const useWebRTC = (roomId, userDetails) => {
     };
 
     connection.ontrack = ({ streams: [remoteStream] }) => {
+      console.log(
+        remoteStream
+          .getTracks()
+          .map((track) => ({ kind: track.kind, enabled: track.enabled }))
+      );
       console.log("Track event:", remoteStream);
       addNewClient({ ...remoteUser, muted: true }, () => {
         const audioElement = audioElements.current[remoteUser._id];
         if (audioElement) {
           audioElement.srcObject = remoteStream;
+          audioElement.volume = 1; // Ensure volume is not 0
+          audioElement.muted = false; // Ensure the element is not muted
+          console.log(
+            `Attached remote stream to audio element for user: ${remoteUser._id}, volume: ${audioElement.volume}`
+          );
+          audioElement.play().catch((error) => {
+            console.error("Failed to play audio:", error);
+          });
+          console.log("Audio element volume set to:", audioElement.volume);
+          console.log(
+            "Attached remote stream to audio element for user:",
+            remoteUser._id
+          );
         } else {
-          const interval = setInterval(() => {
+          const observer = new MutationObserver(() => {
             const element = audioElements.current[remoteUser._id];
             if (element) {
+              console.log("element", element);
               element.srcObject = remoteStream;
-              clearInterval(interval);
+              console.log(
+                "Attached remote stream after observer found the element:",
+                element
+              );
+              observer.disconnect(); // Stop observing once element is found
             }
-          }, 300);
+          });
+          observer.observe(document.body, { childList: true, subtree: true });
         }
+
+        // else {
+        //   const interval = setInterval(() => {
+        //     const element = audioElements.current[remoteUser._id];
+        //     if (element) {
+        //       element.srcObject = remoteStream;
+        //       clearInterval(interval);
+        //     }
+        //   }, 300);
+        // }
       });
     };
 
     if (localMediaStream.current) {
       localMediaStream.current.getTracks().forEach((track) => {
+        track.enabled = true;
         connection.addTrack(track, localMediaStream.current);
+        connection.oniceconnectionstatechange = () => {
+          console.log("ICE connection state:", connection.iceConnectionState);
+        };
+        console.log(
+          `Added ${track.kind} track to connection, enabled: ${track.enabled}`
+        );
       });
     }
-
-    // if (createOffer) {
-    try {
-      const offer = await connection.createOffer();
-      await connection.setLocalDescription(offer);
-      socket.current.emit(ACTIONS.RELAY_SDP, {
-        peerId,
-        sessionDescription: offer,
-      });
-    } catch (error) {
-      console.error("Error creating offer: ", error);
+    console.log(
+      localMediaStream.current
+        .getTracks()
+        .map((track) => ({ kind: track.kind, enabled: track.enabled }))
+    );
+    console.log(createOffer);
+    if (createOffer) {
+      try {
+        const offer = await connection.createOffer();
+        console.log("offer:", offer, "peerId:", peerId);
+        await connection.setLocalDescription(offer);
+        socket.current.emit(ACTIONS.RELAY_SDP, {
+          peerId,
+          sessionDescription: offer,
+        });
+      } catch (error) {
+        console.error("Error creating offer: ", error);
+      }
     }
-    // }
   };
 
   const handleRemovePeer = ({ peerId, userId }) => {
@@ -378,6 +447,7 @@ export const useWebRTC = (roomId, userDetails) => {
 
         if (remoteSessionDescription.type === "offer") {
           const answer = await connection.createAnswer();
+          console.log("answer:", answer, "peerID:", peerId);
           await connection.setLocalDescription(answer);
           socket.current.emit(ACTIONS.RELAY_SDP, {
             peerId,
@@ -416,7 +486,7 @@ export const useWebRTC = (roomId, userDetails) => {
 
   const handleRoomEnded = () => {
     toast("Room ended", { icon: "⚠️" });
-    navigate("/srdhouse");
+    setTimeout(() => navigate("/srdhouse"), 1000);
   };
 
   const handleRaiseHand = ({ userId, username, profile, peerId }) => {
@@ -459,7 +529,6 @@ export const useWebRTC = (roomId, userDetails) => {
 
     // If the current user is the one being approved, add local tracks to peer connection
     if (userId === userDetails._id) {
-      //   addLocalTracksToPeers();
       setShowStartSpeakingPrompt(true);
     }
   };
@@ -498,8 +567,13 @@ export const useWebRTC = (roomId, userDetails) => {
     if (localMediaStream.current) {
       Object.values(connections.current).forEach(({ connection }) => {
         localMediaStream.current.getTracks().forEach((track) => {
-          console.log("Adding track to connection:", track);
-          connection.addTrack(track, localMediaStream.current);
+          const sender = connection.getSenders().find((s) => s.track === track);
+          if (!sender) {
+            console.log("Adding track to connection:", track);
+            connection.addTrack(track, localMediaStream.current);
+          } else {
+            console.log("Track already added:", track);
+          }
         });
       });
     }
@@ -577,7 +651,26 @@ export const useWebRTC = (roomId, userDetails) => {
   };
 
   const provideRef = (instance, userId) => {
-    audioElements.current[userId] = instance;
+    if (instance) {
+      audioElements.current[userId] = instance;
+
+      // Ensure the audio element is connected to the document
+      if (document.body.contains(instance)) {
+        instance.volume = 1;
+        instance.muted = false;
+
+        // Wait for the element to be in the document before playing
+        instance.oncanplay = () => {
+          instance.play().catch((error) => {
+            console.error(`Autoplay prevented for user ${userId}:`, error);
+          });
+        };
+      } else {
+        console.warn(
+          `Audio element for user ${userId} is not attached to the document.`
+        );
+      }
+    }
   };
 
   const handleMute = (isMute, userId) => {

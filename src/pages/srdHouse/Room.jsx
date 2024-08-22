@@ -79,8 +79,8 @@ const Room = () => {
     messages,
     sendMessage,
     returnAudienceSpeak,
-    // handleStartSpeaking,
-    // showStartSpeakingPrompt,
+    handleStartSpeaking,
+    showStartSpeakingPrompt,
   } = useWebRTC(roomId, userDetails);
 
   const currentUser = clients.find((client) => client._id === userDetails._id);
@@ -965,7 +965,7 @@ const Room = () => {
           </Box>
         </DialogContent>
       </Dialog>
-      {/**       <Dialog
+      <Dialog
         open={showStartSpeakingPrompt}
         onClose={!showStartSpeakingPrompt}
         aria-labelledby="alert-dialog-title"
@@ -985,12 +985,23 @@ const Room = () => {
             <Typography sx={{ fontSize: "18px", mb: "10px" }}>
               Your hand raise request has been approved!
             </Typography>
-            <Button color="primary" onClick={() => handleStartSpeaking()}>
+            <Button
+              sx={{
+                backgroundColor: "#f25f0c",
+                color: "white",
+                transition: "all 0.3s ease-in-out",
+                "&:hover": {
+                  background: "#fff",
+                  color: "#f25f0c",
+                },
+              }}
+              onClick={() => handleStartSpeaking()}
+            >
               Start Speaking
             </Button>
           </Box>
         </DialogContent>
-      </Dialog> */}
+      </Dialog>
     </Box>
   );
 };
