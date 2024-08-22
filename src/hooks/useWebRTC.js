@@ -172,14 +172,14 @@ export const useWebRTC = (roomId, userDetails) => {
       });
     }
     console.log("createOffer:", createOffer);
-    if (createOffer) {
-      const offer = await connection.createOffer();
-      await connection.setLocalDescription(offer);
-      socket.current.emit(ACTIONS.RELAY_SDP, {
-        peerId,
-        sessionDescription: offer,
-      });
-    }
+    // if (createOffer) {
+    const offer = await connection.createOffer();
+    await connection.setLocalDescription(offer);
+    socket.current.emit(ACTIONS.RELAY_SDP, {
+      peerId,
+      sessionDescription: offer,
+    });
+    // }
   };
 
   const setRemoteMedia = async ({ peerId, sessionDescription }) => {
@@ -293,47 +293,47 @@ export const useWebRTC = (roomId, userDetails) => {
     );
   };
 
-  const ensureAudioPlayback = (userId) => {
-    const audioElement = audioElements.current[userId];
-    if (audioElement) {
-      audioElement
-        .play()
-        .then(() => {
-          console.log(`Audio playing for user ${userId}`);
-        })
-        .catch((error) => {
-          console.error(`Error playing audio for user ${userId}:`, error);
-        });
-    }
-  };
+  //   const ensureAudioPlayback = (userId) => {
+  //     const audioElement = audioElements.current[userId];
+  //     if (audioElement) {
+  //       audioElement
+  //         .play()
+  //         .then(() => {
+  //           console.log(`Audio playing for user ${userId}`);
+  //         })
+  //         .catch((error) => {
+  //           console.error(`Error playing audio for user ${userId}:`, error);
+  //         });
+  //     }
+  //   };
 
-  // Call this function after setting the remote stream
-  ensureAudioPlayback(userDetails._id);
+  //   // Call this function after setting the remote stream
+  //   ensureAudioPlayback(userDetails._id);
 
-  const monitorWebRTCStats = async () => {
-    if (connections.current) {
-      Object.keys(connections.current).forEach(async (peerId) => {
-        const connection = connections.current[peerId];
-        if (connection) {
-          const stats = await connection.getStats();
-          stats.forEach((report) => {
-            if (report.type === "outbound-rtp" && report.kind === "audio") {
-              console.log(
-                `Outbound audio RTP: packetsSent=${report.packetsSent}, bytesSent=${report.bytesSent}`
-              );
-            }
-            if (report.type === "inbound-rtp" && report.kind === "audio") {
-              console.log(
-                `Inbound audio RTP: packetsReceived=${report.packetsReceived}, bytesReceived=${report.bytesReceived}`
-              );
-            }
-          });
-        }
-      });
-    }
-  };
-  // Call this function periodically to monitor
-  setInterval(monitorWebRTCStats, 5000);
+  //   const monitorWebRTCStats = async () => {
+  //     if (connections.current) {
+  //       Object.keys(connections.current).forEach(async (peerId) => {
+  //         const connection = connections.current[peerId];
+  //         if (connection) {
+  //           const stats = await connection.getStats();
+  //           stats.forEach((report) => {
+  //             if (report.type === "outbound-rtp" && report.kind === "audio") {
+  //               console.log(
+  //                 `Outbound audio RTP: packetsSent=${report.packetsSent}, bytesSent=${report.bytesSent}`
+  //               );
+  //             }
+  //             if (report.type === "inbound-rtp" && report.kind === "audio") {
+  //               console.log(
+  //                 `Inbound audio RTP: packetsReceived=${report.packetsReceived}, bytesReceived=${report.bytesReceived}`
+  //               );
+  //             }
+  //           });
+  //         }
+  //       });
+  //     }
+  //   };
+  //   // Call this function periodically to monitor
+  //   setInterval(monitorWebRTCStats, 5000);
 
   const handleApproveSpeak = ({ userId }) => {
     toast(`User ${userId} has been approved to speak.`);
