@@ -326,18 +326,19 @@ export const useWebRTC = (roomId, userDetails) => {
       });
     }
 
-    // if (createOffer) {
-    try {
-      const offer = await connection.createOffer();
-      await connection.setLocalDescription(offer);
-      socket.current.emit(ACTIONS.RELAY_SDP, {
-        peerId,
-        sessionDescription: offer,
-      });
-    } catch (error) {
-      console.error("Error creating offer: ", error);
+    if (createOffer) {
+      console.log("createOffer", createOffer);
+      try {
+        const offer = await connection.createOffer();
+        await connection.setLocalDescription(offer);
+        socket.current.emit(ACTIONS.RELAY_SDP, {
+          peerId,
+          sessionDescription: offer,
+        });
+      } catch (error) {
+        console.error("Error creating offer: ", error);
+      }
     }
-    // }
   };
 
   const handleRemovePeer = ({ peerId, userId }) => {
