@@ -79,6 +79,8 @@ const Room = () => {
     messages,
     sendMessage,
     returnAudienceSpeak,
+    handleStartSpeaking,
+    showStartSpeakingPrompt,
   } = useWebRTC(roomId, userDetails);
 
   const currentUser = clients.find((client) => client._id === userDetails._id);
@@ -964,6 +966,12 @@ const Room = () => {
           </Box>
         </DialogContent>
       </Dialog>
+      {showStartSpeakingPrompt && (
+        <div className="start-speaking-prompt">
+          <p>Your hand raise request has been approved!</p>
+          <button onClick={() => handleStartSpeaking()}>Start Speaking</button>
+        </div>
+      )}
     </Box>
   );
 };

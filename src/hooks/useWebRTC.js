@@ -17,6 +17,7 @@ export const useWebRTC = (roomId, userDetails) => {
   const [handRaiseRequests, setHandRaiseRequests] = useState([]);
   const [messages, setMessages] = useState([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [showStartSpeakingPrompt, setShowStartSpeakingPrompt] = useState(false);
   const monitoringInterval = useRef(null);
 
   // Function to add a new client to the list of clients
@@ -528,7 +529,19 @@ export const useWebRTC = (roomId, userDetails) => {
 
     // If the current user is the one being approved, add local tracks to peer connection
     if (userId === userDetails._id) {
-      addLocalTracksToPeers();
+      setShowStartSpeakingPrompt(true);
+    }
+  };
+
+  const handleStartSpeaking = () => {
+    setShowStartSpeakingPrompt(false);
+    // Add local tracks to peers and ensure audio playback starts
+    addLocalTracksToPeers();
+    const audioElement = audioElements.current[userDetails._id];
+    if (audioElement) {
+      audioElement.play().catch((error) => {
+        console.error("Failed to play audio:", error);
+      });
     }
   };
 
@@ -766,5 +779,7 @@ export const useWebRTC = (roomId, userDetails) => {
     messages,
     sendMessage,
     returnAudienceSpeak,
+    handleStartSpeaking,
+    showStartSpeakingPrompt,
   };
 };
