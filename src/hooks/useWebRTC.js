@@ -167,22 +167,8 @@ export const useWebRTC = (roomId, userDetails) => {
     };
 
     if (localMediaStream.current) {
-      if (
-        connection.signalingState === "stable" &&
-        connection.iceConnectionState === "connected"
-      ) {
-        localMediaStream.current.getTracks().forEach((track) => {
-          try {
-            connection.addTrack(track, localMediaStream.current);
-          } catch (error) {
-            console.error(`Failed to add track to peer ${peerId}:`, error);
-          }
-        });
-      } else {
-        console.warn(
-          `Peer connection for ${peerId} is not ready, signalingState: ${connection.signalingState}, iceConnectionState: ${connection.iceConnectionState}`
-        );
-      }
+      // Add local tracks only when the connection is ready
+      addLocalTracksToPeers(peerId);
     }
 
     console.log("createOffer:", createOffer);
@@ -384,33 +370,43 @@ export const useWebRTC = (roomId, userDetails) => {
     toast("You have been moved back to the audience.");
   };
 
-  const addLocalTracksToPeers = () => {
-    if (localMediaStream.current) {
-      Object.keys(connections.current).forEach((peerId) => {
-        const connection = connections.current[peerId];
-        if (connection) {
-          if (
-            connection.signalingState === "stable" &&
-            connection.iceConnectionState === "connected"
-          ) {
-            localMediaStream.current.getTracks().forEach((track) => {
-              try {
-                connection.addTrack(track, localMediaStream.current);
-              } catch (error) {
-                console.error(`Failed to add track to peer ${peerId}:`, error);
-              }
-            });
-          } else {
-            console.warn(
-              `Peer connection for ${peerId} is not ready, signalingState: ${connection.signalingState}, iceConnectionState: ${connection.iceConnectionState}`
-            );
+  const addLocalTracksToPeers = (peerId) => {
+    const connection = connections.current[peerId];
+    if (!connection) {
+      console.error(`No connection found for peer ${peerId}`);
+      return;
+    }
+
+    const addTracks = () => {
+      if (localMediaStream.current) {
+        localMediaStream.current.getTracks().forEach((track) => {
+          try {
+            connection.addTrack(track, localMediaStream.current);
+            console.log(`Track added to peer ${peerId}`);
+          } catch (error) {
+            console.error(`Failed to add track to peer ${peerId}:`, error);
           }
-        } else {
-          console.error(`No connection found for peer ${peerId}`);
+        });
+      }
+    };
+
+    if (
+      connection.iceConnectionState === "connected" ||
+      connection.iceConnectionState === "completed"
+    ) {
+      addTracks();
+    } else {
+      console.warn(
+        `Peer connection for ${peerId} is not ready, current ICE state: ${connection.iceConnectionState}`
+      );
+      connection.addEventListener("iceconnectionstatechange", () => {
+        if (
+          connection.iceConnectionState === "connected" ||
+          connection.iceConnectionState === "completed"
+        ) {
+          addTracks();
         }
       });
-    } else {
-      console.error("Local media stream not available");
     }
   };
 
