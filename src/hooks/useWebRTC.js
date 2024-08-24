@@ -387,17 +387,6 @@ export const useWebRTC = (roomId, userDetails) => {
     console.log("Clients state updated:", clients);
   }, [clients]);
 
-  const logConnectionState = (connection) => {
-    console.log("Connection state:", connection.connectionState);
-    console.log("Signaling state:", connection.signalingState);
-    console.log("ICE connection state:", connection.iceConnectionState);
-    console.log(
-      "Tracks:",
-      connection.getSenders().map((sender) => sender.track)
-    );
-  };
-  logConnectionState();
-
   const handleReturnAudience = () => {
     if (localMediaStream.current) {
       localMediaStream.current.getTracks().forEach((track) => {
