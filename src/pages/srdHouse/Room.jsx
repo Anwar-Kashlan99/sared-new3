@@ -82,7 +82,6 @@ const Room = () => {
     handleStartSpeaking,
     showStartSpeakingPrompt,
   } = useWebRTC(roomId, userDetails);
-  console.log(clients);
 
   const currentUser = clients.find((client) => client._id === userDetails._id);
   const [isAdmin, setIsAdmin] = useState(false);

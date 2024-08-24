@@ -22,16 +22,21 @@ export const useWebRTC = (roomId, userDetails) => {
   const addNewClient = useCallback(
     (newClient) => {
       setClients((existingClients) => {
-        const clientExists = existingClients.some(
+        const clientIndex = existingClients.findIndex(
           (client) => client._id === newClient._id
         );
 
-        if (!clientExists) {
-          return [...existingClients, newClient];
+        if (clientIndex !== -1) {
+          // Update existing client
+          const updatedClients = [...existingClients];
+          updatedClients[clientIndex] = {
+            ...updatedClients[clientIndex],
+            ...newClient,
+          };
+          return updatedClients;
         } else {
-          return existingClients.map((client) =>
-            client._id === newClient._id ? { ...client, ...newClient } : client
-          );
+          // Add new client
+          return [...existingClients, newClient];
         }
       });
     },
@@ -328,28 +333,17 @@ export const useWebRTC = (roomId, userDetails) => {
     }
   };
 
-  const handleApproveSpeak = async ({ userId }) => {
+  const handleApproveSpeak = ({ userId }) => {
+    setClients((prevClients) =>
+      prevClients.map((client) =>
+        client._id === userId
+          ? { ...client, role: "speaker", muted: false }
+          : client
+      )
+    );
+
     if (userId === userDetails._id) {
-      // Re-initialize local media tracks
-      await enableLocalAudioTrack();
-      await addLocalTracksToPeers();
-
-      // Re-negotiate peer connection
-      const connection = connections.current[userId];
-      if (connection) {
-        try {
-          const offer = await connection.createOffer({ iceRestart: true });
-          await connection.setLocalDescription(offer);
-          socket.current.emit(ACTIONS.RELAY_SDP, {
-            peerId: userId,
-            sessionDescription: offer,
-          });
-        } catch (error) {
-          console.error("Error during ICE restart and renegotiation:", error);
-        }
-      }
-
-      setShowStartSpeakingPrompt(false);
+      setShowStartSpeakingPrompt(true);
     }
   };
 
@@ -371,15 +365,38 @@ export const useWebRTC = (roomId, userDetails) => {
   const handleStartSpeaking = async () => {
     try {
       setShowStartSpeakingPrompt(false);
-      await enableLocalAudioTrack();
-      await addLocalTracksToPeers();
+      enableLocalAudioTrack();
+      addLocalTracksToPeers();
 
-      // Re-negotiate if needed
-      await handleApproveSpeak({ userId: userDetails._id });
+      // Re-negotiate the connection
+      const connection = connections.current[userDetails._id];
+      if (connection) {
+        const offer = await connection.createOffer({ iceRestart: true });
+        await connection.setLocalDescription(offer);
+        socket.current.emit(ACTIONS.RELAY_SDP, {
+          peerId: userDetails._id,
+          sessionDescription: offer,
+        });
+      }
     } catch (error) {
       console.error("Failed to start speaking:", error);
     }
   };
+
+  useEffect(() => {
+    console.log("Clients state updated:", clients);
+  }, [clients]);
+
+  const logConnectionState = (connection) => {
+    console.log("Connection state:", connection.connectionState);
+    console.log("Signaling state:", connection.signalingState);
+    console.log("ICE connection state:", connection.iceConnectionState);
+    console.log(
+      "Tracks:",
+      connection.getSenders().map((sender) => sender.track)
+    );
+  };
+  logConnectionState();
 
   const handleReturnAudience = () => {
     if (localMediaStream.current) {
