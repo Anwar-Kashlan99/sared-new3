@@ -23,7 +23,9 @@ export const useWebRTC = (roomId, userDetails) => {
     (newClient) => {
       setClients((existingClients) => {
         const clientIndex = existingClients.findIndex(
-          (client) => client._id === newClient._id
+          (client) =>
+            client._id === newClient._id &&
+            client.socketId === newClient.socketId
         );
 
         if (clientIndex !== -1) {
@@ -377,6 +379,22 @@ export const useWebRTC = (roomId, userDetails) => {
           peerId: userDetails._id,
           sessionDescription: offer,
         });
+      }
+
+      // Autoplay handling
+      const audioElement = audioElements.current[userDetails._id];
+      if (audioElement) {
+        try {
+          await audioElement.play();
+        } catch (error) {
+          if (error.name === "NotAllowedError" || error.name === "AbortError") {
+            console.log("Autoplay prevented, user interaction required.");
+            toast("Click to play audio", { icon: "🔊" });
+            // Show a play button to the user to manually start the audio
+          } else {
+            console.error("Error during playback:", error);
+          }
+        }
       }
     } catch (error) {
       console.error("Failed to start speaking:", error);
