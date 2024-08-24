@@ -22,13 +22,23 @@ export const useWebRTC = (roomId, userDetails) => {
   const addNewClient = useCallback(
     (newClient) => {
       setClients((existingClients) => {
-        const existing = existingClients.find(
+        // Find if client already exists
+        const existingIndex = existingClients.findIndex(
           (client) => client._id === newClient._id
         );
-        if (!existing) {
+
+        if (existingIndex !== -1) {
+          // If the client exists, merge the new client data
+          const updatedClients = [...existingClients];
+          updatedClients[existingIndex] = {
+            ...existingClients[existingIndex],
+            ...newClient,
+          };
+          return updatedClients;
+        } else {
+          // If the client does not exist, add it to the list
           return [...existingClients, newClient];
         }
-        return existingClients;
       });
     },
     [setClients]
@@ -136,50 +146,49 @@ export const useWebRTC = (roomId, userDetails) => {
   };
 
   const handleNewPeer = async ({ peerId, createOffer, user }) => {
-    if (connections.current[peerId]) return;
+    try {
+      if (connections.current[peerId]) return;
 
-    const iceServers = freeice();
-    const connection = new RTCPeerConnection({ iceServers });
-    connections.current[peerId] = connection;
+      const iceServers = freeice();
+      const connection = new RTCPeerConnection({ iceServers });
+      connections.current[peerId] = connection;
 
-    connection.onicecandidate = (event) => {
-      if (event.candidate) {
-        socket.current.emit(ACTIONS.RELAY_ICE, {
+      connection.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.current.emit(ACTIONS.RELAY_ICE, {
+            peerId,
+            icecandidate: event.candidate,
+          });
+        }
+      };
+
+      connection.ontrack = ({ streams: [remoteStream] }) => {
+        addNewClient({ ...user, muted: true });
+        const audioElement = audioElements.current[user._id];
+        if (audioElement) {
+          audioElement.srcObject = remoteStream;
+          audioElement.play().catch((error) => {
+            console.error(`Error playing audio for user ${user._id}:`, error);
+          });
+        }
+      };
+
+      if (localMediaStream.current) {
+        localMediaStream.current.getTracks().forEach((track) => {
+          connection.addTrack(track, localMediaStream.current);
+        });
+      }
+
+      if (createOffer) {
+        const offer = await connection.createOffer();
+        await connection.setLocalDescription(offer);
+        socket.current.emit(ACTIONS.RELAY_SDP, {
           peerId,
-          icecandidate: event.candidate,
+          sessionDescription: offer,
         });
       }
-    };
-
-    connection.ontrack = ({ streams: [remoteStream] }) => {
-      console.log(`Received remote stream for user ${user._id}`);
-      addNewClient({ ...user, muted: true });
-
-      const audioElement = audioElements.current[user._id];
-      if (!audioElement) {
-        console.error(`Audio element for user ${user._id} not found!`);
-      } else {
-        audioElement.srcObject = remoteStream;
-        audioElement.play().catch((error) => {
-          console.error(`Error playing audio for user ${user._id}:`, error);
-        });
-      }
-    };
-
-    if (localMediaStream.current) {
-      localMediaStream.current.getTracks().forEach((track) => {
-        connection.addTrack(track, localMediaStream.current);
-      });
-    }
-    console.log("createOffer:", createOffer);
-    if (createOffer) {
-      console.log("Creating offer for peer:", peerId);
-      const offer = await connection.createOffer();
-      await connection.setLocalDescription(offer);
-      socket.current.emit(ACTIONS.RELAY_SDP, {
-        peerId,
-        sessionDescription: offer,
-      });
+    } catch (error) {
+      console.error("Error handling new peer:", error);
     }
   };
 
@@ -357,21 +366,27 @@ export const useWebRTC = (roomId, userDetails) => {
     }
   };
 
-  const handleStartSpeaking = () => {
-    setShowStartSpeakingPrompt(false);
-    enableLocalAudioTrack();
-    addLocalTracksToPeers();
-    const audioElement = audioElements.current[userDetails._id];
-    if (audioElement) {
-      audioElement.play().catch((error) => {
-        console.error("Failed to play audio:", error);
-        if (error.name === "NotAllowedError" || error.name === "AbortError") {
-          // Optionally notify the user to manually start playback
-          alert("Please click the play button to start your audio.");
-        }
-      });
+  const handleStartSpeaking = async () => {
+    try {
+      setShowStartSpeakingPrompt(false);
+      enableLocalAudioTrack();
+      addLocalTracksToPeers();
+
+      // Re-negotiate connection
+      const connection = connections.current[userDetails._id];
+      if (connection) {
+        const offer = await connection.createOffer({ iceRestart: true });
+        await connection.setLocalDescription(offer);
+        socket.current.emit(ACTIONS.RELAY_SDP, {
+          peerId: userDetails._id,
+          sessionDescription: offer,
+        });
+      }
+    } catch (error) {
+      console.error("Failed to start speaking:", error);
     }
   };
+
   const handleReturnAudience = () => {
     if (localMediaStream.current) {
       localMediaStream.current.getTracks().forEach((track) => {
