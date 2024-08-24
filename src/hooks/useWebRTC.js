@@ -346,18 +346,16 @@ export const useWebRTC = (roomId, userDetails) => {
 
   const handleStartSpeaking = () => {
     setShowStartSpeakingPrompt(false);
-
-    // Enable the local audio track explicitly
     enableLocalAudioTrack();
-
-    // Add tracks to peers
     addLocalTracksToPeers();
-
-    // Optionally start playing the local audio element (if needed)
     const audioElement = audioElements.current[userDetails._id];
     if (audioElement) {
       audioElement.play().catch((error) => {
         console.error("Failed to play audio:", error);
+        if (error.name === "NotAllowedError" || error.name === "AbortError") {
+          // Optionally notify the user to manually start playback
+          alert("Please click the play button to start your audio.");
+        }
       });
     }
   };
