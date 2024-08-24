@@ -116,7 +116,7 @@ export const useWebRTC = (roomId, userDetails) => {
         if (track.kind === "audio") {
           track.enabled = true;
           console.log(
-            `Captured track kind: ${track.kind}, enabled: ${track.enabled}`
+            `    Captured track kind: ${track.kind}, enabled: ${track.enabled}`
           );
         }
       });
@@ -167,10 +167,10 @@ export const useWebRTC = (roomId, userDetails) => {
     };
 
     if (localMediaStream.current) {
-      // Add local tracks only when the connection is ready
-      addLocalTracksToPeers(peerId);
+      localMediaStream.current.getTracks().forEach((track) => {
+        connection.addTrack(track, localMediaStream.current);
+      });
     }
-
     console.log("createOffer:", createOffer);
     if (createOffer) {
       console.log("Creating offer for peer:", peerId);
@@ -335,7 +335,7 @@ export const useWebRTC = (roomId, userDetails) => {
         if (track.kind === "audio") {
           track.enabled = true; // Ensure the audio track is enabled
           console.log(
-            `Enabled track kind: ${track.kind}, enabled: ${track.enabled}`
+            `   Enabled track kind: ${track.kind}, enabled: ${track.enabled}`
           );
         }
       });
@@ -370,56 +370,44 @@ export const useWebRTC = (roomId, userDetails) => {
     toast("You have been moved back to the audience.");
   };
 
-  const addLocalTracksToPeers = (peerId) => {
-    const connection = connections.current[peerId];
-    if (!connection) {
-      console.error(`No connection found for peer ${peerId}`);
-      return;
-    }
+  const addLocalTracksToPeers = () => {
+    if (localMediaStream.current) {
+      Object.keys(connections.current).forEach((peerId) => {
+        const connection = connections.current[peerId];
+        console.log(
+          `Peer connection state for ${peerId}: ${connection.connectionState}`
+        );
 
-    const addTracks = () => {
-      if (localMediaStream.current) {
-        localMediaStream.current.getTracks().forEach((track) => {
-          try {
-            connection.addTrack(track, localMediaStream.current);
-            console.log(`Track added to peer ${peerId}`);
-          } catch (error) {
-            console.error(`Failed to add track to peer ${peerId}:`, error);
-          }
-        });
-      }
-    };
+        if (connection) {
+          const senders = connection.getSenders();
 
-    // Check current ICE state and act accordingly
-    if (
-      connection.iceConnectionState === "connected" ||
-      connection.iceConnectionState === "completed"
-    ) {
-      addTracks();
-    } else {
-      console.warn(
-        `Peer connection for ${peerId} is not ready, current ICE state: ${connection.iceConnectionState}`
-      );
+          localMediaStream.current.getTracks().forEach((track) => {
+            const trackAlreadyAdded = senders.some(
+              (sender) => sender.track === track
+            );
 
-      // Listen for the iceconnectionstatechange event
-      const onIceConnectionStateChange = () => {
-        if (
-          connection.iceConnectionState === "connected" ||
-          connection.iceConnectionState === "completed"
-        ) {
-          addTracks();
-          // Remove the event listener after the tracks are added
-          connection.removeEventListener(
-            "iceconnectionstatechange",
-            onIceConnectionStateChange
-          );
+            if (!trackAlreadyAdded) {
+              console.log(
+                `Adding track to connection for peer ${peerId}:`,
+                track
+              );
+              try {
+                connection.addTrack(track, localMediaStream.current);
+              } catch (error) {
+                console.error(`Failed to add track to peer ${peerId}:`, error);
+              }
+            } else {
+              console.log(
+                ` Track already added to connection for peer ${peerId}`
+              );
+            }
+          });
+        } else {
+          console.error(`No connection found for peer ${peerId}`);
         }
-      };
-
-      connection.addEventListener(
-        "iceconnectionstatechange",
-        onIceConnectionStateChange
-      );
+      });
+    } else {
+      console.error("Local media stream not available");
     }
   };
 
