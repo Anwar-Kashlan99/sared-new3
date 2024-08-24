@@ -374,40 +374,23 @@ export const useWebRTC = (roomId, userDetails) => {
     if (localMediaStream.current) {
       Object.keys(connections.current).forEach((peerId) => {
         const connection = connections.current[peerId];
-        console.log(
-          `Peer connection state for ${peerId}: ${connection.connectionState}`
-        );
+        const senders = connection.getSenders();
 
-        if (connection) {
-          const senders = connection.getSenders();
+        localMediaStream.current.getTracks().forEach((track) => {
+          const trackAlreadyAdded = senders.some(
+            (sender) => sender.track === track
+          );
 
-          localMediaStream.current.getTracks().forEach((track) => {
-            const trackAlreadyAdded = senders.some(
-              (sender) => sender.track === track
-            );
-
-            if (!trackAlreadyAdded) {
-              console.log(
-                `Adding track to connection for peer ${peerId}:`,
-                track
-              );
-              try {
-                connection.addTrack(track, localMediaStream.current);
-              } catch (error) {
-                console.error(`Failed to add track to peer ${peerId}:`, error);
-              }
-            } else {
-              console.log(
-                ` Track already added to connection for peer ${peerId}`
-              );
+          if (!trackAlreadyAdded) {
+            connection.addTrack(track, localMediaStream.current);
+          } else {
+            const sender = senders.find((sender) => sender.track === track);
+            if (sender) {
+              sender.replaceTrack(track); // Replace existing track
             }
-          });
-        } else {
-          console.error(`No connection found for peer ${peerId}`);
-        }
+          }
+        });
       });
-    } else {
-      console.error("Local media stream not available");
     }
   };
 
