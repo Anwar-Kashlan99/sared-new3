@@ -22,22 +22,16 @@ export const useWebRTC = (roomId, userDetails) => {
   const addNewClient = useCallback(
     (newClient) => {
       setClients((existingClients) => {
-        // Find if client already exists
-        const existingIndex = existingClients.findIndex(
+        const clientExists = existingClients.some(
           (client) => client._id === newClient._id
         );
 
-        if (existingIndex !== -1) {
-          // If the client exists, merge the new client data
-          const updatedClients = [...existingClients];
-          updatedClients[existingIndex] = {
-            ...existingClients[existingIndex],
-            ...newClient,
-          };
-          return updatedClients;
-        } else {
-          // If the client does not exist, add it to the list
+        if (!clientExists) {
           return [...existingClients, newClient];
+        } else {
+          return existingClients.map((client) =>
+            client._id === newClient._id ? { ...client, ...newClient } : client
+          );
         }
       });
     },
@@ -335,19 +329,27 @@ export const useWebRTC = (roomId, userDetails) => {
   };
 
   const handleApproveSpeak = async ({ userId }) => {
-    toast(`User ${userId} has been approved to speak.`);
-    setHandRaiseRequests((requests) =>
-      requests.filter((req) => req.userId !== userId)
-    );
-    setClients((prevClients) =>
-      prevClients.map((client) =>
-        client._id === userId ? { ...client, role: "speaker" } : client
-      )
-    );
-
     if (userId === userDetails._id) {
-      setShowStartSpeakingPrompt(true);
-      await restartIce();
+      // Re-initialize local media tracks
+      await enableLocalAudioTrack();
+      await addLocalTracksToPeers();
+
+      // Re-negotiate peer connection
+      const connection = connections.current[userId];
+      if (connection) {
+        try {
+          const offer = await connection.createOffer({ iceRestart: true });
+          await connection.setLocalDescription(offer);
+          socket.current.emit(ACTIONS.RELAY_SDP, {
+            peerId: userId,
+            sessionDescription: offer,
+          });
+        } catch (error) {
+          console.error("Error during ICE restart and renegotiation:", error);
+        }
+      }
+
+      setShowStartSpeakingPrompt(false);
     }
   };
 
@@ -369,19 +371,11 @@ export const useWebRTC = (roomId, userDetails) => {
   const handleStartSpeaking = async () => {
     try {
       setShowStartSpeakingPrompt(false);
-      enableLocalAudioTrack();
-      addLocalTracksToPeers();
+      await enableLocalAudioTrack();
+      await addLocalTracksToPeers();
 
-      // Re-negotiate connection
-      const connection = connections.current[userDetails._id];
-      if (connection) {
-        const offer = await connection.createOffer({ iceRestart: true });
-        await connection.setLocalDescription(offer);
-        socket.current.emit(ACTIONS.RELAY_SDP, {
-          peerId: userDetails._id,
-          sessionDescription: offer,
-        });
-      }
+      // Re-negotiate if needed
+      await handleApproveSpeak({ userId: userDetails._id });
     } catch (error) {
       console.error("Failed to start speaking:", error);
     }
