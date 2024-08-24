@@ -167,10 +167,24 @@ export const useWebRTC = (roomId, userDetails) => {
     };
 
     if (localMediaStream.current) {
-      localMediaStream.current.getTracks().forEach((track) => {
-        connection.addTrack(track, localMediaStream.current);
-      });
+      if (
+        connection.signalingState === "stable" &&
+        connection.iceConnectionState === "connected"
+      ) {
+        localMediaStream.current.getTracks().forEach((track) => {
+          try {
+            connection.addTrack(track, localMediaStream.current);
+          } catch (error) {
+            console.error(`Failed to add track to peer ${peerId}:`, error);
+          }
+        });
+      } else {
+        console.warn(
+          `Peer connection for ${peerId} is not ready, signalingState: ${connection.signalingState}, iceConnectionState: ${connection.iceConnectionState}`
+        );
+      }
     }
+
     console.log("createOffer:", createOffer);
     if (createOffer) {
       console.log("Creating offer for peer:", peerId);
@@ -374,34 +388,23 @@ export const useWebRTC = (roomId, userDetails) => {
     if (localMediaStream.current) {
       Object.keys(connections.current).forEach((peerId) => {
         const connection = connections.current[peerId];
-        console.log(
-          `Peer connection state for ${peerId}: ${connection.connectionState}`
-        );
-
         if (connection) {
-          const senders = connection.getSenders();
-
-          localMediaStream.current.getTracks().forEach((track) => {
-            const trackAlreadyAdded = senders.some(
-              (sender) => sender.track === track
-            );
-
-            if (!trackAlreadyAdded) {
-              console.log(
-                `Adding track to connection for peer ${peerId}:`,
-                track
-              );
+          if (
+            connection.signalingState === "stable" &&
+            connection.iceConnectionState === "connected"
+          ) {
+            localMediaStream.current.getTracks().forEach((track) => {
               try {
                 connection.addTrack(track, localMediaStream.current);
               } catch (error) {
                 console.error(`Failed to add track to peer ${peerId}:`, error);
               }
-            } else {
-              console.log(
-                `Track already added to connection for peer ${peerId}`
-              );
-            }
-          });
+            });
+          } else {
+            console.warn(
+              `Peer connection for ${peerId} is not ready, signalingState: ${connection.signalingState}, iceConnectionState: ${connection.iceConnectionState}`
+            );
+          }
         } else {
           console.error(`No connection found for peer ${peerId}`);
         }
