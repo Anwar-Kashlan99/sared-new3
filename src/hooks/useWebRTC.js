@@ -390,6 +390,7 @@ export const useWebRTC = (roomId, userDetails) => {
       }
     };
 
+    // Check current ICE state and act accordingly
     if (
       connection.iceConnectionState === "connected" ||
       connection.iceConnectionState === "completed"
@@ -399,14 +400,26 @@ export const useWebRTC = (roomId, userDetails) => {
       console.warn(
         `Peer connection for ${peerId} is not ready, current ICE state: ${connection.iceConnectionState}`
       );
-      connection.addEventListener("iceconnectionstatechange", () => {
+
+      // Listen for the iceconnectionstatechange event
+      const onIceConnectionStateChange = () => {
         if (
           connection.iceConnectionState === "connected" ||
           connection.iceConnectionState === "completed"
         ) {
           addTracks();
+          // Remove the event listener after the tracks are added
+          connection.removeEventListener(
+            "iceconnectionstatechange",
+            onIceConnectionStateChange
+          );
         }
-      });
+      };
+
+      connection.addEventListener(
+        "iceconnectionstatechange",
+        onIceConnectionStateChange
+      );
     }
   };
 
