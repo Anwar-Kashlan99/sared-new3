@@ -313,7 +313,19 @@ export const useWebRTC = (roomId, userDetails) => {
     );
   };
 
-  const handleApproveSpeak = ({ userId }) => {
+  const restartIce = async () => {
+    const connection = connections.current[userDetails._id];
+    if (connection) {
+      const offer = await connection.createOffer({ iceRestart: true });
+      await connection.setLocalDescription(offer);
+      socket.current.emit(ACTIONS.RELAY_SDP, {
+        peerId: userDetails._id,
+        sessionDescription: offer,
+      });
+    }
+  };
+
+  const handleApproveSpeak = async ({ userId }) => {
     toast(`User ${userId} has been approved to speak.`);
     setHandRaiseRequests((requests) =>
       requests.filter((req) => req.userId !== userId)
@@ -326,6 +338,7 @@ export const useWebRTC = (roomId, userDetails) => {
 
     if (userId === userDetails._id) {
       setShowStartSpeakingPrompt(true);
+      await restartIce();
     }
   };
 
