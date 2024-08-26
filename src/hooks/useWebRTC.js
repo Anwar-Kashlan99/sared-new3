@@ -337,14 +337,10 @@ export const useWebRTC = (roomId, userDetails) => {
     if (localMediaStream.current) {
       localMediaStream.current.getTracks().forEach((track) => {
         if (track.kind === "audio") {
-          track.enabled = true; // Ensure the audio track is enabled
-          console.log(
-            `   Enabled track kind: ${track.kind}, enabled: ${track.enabled}`
-          );
+          track.enabled = true;
+          console.log(`Audio track enabled for speaking: ${track.enabled}`);
         }
       });
-    } else {
-      console.error("No local media stream available to enable tracks.");
     }
   };
 
@@ -438,12 +434,16 @@ export const useWebRTC = (roomId, userDetails) => {
   const handleRenegotiation = async ({ peerId }) => {
     const connection = connections.current[peerId];
     if (connection && connection.signalingState === "stable") {
-      const offer = await connection.createOffer({ iceRestart: true });
-      await connection.setLocalDescription(offer);
-      socket.current.emit(ACTIONS.RELAY_SDP, {
-        peerId: userDetails._id,
-        sessionDescription: offer,
-      });
+      try {
+        const offer = await connection.createOffer({ iceRestart: true });
+        await connection.setLocalDescription(offer);
+        socket.current.emit(ACTIONS.RELAY_SDP, {
+          peerId,
+          sessionDescription: offer,
+        });
+      } catch (error) {
+        console.error("Error during renegotiation:", error);
+      }
     }
   };
 
