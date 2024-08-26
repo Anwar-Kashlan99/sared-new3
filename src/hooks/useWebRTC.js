@@ -337,10 +337,14 @@ export const useWebRTC = (roomId, userDetails) => {
     if (localMediaStream.current) {
       localMediaStream.current.getTracks().forEach((track) => {
         if (track.kind === "audio") {
-          track.enabled = true;
-          console.log(`Audio track enabled for speaking: ${track.enabled}`);
+          track.enabled = true; // Ensure the audio track is enabled
+          console.log(
+            `   Enabled track kind: ${track.kind}, enabled: ${track.enabled}`
+          );
         }
       });
+    } else {
+      console.error("No local media stream available to enable tracks.");
     }
   };
 
