@@ -130,12 +130,8 @@ export const useWebRTC = (roomId, userDetails) => {
         }
       });
 
-      // Handle audio tracks
-      localMediaStream.current.getTracks().forEach((track) => {
-        for (const connection of Object.values(connections.current)) {
-          connection.addTrack(track, localMediaStream.current);
-        }
-      });
+      // Automatically add the local tracks to existing peers
+      addLocalTracksToPeers();
     } catch (error) {
       console.error("Error capturing media:", error);
       toast.error(
@@ -321,18 +317,6 @@ export const useWebRTC = (roomId, userDetails) => {
     );
   };
 
-  const restartIce = async () => {
-    const connection = connections.current[userDetails._id];
-    if (connection) {
-      const offer = await connection.createOffer({ iceRestart: true });
-      await connection.setLocalDescription(offer);
-      socket.current.emit(ACTIONS.RELAY_SDP, {
-        peerId: userDetails._id,
-        sessionDescription: offer,
-      });
-    }
-  };
-
   const handleApproveSpeak = async ({ userId }) => {
     setClients((prevClients) =>
       prevClients.map((client) =>
@@ -345,19 +329,8 @@ export const useWebRTC = (roomId, userDetails) => {
     if (userId === userDetails._id) {
       setShowStartSpeakingPrompt(true);
 
-      // Enable the audio track
-      enableLocalAudioTrack();
-
       // Renegotiate the peer connection
-      const connection = connections.current[userDetails._id];
-      if (connection) {
-        const offer = await connection.createOffer({ iceRestart: true });
-        await connection.setLocalDescription(offer);
-        socket.current.emit(ACTIONS.RELAY_SDP, {
-          peerId: userDetails._id,
-          sessionDescription: offer,
-        });
-      }
+      await handleStartSpeaking();
     }
   };
 
@@ -380,21 +353,25 @@ export const useWebRTC = (roomId, userDetails) => {
     try {
       setShowStartSpeakingPrompt(false);
       enableLocalAudioTrack();
-      addLocalTracksToPeers();
-
-      // Re-negotiate the connection
-      const connection = connections.current[userDetails._id];
-      if (connection) {
-        const offer = await connection.createOffer({ iceRestart: true });
-        await connection.setLocalDescription(offer);
-        socket.current.emit(ACTIONS.RELAY_SDP, {
-          peerId: userDetails._id,
-          sessionDescription: offer,
-        });
-      }
+      await renegotiateConnections();
     } catch (error) {
       console.error("Failed to start speaking:", error);
     }
+  };
+
+  const renegotiateConnections = async () => {
+    await Promise.all(
+      Object.values(connections.current).map(async (connection) => {
+        if (connection.signalingState === "stable") {
+          const offer = await connection.createOffer({ iceRestart: true });
+          await connection.setLocalDescription(offer);
+          socket.current.emit(ACTIONS.RELAY_SDP, {
+            peerId: userDetails._id,
+            sessionDescription: offer,
+          });
+        }
+      })
+    );
   };
 
   useEffect(() => {
