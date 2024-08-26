@@ -76,6 +76,7 @@ export const useWebRTC = (roomId, userDetails) => {
         setClients(clients);
       });
       socket.current.on(ACTIONS.RAISE_HAND, handleRaiseHand);
+      socket.current.on(ACTIONS.RENEGOTIATE, handleRenegotiation);
       socket.current.on(ACTIONS.REJECT_SPEAK, handleRejectSpeak);
       socket.current.on(ACTIONS.APPROVE_SPEAK, handleApproveSpeak);
       socket.current.on(ACTIONS.RETURN_AUDIENCE, handleReturnAudience);
@@ -328,9 +329,7 @@ export const useWebRTC = (roomId, userDetails) => {
 
     if (userId === userDetails._id) {
       setShowStartSpeakingPrompt(true);
-
-      // Renegotiate the peer connection
-      await handleStartSpeaking();
+      enableLocalAudioTrack();
     }
   };
 
@@ -347,31 +346,6 @@ export const useWebRTC = (roomId, userDetails) => {
     } else {
       console.error("No local media stream available to enable tracks.");
     }
-  };
-
-  const handleStartSpeaking = async () => {
-    try {
-      setShowStartSpeakingPrompt(false);
-      enableLocalAudioTrack();
-      await renegotiateConnections();
-    } catch (error) {
-      console.error("Failed to start speaking:", error);
-    }
-  };
-
-  const renegotiateConnections = async () => {
-    await Promise.all(
-      Object.values(connections.current).map(async (connection) => {
-        if (connection.signalingState === "stable") {
-          const offer = await connection.createOffer({ iceRestart: true });
-          await connection.setLocalDescription(offer);
-          socket.current.emit(ACTIONS.RELAY_SDP, {
-            peerId: userDetails._id,
-            sessionDescription: offer,
-          });
-        }
-      })
-    );
   };
 
   const handleReturnAudience = () => {
@@ -459,6 +433,18 @@ export const useWebRTC = (roomId, userDetails) => {
         }
       }
     }, 300);
+  };
+
+  const handleRenegotiation = async ({ peerId }) => {
+    const connection = connections.current[peerId];
+    if (connection && connection.signalingState === "stable") {
+      const offer = await connection.createOffer({ iceRestart: true });
+      await connection.setLocalDescription(offer);
+      socket.current.emit(ACTIONS.RELAY_SDP, {
+        peerId: userDetails._id,
+        sessionDescription: offer,
+      });
+    }
   };
 
   const getAudioLevel = async () => {
@@ -581,7 +567,5 @@ export const useWebRTC = (roomId, userDetails) => {
     messages,
     sendMessage,
     returnAudienceSpeak,
-    handleStartSpeaking,
-    showStartSpeakingPrompt,
   };
 };
