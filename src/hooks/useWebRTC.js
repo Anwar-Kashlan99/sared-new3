@@ -333,7 +333,7 @@ export const useWebRTC = (roomId, userDetails) => {
     }
   };
 
-  const handleApproveSpeak = ({ userId }) => {
+  const handleApproveSpeak = async ({ userId }) => {
     setClients((prevClients) =>
       prevClients.map((client) =>
         client._id === userId
@@ -344,6 +344,20 @@ export const useWebRTC = (roomId, userDetails) => {
 
     if (userId === userDetails._id) {
       setShowStartSpeakingPrompt(true);
+
+      // Enable the audio track
+      enableLocalAudioTrack();
+
+      // Renegotiate the peer connection
+      const connection = connections.current[userDetails._id];
+      if (connection) {
+        const offer = await connection.createOffer({ iceRestart: true });
+        await connection.setLocalDescription(offer);
+        socket.current.emit(ACTIONS.RELAY_SDP, {
+          peerId: userDetails._id,
+          sessionDescription: offer,
+        });
+      }
     }
   };
 
