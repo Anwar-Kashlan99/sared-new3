@@ -145,7 +145,34 @@ export const useWebRTC = (roomId, userDetails) => {
     try {
       if (connections.current[peerId]) return;
 
-      const iceServers = freeice();
+      const iceServers = [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+        { urls: "stun:stun2.l.google.com:19302" },
+        { urls: "stun:stun3.l.google.com:19302" },
+        { urls: "stun:stun4.l.google.com:19302" },
+        { urls: "stun:stun.relay.metered.ca:80" },
+        {
+          urls: "turn:global.relay.metered.ca:80",
+          username: "c8090ecaa7eb2bc0bb45fcd3",
+          credential: "dr9/NfX7eSdwKpFF",
+        },
+        {
+          urls: "turn:global.relay.metered.ca:80?transport=tcp",
+          username: "c8090ecaa7eb2bc0bb45fcd3",
+          credential: "dr9/NfX7eSdwKpFF",
+        },
+        {
+          urls: "turn:global.relay.metered.ca:443",
+          username: "c8090ecaa7eb2bc0bb45fcd3",
+          credential: "dr9/NfX7eSdwKpFF",
+        },
+        {
+          urls: "turns:global.relay.metered.ca:443?transport=tcp",
+          username: "c8090ecaa7eb2bc0bb45fcd3",
+          credential: "dr9/NfX7eSdwKpFF",
+        },
+      ];
       const connection = new RTCPeerConnection({ iceServers });
       connections.current[peerId] = connection;
 
@@ -195,17 +222,21 @@ export const useWebRTC = (roomId, userDetails) => {
     const currentState = connection.signalingState;
     console.log(`Current signaling state: ${currentState}`);
 
-    await connection.setRemoteDescription(
-      new RTCSessionDescription(sessionDescription)
-    );
+    try {
+      await connection.setRemoteDescription(
+        new RTCSessionDescription(sessionDescription)
+      );
 
-    if (sessionDescription.type === "offer") {
-      const answer = await connection.createAnswer();
-      await connection.setLocalDescription(answer);
-      socket.current.emit(ACTIONS.RELAY_SDP, {
-        peerId,
-        sessionDescription: answer,
-      });
+      if (sessionDescription.type === "offer") {
+        const answer = await connection.createAnswer();
+        await connection.setLocalDescription(answer);
+        socket.current.emit(ACTIONS.RELAY_SDP, {
+          peerId,
+          sessionDescription: answer,
+        });
+      }
+    } catch (error) {
+      console.error("Error setting remote description", error);
     }
   };
 
@@ -339,7 +370,7 @@ export const useWebRTC = (roomId, userDetails) => {
         if (track.kind === "audio") {
           track.enabled = true; // Ensure the audio track is enabled
           console.log(
-            `   Enabled track kind: ${track.kind}, enabled: ${track.enabled}`
+            `Enabled track kind: ${track.kind}, enabled: ${track.enabled}`
           );
         }
       });
