@@ -21,7 +21,7 @@ export const useWebRTC = (roomId, userDetails) => {
   const monitoringInterval = useRef(null);
 
   const addNewClient = useCallback(
-    (newClient) => {
+    (newClient, cb) => {
       setClients((existingClients) => {
         const existing = existingClients.find(
           (client) => client._id === newClient._id
@@ -30,7 +30,7 @@ export const useWebRTC = (roomId, userDetails) => {
           return [...existingClients, newClient];
         }
         return existingClients;
-      });
+      }, cb);
     },
     [setClients]
   );

@@ -8,6 +8,7 @@ import { useStateWithCallback } from "./useStateWithCallback";
 
 export const useWebRTC = (roomId, userDetails) => {
   const [clients, setClients] = useStateWithCallback([]);
+  const [isAudioBlocked, setIsAudioBlocked] = useState(false);
   const audioElements = useRef({});
   const connections = useRef({});
   const socket = useRef(null);
@@ -259,12 +260,26 @@ export const useWebRTC = (roomId, userDetails) => {
     if (audioElement) {
       audioElement.play().catch((error) => {
         if (error.name === "NotAllowedError" || error.name === "AbortError") {
-          console.log("Autoplay prevented, waiting for user interaction.");
-          // Display UI to ask user to click to play
+          console.log("Autoplay blocked, waiting for user interaction.");
+          setIsAudioBlocked(true); // Show the button for manual interaction
         } else {
           console.error("Error during playback:", error);
         }
       });
+    }
+  };
+
+  const handlePlayButtonClick = (userId) => {
+    const audioElement = audioElements.current[userId];
+    if (audioElement) {
+      audioElement
+        .play()
+        .then(() => {
+          setIsAudioBlocked(false); // Hide the button after successful play
+        })
+        .catch((error) => {
+          console.error("Error during manual playback:", error);
+        });
     }
   };
 
@@ -602,5 +617,8 @@ export const useWebRTC = (roomId, userDetails) => {
     messages,
     sendMessage,
     returnAudienceSpeak,
+    handleAutoplay,
+    isAudioBlocked,
+    handlePlayButtonClick,
   };
 };

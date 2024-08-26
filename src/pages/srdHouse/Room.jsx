@@ -79,8 +79,9 @@ const Room = () => {
     messages,
     sendMessage,
     returnAudienceSpeak,
-    handleStartSpeaking,
-    showStartSpeakingPrompt,
+    handleAutoplay,
+    isAudioBlocked,
+    handlePlayButtonClick,
   } = useWebRTC(roomId, userDetails);
 
   const currentUser = clients.find((client) => client._id === userDetails._id);
@@ -407,6 +408,7 @@ const Room = () => {
                     autoPlay
                     ref={(instance) => {
                       provideRef(instance, client?._id);
+                      handleAutoplay(client._id); // Attempt to autoplay the audio
                     }}
                   />
                   {client.muted && (
@@ -552,6 +554,7 @@ const Room = () => {
                     <audio
                       ref={(instance) => {
                         provideRef(instance, client?._id);
+                        handleAutoplay(client._id); // Attempt to autoplay the audio
                       }}
                     />
                     {client.muted && (
@@ -967,8 +970,8 @@ const Room = () => {
       </Dialog>
 
       <Dialog
-        open={showStartSpeakingPrompt}
-        onClose={!showStartSpeakingPrompt}
+        open={isAudioBlocked}
+        onClose={!isAudioBlocked}
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
@@ -996,7 +999,7 @@ const Room = () => {
                   color: "#f25f0c",
                 },
               }}
-              onClick={() => handleStartSpeaking()}
+              onClick={() => handlePlayButtonClick(currentUser._id)}
             >
               Start Speaking
             </Button>
