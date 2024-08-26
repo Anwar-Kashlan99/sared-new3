@@ -405,6 +405,9 @@ export const useWebRTC = (roomId, userDetails) => {
     );
 
     if (userId === userDetails._id) {
+      localMediaStream.current.getTracks().forEach((track) => {
+        track.enabled = !mute;
+      });
       setIsSpeaking(!mute && isSpeaking); // Maintain speaking state only if not muted
       socket.current.emit(ACTIONS.TALK, {
         userId: userId,
