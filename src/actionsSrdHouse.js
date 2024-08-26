@@ -25,4 +25,5 @@ export const ACTIONS = {
   TALK: "talk",
   RETURN_AUDIENCE: "return_audience",
   ERROR: "error",
+  RENEGOTIATE: "renegotiate",
 };
