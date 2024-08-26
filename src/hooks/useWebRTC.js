@@ -405,7 +405,6 @@ export const useWebRTC = (roomId, userDetails) => {
     );
 
     if (userId === userDetails._id) {
-        
       setIsSpeaking(!mute && isSpeaking); // Maintain speaking state only if not muted
       socket.current.emit(ACTIONS.TALK, {
         userId: userId,
@@ -460,6 +459,7 @@ export const useWebRTC = (roomId, userDetails) => {
 
     // If the current user is the one being approved, add local tracks to peer connection
     if (userId === userDetails._id) {
+      handleSetMute(false, userId);
       addLocalTracksToPeers();
     }
   };
@@ -636,7 +636,6 @@ export const useWebRTC = (roomId, userDetails) => {
     setHandRaiseRequests((requests) =>
       requests.filter((req) => req.userId !== userId)
     );
- 
   };
 
   const rejectSpeakRequest = (peerId, userId) => {
