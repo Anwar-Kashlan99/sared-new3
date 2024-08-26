@@ -374,10 +374,6 @@ export const useWebRTC = (roomId, userDetails) => {
     );
   };
 
-  useEffect(() => {
-    console.log("Clients state updated:", clients);
-  }, [clients]);
-
   const handleReturnAudience = () => {
     if (localMediaStream.current) {
       localMediaStream.current.getTracks().forEach((track) => {
