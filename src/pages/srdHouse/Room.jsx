@@ -112,10 +112,6 @@ const Room = () => {
     setIsHandRaised(handRaised);
   }, [handRaiseRequests, userDetails?._id]);
 
-  const admins = clients.filter((client) => client.role === "admin");
-  const audience = clients.filter((client) => client.role === "audience");
-  const speaker = clients.filter((client) => client.role === "speaker");
-
   const [isMuted, setMuted] = useState(true);
 
   // console.log(clients);
@@ -165,6 +161,17 @@ const Room = () => {
   };
   const handleCloseAud = () => {
     setAnchorElAud(null);
+  };
+
+  // speaker sittings
+
+  const [anchorElSp, setAnchorElSp] = useState(null);
+  const openSp = Boolean(anchorElSp);
+  const handleClickSp = (event, clientId) => {
+    setAnchorElSp({ anchor: event.currentTarget, clientId });
+  };
+  const handleCloseSp = () => {
+    setAnchorElSp(null);
   };
 
   // raise hand sittings
@@ -366,10 +373,10 @@ const Room = () => {
                   {(isAdmin || isSpeaker) && client.role === "speaker" && (
                     <IconButton
                       id="fade-button"
-                      aria-controls={open ? "fade-menu-aud" : undefined}
+                      aria-controls={openSp ? "fade-menu-sp" : undefined}
                       aria-haspopup="true"
-                      aria-expanded={open ? "true" : undefined}
-                      onClick={(event) => handleClick(event, client._id)}
+                      aria-expanded={openSp ? "true" : undefined}
+                      onClick={(event) => handleClickSp(event, client._id)}
                       sx={{
                         position: "absolute",
                         right: "-40px",
@@ -378,6 +385,38 @@ const Room = () => {
                     >
                       <MoreVert sx={{ color: "#f25f0c", cursor: "pointer" }} />
                     </IconButton>
+                  )}
+                  {isAdmin && anchorElSp && (
+                    <Menu
+                      id="fade-menu-sp"
+                      MenuListProps={{
+                        "aria-labelledby": "fade-button",
+                      }}
+                      anchorEl={anchorElSp?.anchor || null}
+                      open={openSp}
+                      onClose={handleCloseSp}
+                      TransitionComponent={Fade}
+                      sx={{ ml: "-8px", mt: "5px" }}
+                    >
+                      <MenuItem
+                        sx={{ color: "red" }}
+                        onClick={() => {
+                          returnAudienceSpeak(anchorElSp.clientId);
+                          handleCloseSp();
+                        }}
+                      >
+                        Return to the audience
+                      </MenuItem>
+                      <MenuItem
+                        sx={{ color: "red" }}
+                        onClick={() => {
+                          blockUser(anchorElSp.clientId);
+                          handleCloseSp();
+                        }}
+                      >
+                        Block the user
+                      </MenuItem>
+                    </Menu>
                   )}
                 </Box>
                 <Typography
