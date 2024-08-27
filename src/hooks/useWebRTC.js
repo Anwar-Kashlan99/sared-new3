@@ -427,10 +427,13 @@ export const useWebRTC = (roomId, userDetails) => {
       if (!localMediaStream.current) return;
 
       const audioLevel = await getAudioLevel();
+      console.log(audioLevel); // This should now print the audio level
+
       if (audioLevel > 0.1) {
+        // Adjust the threshold based on your needs
         if (
           !isSpeaking &&
-          !clients.find((client) => client._id === userDetails._id)?.muted
+          !clientsRef.current.find((c) => c._id === userDetails._id)?.muted
         ) {
           setIsSpeaking(true);
           socket.current.emit(ACTIONS.TALK, {
@@ -470,14 +473,15 @@ export const useWebRTC = (roomId, userDetails) => {
 
   const getAudioLevel = async () => {
     let audioLevel = 0.0;
-    if (connections.current[userDetails._id]) {
-      const stats = await connections.current[userDetails._id].getStats();
+    const promises = Object.values(connections.current).map(async (pc) => {
+      const stats = await pc.connection.getStats();
       stats.forEach((report) => {
         if (report.type === "media-source" && report.kind === "audio") {
           audioLevel = report.audioLevel || 0.0;
         }
       });
-    }
+    });
+    await Promise.all(promises);
     return audioLevel;
   };
 
