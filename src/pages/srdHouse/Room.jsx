@@ -299,7 +299,9 @@ const Room = () => {
               <Box
                 sx={{
                   display:
-                    client.role === "admin" || "speaker" ? "flex" : "none",
+                    client.role === "admin" || client.role === "speaker"
+                      ? "flex"
+                      : "none",
                   flexDirection: "column",
                   alignItems: "center",
                   textAlign: "center",
