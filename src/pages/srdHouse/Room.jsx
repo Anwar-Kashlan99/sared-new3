@@ -386,20 +386,41 @@ const Room = () => {
                       <MoreVert sx={{ color: "#f25f0c", cursor: "pointer" }} />
                     </IconButton>
                   )}
-                  {isAdmin && anchorElSp && (
-                    <Menu
-                      id="fade-menu-sp"
-                      MenuListProps={{
-                        "aria-labelledby": "fade-button",
-                      }}
-                      anchorEl={anchorElSp?.anchor || null}
-                      open={openSp}
-                      onClose={handleCloseSp}
-                      TransitionComponent={Fade}
-                      sx={{ ml: "-8px", mt: "5px" }}
-                    >
+
+                  <Menu
+                    id="fade-menu-sp"
+                    MenuListProps={{
+                      "aria-labelledby": "fade-button",
+                    }}
+                    anchorEl={anchorElSp?.anchor || null}
+                    open={openSp}
+                    onClose={handleCloseSp}
+                    TransitionComponent={Fade}
+                    sx={{ ml: "-8px", mt: "5px" }}
+                  >
+                    {isAdmin && anchorElSp && (
+                      <>
+                        <MenuItem
+                          onClick={() => {
+                            returnAudienceSpeak(anchorElSp.clientId);
+                            handleCloseSp();
+                          }}
+                        >
+                          Return to the audience
+                        </MenuItem>
+                        <MenuItem
+                          sx={{ color: "red" }}
+                          onClick={() => {
+                            blockUser(anchorElSp.clientId);
+                            handleCloseSp();
+                          }}
+                        >
+                          Block the user
+                        </MenuItem>
+                      </>
+                    )}
+                    {isSpeaker && anchorElSp && (
                       <MenuItem
-                        sx={{ color: "red" }}
                         onClick={() => {
                           returnAudienceSpeak(anchorElSp.clientId);
                           handleCloseSp();
@@ -407,17 +428,8 @@ const Room = () => {
                       >
                         Return to the audience
                       </MenuItem>
-                      <MenuItem
-                        sx={{ color: "red" }}
-                        onClick={() => {
-                          blockUser(anchorElSp.clientId);
-                          handleCloseSp();
-                        }}
-                      >
-                        Block the user
-                      </MenuItem>
-                    </Menu>
-                  )}
+                    )}
+                  </Menu>
                 </Box>
                 <Typography
                   sx={{
