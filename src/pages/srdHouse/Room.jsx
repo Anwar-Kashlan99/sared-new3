@@ -79,9 +79,6 @@ const Room = () => {
     messages,
     sendMessage,
     returnAudienceSpeak,
-    handleAutoplay,
-    isAudioBlocked,
-    handlePlayButtonClick,
   } = useWebRTC(roomId, userDetails);
 
   const currentUser = clients.find((client) => client._id === userDetails._id);
@@ -90,13 +87,6 @@ const Room = () => {
   const [isSpeaker, setIsSpeaker] = useState(false);
   const [isHandRaised, setIsHandRaised] = useState(false);
   const [isCurtainClose, setIsCurtainClose] = useState(true);
-
-  useEffect(() => {
-    if (isSpeaker && currentUser && currentUser._id === userDetails._id) {
-      // Handle autoplay of the user's own audio
-      handleAutoplay(userDetails._id);
-    }
-  }, [isSpeaker, currentUser, userDetails._id, handleAutoplay]);
 
   useEffect(() => {
     if (currentUser && currentUser.role === "admin") {
@@ -415,7 +405,6 @@ const Room = () => {
                     autoPlay
                     ref={(instance) => {
                       provideRef(instance, client?._id);
-                      handleAutoplay(client._id); // Attempt to autoplay the audio
                     }}
                   />
                   {client.muted && (
@@ -437,18 +426,6 @@ const Room = () => {
                     >
                       <MicOffOutlined sx={{ fontSize: "18px" }} />
                     </Box>
-                  )}
-                  {isAudioBlocked && (
-                    <Button
-                      onClick={() => handlePlayButtonClick(client._id)}
-                      sx={{
-                        fontSize: "12px",
-                        color: "#f25f0c",
-                        textTransform: "none",
-                      }}
-                    >
-                      Click to Play
-                    </Button>
                   )}
                   {isAdmin && (
                     <IconButton
@@ -573,7 +550,6 @@ const Room = () => {
                     <audio
                       ref={(instance) => {
                         provideRef(instance, client?._id);
-                        handleAutoplay(client._id); // Attempt to autoplay the audio
                       }}
                     />
                     {client.muted && (
@@ -595,18 +571,6 @@ const Room = () => {
                       >
                         <MicOffOutlined sx={{ fontSize: "18px" }} />
                       </Box>
-                    )}
-                    {isAudioBlocked && (
-                      <Button
-                        onClick={() => handlePlayButtonClick(client._id)}
-                        sx={{
-                          fontSize: "12px",
-                          color: "#f25f0c",
-                          textTransform: "none",
-                        }}
-                      >
-                        Click to Play
-                      </Button>
                     )}
 
                     {isAdmin && (
@@ -999,45 +963,6 @@ const Room = () => {
           </Box>
         </DialogContent>
       </Dialog>
-
-      {/**
-        <Dialog
-        open={isAudioBlocked}
-        onClose={!isAudioBlocked}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogContent>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              flexDirection: "column",
-              p: "1rem",
-              maxWidth: "500px",
-            }}
-          >
-            <Typography sx={{ fontSize: "18px", mb: "10px" }}>
-              Your hand raise request has been approved!
-            </Typography>
-            <Button
-              sx={{
-                backgroundColor: "#f25f0c",
-                color: "white",
-                transition: "all 0.3s ease-in-out",
-                "&:hover": {
-                  background: "#fff",
-                  color: "#f25f0c",
-                },
-              }}
-              onClick={() => handlePlayButtonClick(currentUser._id)}
-            >
-              Start Speaking
-            </Button>
-          </Box>
-        </DialogContent>
-      </Dialog> */}
     </Box>
   );
 };

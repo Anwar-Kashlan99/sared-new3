@@ -8,7 +8,6 @@ import { useStateWithCallback } from "./useStateWithCallback";
 
 export const useWebRTC = (roomId, userDetails) => {
   const [clients, setClients] = useStateWithCallback([]);
-  const [isAudioBlocked, setIsAudioBlocked] = useState(false);
   const audioElements = useRef({});
   const connections = useRef({});
   const socket = useRef(null);
@@ -17,8 +16,8 @@ export const useWebRTC = (roomId, userDetails) => {
   const [handRaiseRequests, setHandRaiseRequests] = useState([]);
   const [messages, setMessages] = useState([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [showStartSpeakingPrompt, setShowStartSpeakingPrompt] = useState(false);
   const monitoringInterval = useRef(null);
+  const clientsRef = useRef([]);
 
   const addNewClient = useCallback(
     (newClient) => {
@@ -44,90 +43,139 @@ export const useWebRTC = (roomId, userDetails) => {
     [setClients]
   );
 
+  // Keep the clients list in sync with a ref to avoid stale closures
+  useEffect(() => {
+    clientsRef.current = clients;
+  }, [clients]);
+
   useEffect(() => {
     const initChat = async () => {
+      if (socket.current) {
+        cleanupConnections();
+      }
+
       socket.current = socketInit();
 
       if (!socket.current) {
         console.error("Socket initialization failed");
+        setTimeout(initChat, 3000);
         return;
       }
 
-      socket.current.on(ACTIONS.JOIN, ({ user, isAdmin }) => {
-        const updatedUserDetails = { ...user, isAdmin };
-        addNewClient(updatedUserDetails);
-      });
+      setupSocketEventHandlers();
 
       await captureMedia();
 
-      socket.current.emit(ACTIONS.JOIN, { roomId, user: userDetails });
+      if (userDetails && userDetails._id) {
+        addNewClient({ ...userDetails, muted: true }, () => {
+          const localElement = audioElements.current[userDetails._id];
+          if (localElement) {
+            localElement.srcObject = localMediaStream.current;
+          }
 
-      socket.current.on(ACTIONS.ADD_PEER, handleNewPeer);
-      socket.current.on(ACTIONS.SESSION_DESCRIPTION, setRemoteMedia);
-      socket.current.on(ACTIONS.ICE_CANDIDATE, handleIceCandidate);
-      socket.current.on(ACTIONS.REMOVE_PEER, handleRemovePeer);
-      socket.current.on(ACTIONS.MESSAGE, handleMessageReceived);
-      socket.current.on(ACTIONS.MUTE, ({ userId }) =>
-        handleSetMute(true, userId)
-      );
-      socket.current.on(ACTIONS.UNMUTE, ({ userId }) =>
-        handleSetMute(false, userId)
-      );
-      socket.current.on(ACTIONS.ROOM_CLIENTS, ({ roomId, clients }) => {
-        setClients(clients);
-      });
-      socket.current.on(ACTIONS.RAISE_HAND, handleRaiseHand);
-      socket.current.on(ACTIONS.RENEGOTIATE, handleRenegotiation);
-      socket.current.on(ACTIONS.REJECT_SPEAK, handleRejectSpeak);
-      socket.current.on(ACTIONS.APPROVE_SPEAK, handleApproveSpeak);
-      socket.current.on(ACTIONS.RETURN_AUDIENCE, handleReturnAudience);
-      socket.current.on(ACTIONS.TALK, handleTalk);
-      socket.current.on(ACTIONS.ERROR, handleErrorRoom);
-      socket.current.on("ROOM_ENDED_REDIRECT", handleRoomEnded);
+          socket.current.emit(ACTIONS.JOIN, { roomId, user: userDetails });
+        });
 
-      startMonitoringAudioLevels();
+        socket.current.on(ACTIONS.JOIN, ({ user, isAdmin }) => {
+          const updatedUserDetails = { ...user, isAdmin };
+          addNewClient(updatedUserDetails, () => {
+            const existingClient = clientsRef.current.find(
+              (client) => client._id === user._id
+            );
+            if (!existingClient) {
+              console.log(
+                `User ${user._id} joined as ${isAdmin ? "admin" : "audience"}`
+              );
+            }
+          });
+        });
+
+        startMonitoringAudioLevels();
+      } else {
+        console.error("Invalid userDetails");
+      }
     };
 
     initChat();
 
     return () => {
+      if (localMediaStream.current) {
+        localMediaStream.current.getTracks().forEach((track) => track.stop());
+        localMediaStream.current = null; // Explicitly clear the media stream reference
+      }
       cleanupConnections();
     };
-  }, [roomId, userDetails, addNewClient]);
+  }, [userDetails, addNewClient, setClients, navigate]);
 
-  const cleanupConnections = () => {
+  const setupSocketEventHandlers = () => {
+    socket.current.on(ACTIONS.MUTE_INFO, ({ userId, isMute }) =>
+      handleSetMute(isMute, userId)
+    );
+    socket.current.on(ACTIONS.ADD_PEER, handleNewPeer);
+    socket.current.on(ACTIONS.REMOVE_PEER, handleRemovePeer);
+    socket.current.on(ACTIONS.ICE_CANDIDATE, handleIceCandidate);
+    socket.current.on(ACTIONS.SESSION_DESCRIPTION, setRemoteMedia);
+    socket.current.on(ACTIONS.MUTE, ({ userId }) =>
+      handleSetMute(true, userId)
+    );
+    socket.current.on(ACTIONS.UNMUTE, ({ userId }) =>
+      handleSetMute(false, userId)
+    );
+    socket.current.on(ACTIONS.ROOM_CLIENTS, ({ roomId, clients }) => {
+      console.log("ROOM_CLIENTS event received:", { roomId, clients });
+      setClients(clients);
+    });
+    socket.current.on("ROOM_ENDED_REDIRECT", handleRoomEnded);
+    socket.current.on(ACTIONS.RAISE_HAND, handleRaiseHand);
+    socket.current.on(ACTIONS.REJECT_SPEAK, handleRejectSpeak);
+    socket.current.on(ACTIONS.RAISE_HAND_DUPLICATE, ({ message }) =>
+      toast(message)
+    );
+    socket.current.on(ACTIONS.APPROVE_SPEAK, handleApproveSpeak);
+    socket.current.on(ACTIONS.MESSAGE, handleMessageReceived);
+    socket.current.on(ACTIONS.TALK, handleTalk);
+    socket.current.on(ACTIONS.RETURN_AUDIENCE, handleReturnAudience);
+    socket.current.on(ACTIONS.ERROR, handleErrorRoom);
+  };
+
+  const cleanupConnections = useCallback(() => {
     for (let peerId in connections.current) {
       if (connections.current[peerId]) {
-        connections.current[peerId].close();
+        connections.current[peerId].connection.close();
         delete connections.current[peerId];
       }
     }
-
     for (let userId in audioElements.current) {
       delete audioElements.current[userId];
     }
-
     if (socket.current) {
-      socket.current.disconnect();
+      Object.values(ACTIONS).forEach((action) => socket.current.off(action));
+      socket.current.emit(ACTIONS.LEAVE, { roomId });
+      socket.current = null;
+      console.log("All socket listeners removed and cleanup complete.");
     }
 
     if (monitoringInterval.current) {
       clearInterval(monitoringInterval.current);
       monitoringInterval.current = null;
     }
-  };
+  }, [roomId]);
 
   const captureMedia = async () => {
     try {
       localMediaStream.current = await navigator.mediaDevices.getUserMedia({
-        audio: true,
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
       });
       // Make sure the track is enabled right after capture
       localMediaStream.current.getTracks().forEach((track) => {
         if (track.kind === "audio") {
           track.enabled = true;
           console.log(
-            `    Captured track kind: ${track.kind}, enabled: ${track.enabled}`
+            `Captured track kind: ${track.kind}, enabled: ${track.enabled}`
           );
         }
       });
@@ -192,9 +240,6 @@ export const useWebRTC = (roomId, userDetails) => {
       };
 
       connection.ontrack = ({ streams: [remoteStream] }) => {
-        remoteStream.getTracks().forEach((track) => {
-          console.log(`Remote track: ${track.kind}, enabled: ${track.enabled}`);
-        });
         addNewClient({ ...user, muted: true });
         const audioElement = audioElements.current[user._id];
         if (audioElement) {
@@ -274,38 +319,6 @@ export const useWebRTC = (roomId, userDetails) => {
       console.error(`Connection not found for peer ${peerId}`);
     }
   };
-
-  const handleAutoplay = (userId) => {
-    const audioElement = audioElements.current[userId];
-    if (audioElement) {
-      audioElement.play().catch((error) => {
-        if (error.name === "NotAllowedError" || error.name === "AbortError") {
-          console.log("Autoplay blocked, waiting for user interaction.");
-          setIsAudioBlocked(true); // Show the button for manual interaction
-        } else {
-          console.error("Error during playback:", error);
-        }
-      });
-    }
-  };
-
-  const handlePlayButtonClick = (userId) => {
-    const audioElement = audioElements.current[userId];
-    if (audioElement) {
-      audioElement
-        .play()
-        .then(() => {
-          console.log(`Audio playing for user ${userId}`);
-          audioElement.removeAttribute("autoplayBlocked");
-        })
-        .catch((error) => {
-          console.error("Error during manual playback:", error);
-        });
-    }
-  };
-
-  // Call this function when the audio element is ready
-  handleAutoplay(userDetails._id);
 
   const handleRemovePeer = ({ peerId, userId }) => {
     if (connections.current[peerId]) {
@@ -393,40 +406,6 @@ export const useWebRTC = (roomId, userDetails) => {
           : client
       )
     );
-
-    if (userId === userDetails._id) {
-      setShowStartSpeakingPrompt(true);
-      enableLocalAudioTrack();
-    }
-  };
-
-  const enableLocalAudioTrack = () => {
-    if (localMediaStream.current) {
-      localMediaStream.current.getTracks().forEach((track) => {
-        if (track.kind === "audio") {
-          track.enabled = true; // Ensure the audio track is enabled
-          console.log(
-            `Enabled track kind: ${track.kind}, enabled: ${track.enabled}`
-          );
-
-          // Ensure the track is added to all peer connections
-          Object.values(connections.current).forEach((connection) => {
-            const senders = connection.getSenders();
-            const existingSender = senders.find(
-              (sender) => sender.track === track
-            );
-
-            if (!existingSender) {
-              connection.addTrack(track, localMediaStream.current);
-            } else {
-              existingSender.replaceTrack(track); // Replace if track is already added
-            }
-          });
-        }
-      });
-    } else {
-      console.error("No local media stream available to enable tracks.");
-    }
   };
 
   const handleReturnAudience = () => {
@@ -475,10 +454,13 @@ export const useWebRTC = (roomId, userDetails) => {
       if (!localMediaStream.current) return;
 
       const audioLevel = await getAudioLevel();
+      console.log(audioLevel); // This should now print the audio level
+
       if (audioLevel > 0.1) {
+        // Adjust the threshold based on your needs
         if (
           !isSpeaking &&
-          !clients.find((client) => client._id === userDetails._id)?.muted
+          !clientsRef.current.find((c) => c._id === userDetails._id)?.muted
         ) {
           setIsSpeaking(true);
           socket.current.emit(ACTIONS.TALK, {
@@ -516,32 +498,17 @@ export const useWebRTC = (roomId, userDetails) => {
     }, 300);
   };
 
-  const handleRenegotiation = async ({ peerId }) => {
-    const connection = connections.current[peerId];
-    if (connection && connection.signalingState === "stable") {
-      try {
-        const offer = await connection.createOffer({ iceRestart: true });
-        await connection.setLocalDescription(offer);
-        socket.current.emit(ACTIONS.RELAY_SDP, {
-          peerId,
-          sessionDescription: offer,
-        });
-      } catch (error) {
-        console.error("Error during renegotiation:", error);
-      }
-    }
-  };
-
   const getAudioLevel = async () => {
     let audioLevel = 0.0;
-    if (connections.current[userDetails._id]) {
-      const stats = await connections.current[userDetails._id].getStats();
+    const promises = Object.values(connections.current).map(async (pc) => {
+      const stats = await pc.connection.getStats();
       stats.forEach((report) => {
         if (report.type === "media-source" && report.kind === "audio") {
           audioLevel = report.audioLevel || 0.0;
         }
       });
-    }
+    });
+    await Promise.all(promises);
     return audioLevel;
   };
 
@@ -616,13 +583,6 @@ export const useWebRTC = (roomId, userDetails) => {
     setHandRaiseRequests((requests) =>
       requests.filter((req) => req.userId !== userId)
     );
-    if (userId === userDetails._id) {
-      enableLocalAudioTrack();
-
-      Object.keys(connections.current).forEach((peerId) => {
-        handleRenegotiation({ peerId });
-      });
-    }
   };
 
   const rejectSpeakRequest = (peerId, userId) => {
@@ -659,8 +619,5 @@ export const useWebRTC = (roomId, userDetails) => {
     messages,
     sendMessage,
     returnAudienceSpeak,
-    handleAutoplay,
-    isAudioBlocked,
-    handlePlayButtonClick,
   };
 };
