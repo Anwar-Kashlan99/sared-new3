@@ -112,10 +112,6 @@ const Room = () => {
     setIsHandRaised(handRaised);
   }, [handRaiseRequests, userDetails?._id]);
 
-  const admins = clients.filter((client) => client.role === "admin");
-  const audience = clients.filter((client) => client.role === "audience");
-  const speaker = clients.filter((client) => client.role === "speaker");
-
   const [isMuted, setMuted] = useState(true);
 
   // console.log(clients);
@@ -390,7 +386,7 @@ const Room = () => {
                     TransitionComponent={Fade}
                     sx={{ ml: "-8px", mt: "5px" }}
                   >
-                    {(isAdmin || isSpeaker) && anchorElAud && (
+                    {isAdmin && anchorElAud && (
                       <>
                         <MenuItem
                           sx={{ color: "red" }}
@@ -410,6 +406,16 @@ const Room = () => {
                           Return to audience
                         </MenuItem>
                       </>
+                    )}
+                    {isSpeaker && anchorElAud && (
+                      <MenuItem
+                        onClick={() => {
+                          returnAudienceSpeak(anchorElAud.clientId);
+                          handleCloseAud();
+                        }}
+                      >
+                        Return to audience
+                      </MenuItem>
                     )}
                   </Menu>
                 </Box>
