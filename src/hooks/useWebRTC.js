@@ -95,18 +95,23 @@ export const useWebRTC = (roomId, userDetails) => {
   const cleanupConnections = useCallback(() => {
     for (let peerId in connections.current) {
       if (connections.current[peerId]) {
-        connections.current[peerId].connection.close();
+        connections.current[peerId].close();
         delete connections.current[peerId];
       }
-    }
-    for (let userId in audioElements.current) {
-      delete audioElements.current[userId];
     }
     if (socket.current) {
       Object.values(ACTIONS).forEach((action) => socket.current.off(action));
       socket.current.emit(ACTIONS.LEAVE, { roomId });
       socket.current = null;
       console.log("All socket listeners removed and cleanup complete.");
+    }
+
+    for (let userId in audioElements.current) {
+      delete audioElements.current[userId];
+    }
+
+    if (socket.current) {
+      socket.current.disconnect();
     }
 
     if (monitoringInterval.current) {
@@ -118,11 +123,7 @@ export const useWebRTC = (roomId, userDetails) => {
   const captureMedia = async () => {
     try {
       localMediaStream.current = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
+        audio: true,
       });
       // Make sure the track is enabled right after capture
       localMediaStream.current.getTracks().forEach((track) => {
