@@ -388,6 +388,7 @@ const Room = () => {
                   >
                     {isAdmin && anchorElAud && (
                       <>
+                        {/* Admin can block user */}
                         <MenuItem
                           sx={{ color: "red" }}
                           onClick={() => {
@@ -397,6 +398,8 @@ const Room = () => {
                         >
                           Block the user
                         </MenuItem>
+
+                        {/* Admin can return user to audience */}
                         <MenuItem
                           onClick={() => {
                             returnAudienceSpeak(anchorElAud.clientId);
@@ -407,16 +410,21 @@ const Room = () => {
                         </MenuItem>
                       </>
                     )}
-                    {client.role === "speaker" && anchorElAud && (
-                      <MenuItem
-                        onClick={() => {
-                          returnAudienceSpeak(anchorElAud.clientId);
-                          handleCloseAud();
-                        }}
-                      >
-                        Return to audience
-                      </MenuItem>
-                    )}
+
+                    {/* Speaker can only return user to audience */}
+                    {isSpeaker &&
+                      !isAdmin &&
+                      client.role === "speaker" &&
+                      anchorElAud && (
+                        <MenuItem
+                          onClick={() => {
+                            returnAudienceSpeak(anchorElAud.clientId);
+                            handleCloseAud();
+                          }}
+                        >
+                          Return to audience
+                        </MenuItem>
+                      )}
                   </Menu>
                 </Box>
                 <Typography
@@ -533,29 +541,31 @@ const Room = () => {
                         />
                       </IconButton>
                     )}
-                    <Menu
-                      id="fade-menu-aud"
-                      MenuListProps={{
-                        "aria-labelledby": "fade-button",
-                      }}
-                      anchorEl={anchorElAud?.anchor || null}
-                      open={openAud}
-                      onClose={handleCloseAud}
-                      TransitionComponent={Fade}
-                      sx={{ ml: "-8px", mt: "5px" }}
-                    >
-                      {isAdmin && anchorElAud && (
-                        <MenuItem
-                          sx={{ color: "red" }}
-                          onClick={() => {
-                            blockUser(anchorElAud.clientId);
-                            handleCloseAud();
-                          }}
-                        >
-                          Block the user
-                        </MenuItem>
-                      )}
-                    </Menu>
+                    {isAdmin && (
+                      <Menu
+                        id="fade-menu-aud"
+                        MenuListProps={{
+                          "aria-labelledby": "fade-button",
+                        }}
+                        anchorEl={anchorElAud?.anchor || null}
+                        open={openAud}
+                        onClose={handleCloseAud}
+                        TransitionComponent={Fade}
+                        sx={{ ml: "-8px", mt: "5px" }}
+                      >
+                        {anchorElAud && (
+                          <MenuItem
+                            sx={{ color: "red" }}
+                            onClick={() => {
+                              blockUser(anchorElAud.clientId);
+                              handleCloseAud();
+                            }}
+                          >
+                            Block the user
+                          </MenuItem>
+                        )}
+                      </Menu>
+                    )}
                     <audio
                       autoPlay
                       ref={(instance) => {
