@@ -407,7 +407,7 @@ const Room = () => {
                         </MenuItem>
                       </>
                     )}
-                    {isSpeaker && anchorElAud && (
+                    {client.role === "speaker" && anchorElAud && (
                       <MenuItem
                         onClick={() => {
                           returnAudienceSpeak(anchorElAud.clientId);
