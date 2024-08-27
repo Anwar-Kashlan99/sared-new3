@@ -431,6 +431,18 @@ const Room = () => {
                       <MicOffOutlined sx={{ fontSize: "18px" }} />
                     </Box>
                   )}
+                  {isAudioBlocked && (
+                    <Button
+                      onClick={() => handlePlayButtonClick(client._id)}
+                      sx={{
+                        fontSize: "12px",
+                        color: "#f25f0c",
+                        textTransform: "none",
+                      }}
+                    >
+                      Click to Play
+                    </Button>
+                  )}
                   {isAdmin && (
                     <IconButton
                       id="fade-button"
@@ -576,6 +588,18 @@ const Room = () => {
                       >
                         <MicOffOutlined sx={{ fontSize: "18px" }} />
                       </Box>
+                    )}
+                    {isAudioBlocked && (
+                      <Button
+                        onClick={() => handlePlayButtonClick(client._id)}
+                        sx={{
+                          fontSize: "12px",
+                          color: "#f25f0c",
+                          textTransform: "none",
+                        }}
+                      >
+                        Click to Play
+                      </Button>
                     )}
 
                     {isAdmin && (
@@ -969,7 +993,8 @@ const Room = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog
+      {/**
+        <Dialog
         open={isAudioBlocked}
         onClose={!isAudioBlocked}
         aria-labelledby="alert-dialog-title"
@@ -1005,7 +1030,7 @@ const Room = () => {
             </Button>
           </Box>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </Box>
   );
 };
