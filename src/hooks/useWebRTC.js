@@ -8,15 +8,19 @@ import { useStateWithCallback } from "./useStateWithCallback";
 
 export const useWebRTC = (roomId, userDetails) => {
   const [clients, setClients] = useStateWithCallback([]);
-  const audioElements = useRef({});
-  const connections = useRef({});
-  const socket = useRef(null);
-  const localMediaStream = useRef(null);
-  const navigate = useNavigate();
+
   const [handRaiseRequests, setHandRaiseRequests] = useState([]);
   const [messages, setMessages] = useState([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
+
   const monitoringInterval = useRef(null);
+  const audioElements = useRef({});
+  const connections = useRef({});
+  const clientsRef = useRef([]);
+  const socket = useRef(null);
+  const localMediaStream = useRef(null);
+
+  const navigate = useNavigate();
 
   const addNewClient = useCallback(
     (newClient) => {
@@ -42,6 +46,11 @@ export const useWebRTC = (roomId, userDetails) => {
     [setClients]
   );
 
+  // Keep the clients list in sync with a ref to avoid stale closures
+  useEffect(() => {
+    clientsRef.current = clients;
+  }, [clients]);
+
   useEffect(() => {
     const initChat = async () => {
       socket.current = socketInit();
@@ -53,7 +62,16 @@ export const useWebRTC = (roomId, userDetails) => {
 
       socket.current.on(ACTIONS.JOIN, ({ user, isAdmin }) => {
         const updatedUserDetails = { ...user, isAdmin };
-        addNewClient(updatedUserDetails);
+        addNewClient(updatedUserDetails, () => {
+          const existingClient = clientsRef.current.find(
+            (client) => client._id === user._id
+          );
+          if (!existingClient) {
+            console.log(
+              `User ${user._id} joined as ${isAdmin ? "admin" : "audience"}`
+            );
+          }
+        });
       });
 
       await captureMedia();
