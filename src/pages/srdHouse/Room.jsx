@@ -359,22 +359,25 @@ const Room = () => {
                       <MicOffOutlined sx={{ fontSize: "18px" }} />
                     </Box>
                   )}
-                  {(client.role === "speaker" || isAdmin) && (
-                    <IconButton
-                      id="fade-button"
-                      aria-controls={openAud ? "fade-menu-aud" : undefined}
-                      aria-haspopup="true"
-                      aria-expanded={openAud ? "true" : undefined}
-                      onClick={(event) => handleClickAud(event, client._id)}
-                      sx={{
-                        position: "absolute",
-                        right: "-40px",
-                        top: "-10px",
-                      }}
-                    >
-                      <MoreVert sx={{ color: "#f25f0c", cursor: "pointer" }} />
-                    </IconButton>
-                  )}
+                  {(client.role === "speaker" || isAdmin) &&
+                    !client.role === "speaker" && (
+                      <IconButton
+                        id="fade-button"
+                        aria-controls={openAud ? "fade-menu-aud" : undefined}
+                        aria-haspopup="true"
+                        aria-expanded={openAud ? "true" : undefined}
+                        onClick={(event) => handleClickAud(event, client._id)}
+                        sx={{
+                          position: "absolute",
+                          right: "-40px",
+                          top: "-10px",
+                        }}
+                      >
+                        <MoreVert
+                          sx={{ color: "#f25f0c", cursor: "pointer" }}
+                        />
+                      </IconButton>
+                    )}
                   {isAdmin && anchorElAud && (
                     <Menu
                       id="fade-menu-aud"
