@@ -735,7 +735,7 @@ const Room = () => {
                         />
                       </IconButton>
 
-                      {(isAdmin || isSpeaker) && (
+                      {(isAdmin || isSpeaker || isAudience) && (
                         <IconButton
                           onClick={() => handleMuteClick(currentUser?._id)}
                         >
