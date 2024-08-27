@@ -359,7 +359,7 @@ const Room = () => {
                       <MicOffOutlined sx={{ fontSize: "18px" }} />
                     </Box>
                   )}
-                  {client.role === "speaker" && isAdmin && !isAudience && (
+                  {client.role === "speaker" && isAdmin && (
                     <IconButton
                       id="fade-button"
                       aria-controls={openAud ? "fade-menu-aud" : undefined}
@@ -388,7 +388,6 @@ const Room = () => {
                   >
                     {isAdmin && anchorElAud && (
                       <>
-                        {/* Admin can block user */}
                         <MenuItem
                           sx={{ color: "red" }}
                           onClick={() => {
@@ -523,7 +522,7 @@ const Room = () => {
                       </Box>
                     )}
 
-                    {isAdmin && (
+                    {/* isAdmin && (
                       <IconButton
                         id="fade-button"
                         aria-controls={openAud ? "fade-menu-aud" : undefined}
@@ -540,8 +539,8 @@ const Room = () => {
                           sx={{ color: "#f25f0c", cursor: "pointer" }}
                         />
                       </IconButton>
-                    )}
-                    {isAdmin && (
+                    )*/}
+                    {/*isAdmin && (
                       <Menu
                         id="fade-menu-aud"
                         MenuListProps={{
@@ -565,7 +564,7 @@ const Room = () => {
                           </MenuItem>
                         )}
                       </Menu>
-                    )}
+                    )*/}
                     <audio
                       autoPlay
                       ref={(instance) => {
