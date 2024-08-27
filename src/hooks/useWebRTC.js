@@ -429,10 +429,6 @@ export const useWebRTC = (roomId, userDetails) => {
     }
   };
 
-  localMediaStream.current.getTracks().forEach((track) => {
-    console.log(`Local track: ${track.kind}, enabled: ${track.enabled}`);
-  });
-
   const handleReturnAudience = () => {
     if (localMediaStream.current) {
       localMediaStream.current.getTracks().forEach((track) => {
