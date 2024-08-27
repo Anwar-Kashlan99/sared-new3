@@ -363,26 +363,22 @@ const Room = () => {
                       <MicOffOutlined sx={{ fontSize: "18px" }} />
                     </Box>
                   )}
-                  {(isAdmin || isSpeaker) &&
-                    client.role ===
-                      "speaker"(
-                        <IconButton
-                          id="fade-button"
-                          aria-controls={open ? "fade-menu-aud" : undefined}
-                          aria-haspopup="true"
-                          aria-expanded={open ? "true" : undefined}
-                          onClick={(event) => handleClick(event, client._id)}
-                          sx={{
-                            position: "absolute",
-                            right: "-40px",
-                            top: "-10px",
-                          }}
-                        >
-                          <MoreVert
-                            sx={{ color: "#f25f0c", cursor: "pointer" }}
-                          />
-                        </IconButton>
-                      )}
+                  {(isAdmin || isSpeaker) && client.role === "speaker" && (
+                    <IconButton
+                      id="fade-button"
+                      aria-controls={open ? "fade-menu-aud" : undefined}
+                      aria-haspopup="true"
+                      aria-expanded={open ? "true" : undefined}
+                      onClick={(event) => handleClick(event, client._id)}
+                      sx={{
+                        position: "absolute",
+                        right: "-40px",
+                        top: "-10px",
+                      }}
+                    >
+                      <MoreVert sx={{ color: "#f25f0c", cursor: "pointer" }} />
+                    </IconButton>
+                  )}
                 </Box>
                 <Typography
                   sx={{
