@@ -185,6 +185,11 @@ export const useWebRTC = (roomId, userDetails) => {
           });
         }
       };
+      connection.oniceconnectionstatechange = () => {
+        console.log(
+          `ICE connection state for ${peerId}: ${connection.iceConnectionState}`
+        );
+      };
 
       connection.ontrack = ({ streams: [remoteStream] }) => {
         addNewClient({ ...user, muted: true });
@@ -236,6 +241,8 @@ export const useWebRTC = (roomId, userDetails) => {
           sessionDescription: answer,
         });
       }
+      // After setting remote description, check if the state moves to stable
+      console.log(`Updated signaling state: ${connection.signalingState}`);
     } catch (error) {
       console.error("Error setting remote description", error);
     }
@@ -275,7 +282,17 @@ export const useWebRTC = (roomId, userDetails) => {
       audioElement
         .play()
         .then(() => {
-          setIsAudioBlocked(false); // Hide the button after successful play
+          console.log(`Audio playing for user ${userId}`);
+          audioElement.removeAttribute("autoplayBlocked");
+          // Ensure that the audio track is enabled
+          if (localMediaStream.current) {
+            localMediaStream.current.getTracks().forEach((track) => {
+              if (track.kind === "audio") {
+                track.enabled = true; // Ensure the audio track is enabled
+                console.log(`Track ${track.kind} enabled: ${track.enabled}`);
+              }
+            });
+          }
         })
         .catch((error) => {
           console.error("Error during manual playback:", error);
