@@ -141,7 +141,11 @@ export const useWebRTC = (roomId, userDetails) => {
   const captureMedia = async () => {
     try {
       localMediaStream.current = await navigator.mediaDevices.getUserMedia({
-        audio: true,
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
       });
       // Make sure the track is enabled right after capture
       localMediaStream.current.getTracks().forEach((track) => {
@@ -238,7 +242,6 @@ export const useWebRTC = (roomId, userDetails) => {
           connection.addTrack(track, localMediaStream.current);
         });
       }
-      console.log("createOffer:", createOffer);
       if (createOffer) {
         const offer = await connection.createOffer();
         await connection.setLocalDescription(offer);
