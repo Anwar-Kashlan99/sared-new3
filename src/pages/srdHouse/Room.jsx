@@ -360,7 +360,7 @@ const Room = () => {
                     </Box>
                   )}
                   {(client.role === "speaker" || isAdmin) &&
-                    !client.role === "speaker" && (
+                    !client.role === "admin" && (
                       <IconButton
                         id="fade-button"
                         aria-controls={openAud ? "fade-menu-aud" : undefined}
@@ -539,7 +539,7 @@ const Room = () => {
                       </Box>
                     )}
 
-                    {/* isAdmin && (
+                    {isAdmin && (
                       <IconButton
                         id="fade-button"
                         aria-controls={openAud ? "fade-menu-aud" : undefined}
@@ -556,8 +556,8 @@ const Room = () => {
                           sx={{ color: "#f25f0c", cursor: "pointer" }}
                         />
                       </IconButton>
-                    )*/}
-                    {/*isAdmin && (
+                    )}
+                    {isAdmin && anchorElAud && (
                       <Menu
                         id="fade-menu-aud"
                         MenuListProps={{
@@ -569,19 +569,19 @@ const Room = () => {
                         TransitionComponent={Fade}
                         sx={{ ml: "-8px", mt: "5px" }}
                       >
-                        {anchorElAud && (
-                          <MenuItem
-                            sx={{ color: "red" }}
-                            onClick={() => {
-                              blockUser(anchorElAud.clientId);
-                              handleCloseAud();
-                            }}
-                          >
-                            Block the user
-                          </MenuItem>
-                        )}
+                        (
+                        <MenuItem
+                          sx={{ color: "red" }}
+                          onClick={() => {
+                            blockUser(anchorElAud.clientId);
+                            handleCloseAud();
+                          }}
+                        >
+                          Block the user
+                        </MenuItem>
+                        )
                       </Menu>
-                    )*/}
+                    )}
                     <audio
                       autoPlay
                       ref={(instance) => {
