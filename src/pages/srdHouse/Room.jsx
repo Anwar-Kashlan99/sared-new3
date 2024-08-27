@@ -112,6 +112,10 @@ const Room = () => {
     setIsHandRaised(handRaised);
   }, [handRaiseRequests, userDetails?._id]);
 
+  const admins = clients.filter((client) => client.role === "admin");
+  const audience = clients.filter((client) => client.role === "audience");
+  const speaker = clients.filter((client) => client.role === "speaker");
+
   const [isMuted, setMuted] = useState(true);
 
   // console.log(clients);
@@ -359,89 +363,6 @@ const Room = () => {
                       <MicOffOutlined sx={{ fontSize: "18px" }} />
                     </Box>
                   )}
-                  {(client.role === "speaker" || isAdmin) &&
-                    !client.role === "admin" && (
-                      <IconButton
-                        id="fade-button"
-                        aria-controls={openAud ? "fade-menu-aud" : undefined}
-                        aria-haspopup="true"
-                        aria-expanded={openAud ? "true" : undefined}
-                        onClick={(event) => handleClickAud(event, client._id)}
-                        sx={{
-                          position: "absolute",
-                          right: "-40px",
-                          top: "-10px",
-                        }}
-                      >
-                        <MoreVert
-                          sx={{ color: "#f25f0c", cursor: "pointer" }}
-                        />
-                      </IconButton>
-                    )}
-                  {isAdmin && anchorElAud && (
-                    <Menu
-                      id="fade-menu-aud"
-                      MenuListProps={{
-                        "aria-labelledby": "fade-button",
-                      }}
-                      anchorEl={anchorElAud?.anchor || null}
-                      open={openAud}
-                      onClose={handleCloseAud}
-                      TransitionComponent={Fade}
-                      sx={{ ml: "-8px", mt: "5px" }}
-                    >
-                      <MenuItem
-                        sx={{ color: "red" }}
-                        onClick={() => {
-                          blockUser(anchorElAud.clientId);
-                          handleCloseAud();
-                        }}
-                      >
-                        Block the user
-                      </MenuItem>
-
-                      {/* Admin can return user to audience */}
-                      <MenuItem
-                        onClick={() => {
-                          returnAudienceSpeak(anchorElAud.clientId);
-                          handleCloseAud();
-                        }}
-                      >
-                        Return to audience
-                      </MenuItem>
-                    </Menu>
-                  )}
-                  {isSpeaker &&
-                    !isAdmin &&
-                    client.role === "speaker" &&
-                    anchorElAud && (
-                      <Menu
-                        id="fade-menu-aud"
-                        MenuListProps={{
-                          "aria-labelledby": "fade-button",
-                        }}
-                        anchorEl={anchorElAud?.anchor || null}
-                        open={openAud}
-                        onClose={handleCloseAud}
-                        TransitionComponent={Fade}
-                        sx={{ ml: "-8px", mt: "5px" }}
-                      >
-                        {/* Speaker can only return user to audience */}
-                        {isSpeaker &&
-                          !isAdmin &&
-                          client.role === "speaker" &&
-                          anchorElAud && (
-                            <MenuItem
-                              onClick={() => {
-                                returnAudienceSpeak(anchorElAud.clientId);
-                                handleCloseAud();
-                              }}
-                            >
-                              Return to audience
-                            </MenuItem>
-                          )}
-                      </Menu>
-                    )}
                 </Box>
                 <Typography
                   sx={{
@@ -569,7 +490,6 @@ const Room = () => {
                         TransitionComponent={Fade}
                         sx={{ ml: "-8px", mt: "5px" }}
                       >
-                        (
                         <MenuItem
                           sx={{ color: "red" }}
                           onClick={() => {
@@ -579,7 +499,6 @@ const Room = () => {
                         >
                           Block the user
                         </MenuItem>
-                        )
                       </Menu>
                     )}
                     <audio
