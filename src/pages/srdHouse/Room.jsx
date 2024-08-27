@@ -333,7 +333,6 @@ const Room = () => {
                   />
 
                   <audio
-                    autoPlay
                     ref={(instance) => {
                       provideRef(instance, client?._id);
                     }}
@@ -406,7 +405,6 @@ const Room = () => {
                     }}
                   />
                   <audio
-                    autoPlay
                     ref={(instance) => {
                       provideRef(instance, client?._id);
                     }}
