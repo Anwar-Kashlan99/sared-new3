@@ -474,12 +474,15 @@ export const useWebRTC = (roomId, userDetails) => {
   const getAudioLevel = async () => {
     let audioLevel = 0.0;
     const promises = Object.values(connections.current).map(async (pc) => {
-      const stats = await pc.connection.getStats();
-      stats.forEach((report) => {
-        if (report.type === "media-source" && report.kind === "audio") {
-          audioLevel = report.audioLevel || 0.0;
-        }
-      });
+      console.log("Peer connection object:", pc); // Add this
+      if (pc && typeof pc.getStats === "function") {
+        const stats = await pc.getStats();
+        stats.forEach((report) => {
+          if (report.type === "media-source" && report.kind === "audio") {
+            audioLevel = report.audioLevel || 0.0;
+          }
+        });
+      }
     });
     await Promise.all(promises);
     return audioLevel;
