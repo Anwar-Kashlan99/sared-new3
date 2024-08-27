@@ -92,6 +92,13 @@ const Room = () => {
   const [isCurtainClose, setIsCurtainClose] = useState(true);
 
   useEffect(() => {
+    if (isSpeaker && currentUser && currentUser._id === userDetails._id) {
+      // Handle autoplay of the user's own audio
+      handleAutoplay(userDetails._id);
+    }
+  }, [isSpeaker, currentUser, userDetails._id, handleAutoplay]);
+
+  useEffect(() => {
     if (currentUser && currentUser.role === "admin") {
       setIsAdmin(true);
     }

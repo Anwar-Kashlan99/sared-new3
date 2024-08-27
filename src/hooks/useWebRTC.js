@@ -611,11 +611,18 @@ export const useWebRTC = (roomId, userDetails) => {
     toast("You have raised your hand.");
   };
 
-  const approveSpeakRequest = (peerId, userId) => {
+  const approveSpeakRequest = async (peerId, userId) => {
     socket.current.emit(ACTIONS.APPROVE_SPEAK, { roomId, userId });
     setHandRaiseRequests((requests) =>
       requests.filter((req) => req.userId !== userId)
     );
+    if (userId === userDetails._id) {
+      enableLocalAudioTrack();
+
+      Object.keys(connections.current).forEach((peerId) => {
+        handleRenegotiation({ peerId });
+      });
+    }
   };
 
   const rejectSpeakRequest = (peerId, userId) => {
