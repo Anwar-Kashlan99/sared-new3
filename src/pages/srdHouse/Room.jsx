@@ -295,10 +295,11 @@ const Room = () => {
             }}
           >
             {/** here the andmin and speker */}
-            {admins.map((client) => (
+            {clients.map((client) => (
               <Box
                 sx={{
-                  display: "flex",
+                  display:
+                    client.role === "admin" || "speaker" ? "flex" : "none",
                   flexDirection: "column",
                   alignItems: "center",
                   textAlign: "center",
@@ -311,7 +312,10 @@ const Room = () => {
                     width: "75px",
                     height: "75px",
                     borderRadius: "50%",
-                    border: "3px solid #ffc500",
+                    border:
+                      client.role === "admin"
+                        ? "3px solid #ffc500"
+                        : "3px solid #c0c0c0",
                     position: " relative",
                     "&::before": {
                       borderColor: client.speaking ? "#eb7635" : "#eee",
@@ -369,127 +373,6 @@ const Room = () => {
                 </Typography>
               </Box>
             ))}
-
-            {speaker.map((client) => (
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  textAlign: "center",
-                  width: "130px",
-                }}
-                key={client?._id}
-              >
-                <Box
-                  sx={{
-                    width: "75px",
-                    height: "75px",
-                    borderRadius: "50%",
-                    border: "3px solid #c0c0c0",
-                    position: " relative",
-                    "&::before": {
-                      borderColor: client.speaking ? "#eb7635" : "#eee",
-                    },
-                  }}
-                  className="speaking-avatar"
-                >
-                  <Avatar
-                    src={client.profile}
-                    alt=""
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      borderRadius: "50%",
-                      backgroundColor: "#ddd",
-                    }}
-                  />
-                  <audio
-                    ref={(instance) => {
-                      provideRef(instance, client?._id);
-                    }}
-                  />
-                  {client.muted && (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        borderRadius: "50%",
-                        backgroundColor: "#fff",
-                        position: "absolute",
-                        bottom: "-2px",
-                        right: "-2px",
-                        width: "25px",
-                        height: "25px",
-                        zIndex: "99",
-                        boxShadow: "0px 0px 3px 1px rgba(0, 0, 0, 0.25)",
-                      }}
-                    >
-                      <MicOffOutlined sx={{ fontSize: "18px" }} />
-                    </Box>
-                  )}
-                  {isAdmin && (
-                    <IconButton
-                      id="fade-button"
-                      aria-controls={openAud ? "fade-menu-aud" : undefined}
-                      aria-haspopup="true"
-                      aria-expanded={openAud ? "true" : undefined}
-                      onClick={(event) => handleClickAud(event, client._id)}
-                      sx={{
-                        position: "absolute",
-                        right: "-40px",
-                        top: "-10px",
-                      }}
-                    >
-                      <MoreVert sx={{ color: "#f25f0c", cursor: "pointer" }} />
-                    </IconButton>
-                  )}
-                  <Menu
-                    id="fade-menu-aud"
-                    MenuListProps={{
-                      "aria-labelledby": "fade-button",
-                    }}
-                    anchorEl={anchorElAud?.anchor || null}
-                    open={openAud}
-                    onClose={handleCloseAud}
-                    TransitionComponent={Fade}
-                    sx={{ ml: "-8px", mt: "5px" }}
-                  >
-                    {(isAdmin || isSpeaker) && anchorElAud && (
-                      <>
-                        <MenuItem
-                          sx={{ color: "red" }}
-                          onClick={() => {
-                            blockUser(anchorElAud.clientId);
-                            handleCloseAud();
-                          }}
-                        >
-                          Block the user
-                        </MenuItem>
-                        <MenuItem
-                          onClick={() => {
-                            returnAudienceSpeak(anchorElAud.clientId);
-                            handleCloseAud();
-                          }}
-                        >
-                          Return to audience
-                        </MenuItem>
-                      </>
-                    )}
-                  </Menu>
-                </Box>
-                <Typography
-                  sx={{
-                    marginTop: "0.5rem",
-                    fontSize: "15px",
-                    color: "#000",
-                  }}
-                >
-                  {client.username}
-                </Typography>
-              </Box>
-            ))}
           </Box>
           <hr style={{ marginTop: "25px", marginBottom: "25px" }} />
           <Box
@@ -520,10 +403,10 @@ const Room = () => {
                 },
               }}
             >
-              {audience.map((client) => (
+              {clients.map((client) => (
                 <Box
                   sx={{
-                    display: "flex",
+                    display: client.role === "audience" ? "flex" : "none",
                     flexDirection: "column",
                     alignItems: "center",
                     width: "130px",
