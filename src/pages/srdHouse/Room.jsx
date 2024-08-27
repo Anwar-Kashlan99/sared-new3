@@ -74,11 +74,11 @@ const Room = () => {
     blockUser,
     raiseHand,
     handRaiseRequests,
-    approveSpeakRequest,
     rejectSpeakRequest,
     messages,
     sendMessage,
     returnAudienceSpeak,
+    handleApproveSpeak,
   } = useWebRTC(roomId, userDetails);
 
   const currentUser = clients.find((client) => client._id === userDetails._id);
@@ -176,6 +176,10 @@ const Room = () => {
   };
   const handleRaiseHandDialogClose = () => {
     setRaiseHandDialogOpen(false);
+  };
+
+  const onApproveClick = (userId) => {
+    handleApproveSpeak({ userId });
   };
 
   // share sittings
@@ -855,10 +859,7 @@ const Room = () => {
                   }}
                 />
                 <ListItemText primary={`User: ${username}`} />
-                <Button
-                  onClick={() => approveSpeakRequest(peerId, userId)}
-                  color="primary"
-                >
+                <Button onClick={() => onApproveClick(userId)} color="primary">
                   Approve
                 </Button>
                 <Button

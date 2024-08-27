@@ -328,6 +328,30 @@ export const useWebRTC = (roomId, userDetails) => {
     }
   };
 
+  const addLocalTracksToPeers = () => {
+    if (localMediaStream.current) {
+      Object.keys(connections.current).forEach((peerId) => {
+        const connection = connections.current[peerId];
+        const senders = connection.getSenders();
+
+        localMediaStream.current.getTracks().forEach((track) => {
+          const trackAlreadyAdded = senders.some(
+            (sender) => sender.track === track
+          );
+
+          if (!trackAlreadyAdded) {
+            connection.addTrack(track, localMediaStream.current);
+          } else {
+            const sender = senders.find((sender) => sender.track === track);
+            if (sender) {
+              sender.replaceTrack(track); // Replace existing track
+            }
+          }
+        });
+      });
+    }
+  };
+
   const handleMessageReceived = (data) => {
     console.log("Received message data:", data);
 
@@ -351,6 +375,7 @@ export const useWebRTC = (roomId, userDetails) => {
     toast("Room ended", { icon: "⚠️" });
     navigate("/srdhouse");
   };
+
   const handleErrorRoom = () => {
     toast("You are blocked from this room");
     navigate("/srdhouse");
@@ -372,13 +397,27 @@ export const useWebRTC = (roomId, userDetails) => {
   };
 
   const handleApproveSpeak = async ({ userId }) => {
+    // Find the client in the current clients list
     setClients((prevClients) =>
       prevClients.map((client) =>
         client._id === userId
-          ? { ...client, role: "speaker", muted: false }
+          ? { ...client, role: "speaker", muted: false } // Change role to speaker
           : client
       )
     );
+
+    // Notify the server about the approval of the speak request
+    if (socket.current) {
+      socket.current.emit(ACTIONS.APPROVE_SPEAK, { roomId, userId });
+    }
+
+    // Remove the user from the raised hands list after approval
+    setHandRaiseRequests((requests) =>
+      requests.filter((req) => req.userId !== userId)
+    );
+
+    // Optionally, notify the user that their request was approved
+    toast(`User ${userId} has been approved to speak.`);
   };
 
   const handleReturnAudience = () => {
@@ -388,30 +427,6 @@ export const useWebRTC = (roomId, userDetails) => {
       });
     }
     toast("You have been moved back to the audience.");
-  };
-
-  const addLocalTracksToPeers = () => {
-    if (localMediaStream.current) {
-      Object.keys(connections.current).forEach((peerId) => {
-        const connection = connections.current[peerId];
-        const senders = connection.getSenders();
-
-        localMediaStream.current.getTracks().forEach((track) => {
-          const trackAlreadyAdded = senders.some(
-            (sender) => sender.track === track
-          );
-
-          if (!trackAlreadyAdded) {
-            connection.addTrack(track, localMediaStream.current);
-          } else {
-            const sender = senders.find((sender) => sender.track === track);
-            if (sender) {
-              sender.replaceTrack(track); // Replace existing track
-            }
-          }
-        });
-      });
-    }
   };
 
   const handleTalk = ({ userId, isTalk }) => {
@@ -468,7 +483,7 @@ export const useWebRTC = (roomId, userDetails) => {
           );
         }
       }
-    }, 300);
+    }, 400);
   };
 
   const getAudioLevel = async () => {
@@ -554,13 +569,6 @@ export const useWebRTC = (roomId, userDetails) => {
     toast("You have raised your hand.");
   };
 
-  const approveSpeakRequest = async (peerId, userId) => {
-    socket.current.emit(ACTIONS.APPROVE_SPEAK, { roomId, userId });
-    setHandRaiseRequests((requests) =>
-      requests.filter((req) => req.userId !== userId)
-    );
-  };
-
   const rejectSpeakRequest = (peerId, userId) => {
     socket.current.emit(ACTIONS.REJECT_SPEAK, { roomId, userId });
     setHandRaiseRequests((requests) =>
@@ -590,10 +598,10 @@ export const useWebRTC = (roomId, userDetails) => {
     blockUser,
     raiseHand,
     handRaiseRequests,
-    approveSpeakRequest,
     rejectSpeakRequest,
     messages,
     sendMessage,
     returnAudienceSpeak,
+    handleApproveSpeak,
   };
 };
