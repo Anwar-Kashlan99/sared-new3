@@ -396,16 +396,7 @@ export const useWebRTC = (roomId, userDetails) => {
     );
   };
 
-  const handleApproveSpeak = async ({ userId }) => {
-    // Find the client in the current clients list
-    setClients((prevClients) =>
-      prevClients.map((client) =>
-        client._id === userId
-          ? { ...client, role: "speaker", muted: false } // Change role to speaker
-          : client
-      )
-    );
-
+  const handleApproveSpeak = async ({ roomId, userId }) => {
     // Notify the server about the approval of the speak request
     if (socket.current) {
       socket.current.emit(ACTIONS.APPROVE_SPEAK, { roomId, userId });

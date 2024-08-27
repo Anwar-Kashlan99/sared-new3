@@ -179,7 +179,7 @@ const Room = () => {
   };
 
   const onApproveClick = (userId) => {
-    handleApproveSpeak({ userId });
+    handleApproveSpeak({ roomId, userId });
   };
 
   // share sittings
