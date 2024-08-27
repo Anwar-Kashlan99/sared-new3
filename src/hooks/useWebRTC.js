@@ -17,7 +17,6 @@ export const useWebRTC = (roomId, userDetails) => {
   const [messages, setMessages] = useState([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const monitoringInterval = useRef(null);
-  const clientsRef = useRef([]);
 
   const addNewClient = useCallback(
     (newClient) => {
@@ -43,100 +42,55 @@ export const useWebRTC = (roomId, userDetails) => {
     [setClients]
   );
 
-  // Keep the clients list in sync with a ref to avoid stale closures
-  useEffect(() => {
-    clientsRef.current = clients;
-  }, [clients]);
-
   useEffect(() => {
     const initChat = async () => {
-      if (socket.current) {
-        cleanupConnections();
-      }
-
       socket.current = socketInit();
 
       if (!socket.current) {
         console.error("Socket initialization failed");
-        setTimeout(initChat, 3000);
         return;
       }
 
-      setupSocketEventHandlers();
+      socket.current.on(ACTIONS.JOIN, ({ user, isAdmin }) => {
+        const updatedUserDetails = { ...user, isAdmin };
+        addNewClient(updatedUserDetails);
+      });
 
       await captureMedia();
 
-      if (userDetails && userDetails._id) {
-        addNewClient({ ...userDetails, muted: true }, () => {
-          const localElement = audioElements.current[userDetails._id];
-          if (localElement) {
-            localElement.srcObject = localMediaStream.current;
-          }
+      socket.current.emit(ACTIONS.JOIN, { roomId, user: userDetails });
 
-          socket.current.emit(ACTIONS.JOIN, { roomId, user: userDetails });
-        });
+      socket.current.on(ACTIONS.ADD_PEER, handleNewPeer);
+      socket.current.on(ACTIONS.SESSION_DESCRIPTION, setRemoteMedia);
+      socket.current.on(ACTIONS.ICE_CANDIDATE, handleIceCandidate);
+      socket.current.on(ACTIONS.REMOVE_PEER, handleRemovePeer);
+      socket.current.on(ACTIONS.MESSAGE, handleMessageReceived);
+      socket.current.on(ACTIONS.MUTE, ({ userId }) =>
+        handleSetMute(true, userId)
+      );
+      socket.current.on(ACTIONS.UNMUTE, ({ userId }) =>
+        handleSetMute(false, userId)
+      );
+      socket.current.on(ACTIONS.ROOM_CLIENTS, ({ roomId, clients }) => {
+        setClients(clients);
+      });
+      socket.current.on(ACTIONS.RAISE_HAND, handleRaiseHand);
+      socket.current.on(ACTIONS.REJECT_SPEAK, handleRejectSpeak);
+      socket.current.on(ACTIONS.APPROVE_SPEAK, handleApproveSpeak);
+      socket.current.on(ACTIONS.RETURN_AUDIENCE, handleReturnAudience);
+      socket.current.on(ACTIONS.TALK, handleTalk);
+      socket.current.on(ACTIONS.ERROR, handleErrorRoom);
+      socket.current.on("ROOM_ENDED_REDIRECT", handleRoomEnded);
 
-        socket.current.on(ACTIONS.JOIN, ({ user, isAdmin }) => {
-          const updatedUserDetails = { ...user, isAdmin };
-          addNewClient(updatedUserDetails, () => {
-            const existingClient = clientsRef.current.find(
-              (client) => client._id === user._id
-            );
-            if (!existingClient) {
-              console.log(
-                `User ${user._id} joined as ${isAdmin ? "admin" : "audience"}`
-              );
-            }
-          });
-        });
-
-        startMonitoringAudioLevels();
-      } else {
-        console.error("Invalid userDetails");
-      }
+      startMonitoringAudioLevels();
     };
 
     initChat();
 
     return () => {
-      if (localMediaStream.current) {
-        localMediaStream.current.getTracks().forEach((track) => track.stop());
-        localMediaStream.current = null; // Explicitly clear the media stream reference
-      }
       cleanupConnections();
     };
-  }, [userDetails, addNewClient, setClients, navigate]);
-
-  const setupSocketEventHandlers = () => {
-    socket.current.on(ACTIONS.MUTE_INFO, ({ userId, isMute }) =>
-      handleSetMute(isMute, userId)
-    );
-    socket.current.on(ACTIONS.ADD_PEER, handleNewPeer);
-    socket.current.on(ACTIONS.REMOVE_PEER, handleRemovePeer);
-    socket.current.on(ACTIONS.ICE_CANDIDATE, handleIceCandidate);
-    socket.current.on(ACTIONS.SESSION_DESCRIPTION, setRemoteMedia);
-    socket.current.on(ACTIONS.MUTE, ({ userId }) =>
-      handleSetMute(true, userId)
-    );
-    socket.current.on(ACTIONS.UNMUTE, ({ userId }) =>
-      handleSetMute(false, userId)
-    );
-    socket.current.on(ACTIONS.ROOM_CLIENTS, ({ roomId, clients }) => {
-      console.log("ROOM_CLIENTS event received:", { roomId, clients });
-      setClients(clients);
-    });
-    socket.current.on("ROOM_ENDED_REDIRECT", handleRoomEnded);
-    socket.current.on(ACTIONS.RAISE_HAND, handleRaiseHand);
-    socket.current.on(ACTIONS.REJECT_SPEAK, handleRejectSpeak);
-    socket.current.on(ACTIONS.RAISE_HAND_DUPLICATE, ({ message }) =>
-      toast(message)
-    );
-    socket.current.on(ACTIONS.APPROVE_SPEAK, handleApproveSpeak);
-    socket.current.on(ACTIONS.MESSAGE, handleMessageReceived);
-    socket.current.on(ACTIONS.TALK, handleTalk);
-    socket.current.on(ACTIONS.RETURN_AUDIENCE, handleReturnAudience);
-    socket.current.on(ACTIONS.ERROR, handleErrorRoom);
-  };
+  }, [roomId, userDetails, addNewClient]);
 
   const cleanupConnections = useCallback(() => {
     for (let peerId in connections.current) {
@@ -454,13 +408,10 @@ export const useWebRTC = (roomId, userDetails) => {
       if (!localMediaStream.current) return;
 
       const audioLevel = await getAudioLevel();
-      console.log(audioLevel); // This should now print the audio level
-
       if (audioLevel > 0.1) {
-        // Adjust the threshold based on your needs
         if (
           !isSpeaking &&
-          !clientsRef.current.find((c) => c._id === userDetails._id)?.muted
+          !clients.find((client) => client._id === userDetails._id)?.muted
         ) {
           setIsSpeaking(true);
           socket.current.emit(ACTIONS.TALK, {
@@ -500,15 +451,14 @@ export const useWebRTC = (roomId, userDetails) => {
 
   const getAudioLevel = async () => {
     let audioLevel = 0.0;
-    const promises = Object.values(connections.current).map(async (pc) => {
-      const stats = await pc.connection.getStats();
+    if (connections.current[userDetails._id]) {
+      const stats = await connections.current[userDetails._id].getStats();
       stats.forEach((report) => {
         if (report.type === "media-source" && report.kind === "audio") {
           audioLevel = report.audioLevel || 0.0;
         }
       });
-    });
-    await Promise.all(promises);
+    }
     return audioLevel;
   };
 
