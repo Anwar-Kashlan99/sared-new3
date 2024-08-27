@@ -402,6 +402,12 @@ export const useWebRTC = (roomId, userDetails) => {
       socket.current.emit(ACTIONS.APPROVE_SPEAK, { roomId, userId });
     }
 
+    if (localMediaStream.current) {
+      localMediaStream.current.getTracks().forEach((track) => {
+        track.enabled = true;
+      });
+    }
+
     // Remove the user from the raised hands list after approval
     setHandRaiseRequests((requests) =>
       requests.filter((req) => req.userId !== userId)
