@@ -192,12 +192,25 @@ export const useWebRTC = (roomId, userDetails) => {
       };
 
       connection.ontrack = ({ streams: [remoteStream] }) => {
+        remoteStream.getTracks().forEach((track) => {
+          console.log(`Remote track: ${track.kind}, enabled: ${track.enabled}`);
+        });
         addNewClient({ ...user, muted: true });
         const audioElement = audioElements.current[user._id];
         if (audioElement) {
           audioElement.srcObject = remoteStream;
           audioElement.play().catch((error) => {
-            console.error(`Error playing audio for user ${user._id}:`, error);
+            if (
+              error.name === "NotAllowedError" ||
+              error.name === "AbortError"
+            ) {
+              console.log(
+                `Autoplay blocked for user ${user._id}, waiting for user interaction.`
+              );
+              audioElement.setAttribute("autoplayBlocked", "true");
+            } else {
+              console.error(`Error playing audio for user ${user._id}:`, error);
+            }
           });
         }
       };
@@ -284,15 +297,6 @@ export const useWebRTC = (roomId, userDetails) => {
         .then(() => {
           console.log(`Audio playing for user ${userId}`);
           audioElement.removeAttribute("autoplayBlocked");
-          // Ensure that the audio track is enabled
-          if (localMediaStream.current) {
-            localMediaStream.current.getTracks().forEach((track) => {
-              if (track.kind === "audio") {
-                track.enabled = true; // Ensure the audio track is enabled
-                console.log(`Track ${track.kind} enabled: ${track.enabled}`);
-              }
-            });
-          }
         })
         .catch((error) => {
           console.error("Error during manual playback:", error);
@@ -404,12 +408,30 @@ export const useWebRTC = (roomId, userDetails) => {
           console.log(
             `Enabled track kind: ${track.kind}, enabled: ${track.enabled}`
           );
+
+          // Ensure the track is added to all peer connections
+          Object.values(connections.current).forEach((connection) => {
+            const senders = connection.getSenders();
+            const existingSender = senders.find(
+              (sender) => sender.track === track
+            );
+
+            if (!existingSender) {
+              connection.addTrack(track, localMediaStream.current);
+            } else {
+              existingSender.replaceTrack(track); // Replace if track is already added
+            }
+          });
         }
       });
     } else {
       console.error("No local media stream available to enable tracks.");
     }
   };
+
+  localMediaStream.current.getTracks().forEach((track) => {
+    console.log(`Local track: ${track.kind}, enabled: ${track.enabled}`);
+  });
 
   const handleReturnAudience = () => {
     if (localMediaStream.current) {
