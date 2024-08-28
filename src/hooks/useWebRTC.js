@@ -112,6 +112,7 @@ export const useWebRTC = (roomId, userDetails) => {
     if (socket.current) {
       Object.values(ACTIONS).forEach((action) => socket.current.off(action));
       socket.current.emit(ACTIONS.LEAVE, { roomId });
+      socket.current.disconnect(); // Ensure this is called once
       socket.current = null;
     }
 
@@ -258,27 +259,6 @@ export const useWebRTC = (roomId, userDetails) => {
     }
   };
 
-  const handleIceCandidate = async ({ peerId, icecandidate }) => {
-    const connection = connections.current[peerId];
-    if (connection) {
-      try {
-        if (connection.remoteDescription && connection.remoteDescription.type) {
-          await connection.addIceCandidate(new RTCIceCandidate(icecandidate));
-          console.log(`ICE candidate added for peer ${peerId}`);
-        } else {
-          // Queue the ICE candidate until remote description is set
-          connection.queuedIceCandidates = connection.queuedIceCandidates || [];
-          connection.queuedIceCandidates.push(icecandidate);
-          console.log(`ICE candidate queued for peer ${peerId}`);
-        }
-      } catch (error) {
-        console.error(`Error adding ICE candidate for peer ${peerId}:`, error);
-      }
-    } else {
-      console.error(`Connection not found for peer ${peerId}`);
-    }
-  };
-
   const setRemoteMedia = async ({ peerId, sessionDescription }) => {
     const connection = connections.current[peerId];
     if (!connection) return;
@@ -306,6 +286,27 @@ export const useWebRTC = (roomId, userDetails) => {
       }
     } catch (error) {
       console.error("Error setting remote description", error);
+    }
+  };
+
+  const handleIceCandidate = async ({ peerId, icecandidate }) => {
+    const connection = connections.current[peerId];
+    if (connection) {
+      try {
+        if (connection.remoteDescription && connection.remoteDescription.type) {
+          await connection.addIceCandidate(new RTCIceCandidate(icecandidate));
+          console.log(`ICE candidate added for peer ${peerId}`);
+        } else {
+          // Queue the ICE candidate until remote description is set
+          connection.queuedIceCandidates = connection.queuedIceCandidates || [];
+          connection.queuedIceCandidates.push(icecandidate);
+          console.log(`ICE candidate queued for peer ${peerId}`);
+        }
+      } catch (error) {
+        console.error(`Error adding ICE candidate for peer ${peerId}:`, error);
+      }
+    } else {
+      console.error(`Connection not found for peer ${peerId}`);
     }
   };
 
