@@ -53,46 +53,54 @@ export const useWebRTC = (roomId, userDetails) => {
 
   useEffect(() => {
     const initChat = async () => {
-      try {
-        socket.current = socketInit();
+      socket.current = socketInit();
 
-        if (!socket.current) {
-          console.error("Socket initialization failed");
-          return;
-        }
-
-        // Setup listeners
-        socket.current.on(ACTIONS.JOIN, handleJoin);
-        socket.current.on(ACTIONS.ADD_PEER, handleNewPeer);
-        socket.current.on(ACTIONS.SESSION_DESCRIPTION, setRemoteMedia);
-        socket.current.on(ACTIONS.ICE_CANDIDATE, handleIceCandidate);
-        socket.current.on(ACTIONS.REMOVE_PEER, handleRemovePeer);
-        socket.current.on(ACTIONS.MESSAGE, handleMessageReceived);
-        socket.current.on(ACTIONS.MUTE, ({ userId }) =>
-          handleSetMute(true, userId)
-        );
-        socket.current.on(ACTIONS.UNMUTE, ({ userId }) =>
-          handleSetMute(false, userId)
-        );
-        socket.current.on(ACTIONS.ROOM_CLIENTS, ({ roomId, clients }) => {
-          setClients(clients);
-        });
-        socket.current.on(ACTIONS.RAISE_HAND, handleRaiseHand);
-        socket.current.on(ACTIONS.REJECT_SPEAK, handleRejectSpeak);
-        socket.current.on(ACTIONS.APPROVE_SPEAK, handleApproveSpeak);
-        socket.current.on(ACTIONS.RETURN_AUDIENCE, handleReturnAudience);
-        socket.current.on(ACTIONS.TALK, handleTalk);
-        socket.current.on(ACTIONS.ERROR, handleErrorRoom);
-        socket.current.on("ROOM_ENDED_REDIRECT", handleRoomEnded);
-
-        await captureMedia();
-
-        socket.current.emit(ACTIONS.JOIN, { roomId, user: userDetails });
-
-        startMonitoringAudioLevels();
-      } catch (error) {
-        console.error("Error initializing chat:", error);
+      if (!socket.current) {
+        console.error("Socket initialization failed");
+        return;
       }
+
+      socket.current.on(ACTIONS.JOIN, ({ user, isAdmin }) => {
+        const updatedUserDetails = { ...user, isAdmin };
+        addNewClient(updatedUserDetails, () => {
+          const existingClient = clientsRef.current.find(
+            (client) => client._id === user._id
+          );
+          if (!existingClient) {
+            console.log(
+              `User ${user._id} joined as ${isAdmin ? "admin" : "audience"}`
+            );
+          }
+        });
+      });
+
+      await captureMedia();
+
+      socket.current.emit(ACTIONS.JOIN, { roomId, user: userDetails });
+
+      socket.current.on(ACTIONS.ADD_PEER, handleNewPeer);
+      socket.current.on(ACTIONS.SESSION_DESCRIPTION, setRemoteMedia);
+      socket.current.on(ACTIONS.ICE_CANDIDATE, handleIceCandidate);
+      socket.current.on(ACTIONS.REMOVE_PEER, handleRemovePeer);
+      socket.current.on(ACTIONS.MESSAGE, handleMessageReceived);
+      socket.current.on(ACTIONS.MUTE, ({ userId }) =>
+        handleSetMute(true, userId)
+      );
+      socket.current.on(ACTIONS.UNMUTE, ({ userId }) =>
+        handleSetMute(false, userId)
+      );
+      socket.current.on(ACTIONS.ROOM_CLIENTS, ({ roomId, clients }) => {
+        setClients(clients);
+      });
+      socket.current.on(ACTIONS.RAISE_HAND, handleRaiseHand);
+      socket.current.on(ACTIONS.REJECT_SPEAK, handleRejectSpeak);
+      socket.current.on(ACTIONS.APPROVE_SPEAK, handleApproveSpeak);
+      socket.current.on(ACTIONS.RETURN_AUDIENCE, handleReturnAudience);
+      socket.current.on(ACTIONS.TALK, handleTalk);
+      socket.current.on(ACTIONS.ERROR, handleErrorRoom);
+      socket.current.on("ROOM_ENDED_REDIRECT", handleRoomEnded);
+
+      startMonitoringAudioLevels();
     };
 
     initChat();
@@ -113,18 +121,21 @@ export const useWebRTC = (roomId, userDetails) => {
       Object.values(ACTIONS).forEach((action) => socket.current.off(action));
       socket.current.emit(ACTIONS.LEAVE, { roomId });
       socket.current = null;
+      console.log("All socket listeners removed and cleanup complete.");
     }
 
     for (let userId in audioElements.current) {
       delete audioElements.current[userId];
     }
 
+    if (socket.current) {
+      socket.current.disconnect();
+    }
+
     if (monitoringInterval.current) {
       clearInterval(monitoringInterval.current);
       monitoringInterval.current = null;
     }
-
-    console.log("All socket listeners removed and cleanup complete.");
   }, [roomId]);
 
   const captureMedia = async () => {
@@ -154,20 +165,6 @@ export const useWebRTC = (roomId, userDetails) => {
         "Error capturing media. Please ensure your browser has permission to access the microphone."
       );
     }
-  };
-
-  const handleJoin = ({ user, isAdmin }) => {
-    const updatedUserDetails = { ...user, isAdmin };
-    addNewClient(updatedUserDetails, () => {
-      const existingClient = clientsRef.current.find(
-        (client) => client._id === user._id
-      );
-      if (!existingClient) {
-        console.log(
-          `User ${user._id} joined as ${isAdmin ? "admin" : "audience"}`
-        );
-      }
-    });
   };
 
   const handleNewPeer = async ({ peerId, createOffer, user }) => {
@@ -258,30 +255,12 @@ export const useWebRTC = (roomId, userDetails) => {
     }
   };
 
-  const handleIceCandidate = async ({ peerId, icecandidate }) => {
-    const connection = connections.current[peerId];
-    if (connection) {
-      try {
-        if (connection.remoteDescription && connection.remoteDescription.type) {
-          await connection.addIceCandidate(new RTCIceCandidate(icecandidate));
-          console.log(`ICE candidate added for peer ${peerId}`);
-        } else {
-          // Queue the ICE candidate until remote description is set
-          connection.queuedIceCandidates = connection.queuedIceCandidates || [];
-          connection.queuedIceCandidates.push(icecandidate);
-          console.log(`ICE candidate queued for peer ${peerId}`);
-        }
-      } catch (error) {
-        console.error(`Error adding ICE candidate for peer ${peerId}:`, error);
-      }
-    } else {
-      console.error(`Connection not found for peer ${peerId}`);
-    }
-  };
-
   const setRemoteMedia = async ({ peerId, sessionDescription }) => {
     const connection = connections.current[peerId];
     if (!connection) return;
+
+    const currentState = connection.signalingState;
+    console.log(`Current signaling state: ${currentState}`);
 
     try {
       await connection.setRemoteDescription(
@@ -296,16 +275,24 @@ export const useWebRTC = (roomId, userDetails) => {
           sessionDescription: answer,
         });
       }
-
-      // Add queued ICE candidates after setting the remote description
-      if (connection.queuedIceCandidates) {
-        for (const candidate of connection.queuedIceCandidates) {
-          await connection.addIceCandidate(new RTCIceCandidate(candidate));
-        }
-        connection.queuedIceCandidates = [];
-      }
+      // After setting remote description, check if the state moves to stable
+      console.log(`Updated signaling state: ${connection.signalingState}`);
     } catch (error) {
       console.error("Error setting remote description", error);
+    }
+  };
+
+  const handleIceCandidate = async ({ peerId, icecandidate }) => {
+    const connection = connections.current[peerId];
+    if (connection) {
+      try {
+        await connection.addIceCandidate(new RTCIceCandidate(icecandidate));
+        console.log(`ICE candidate added for peer ${peerId}`);
+      } catch (error) {
+        console.error(`Error adding ICE candidate for peer ${peerId}:`, error);
+      }
+    } else {
+      console.error(`Connection not found for peer ${peerId}`);
     }
   };
 
@@ -330,21 +317,12 @@ export const useWebRTC = (roomId, userDetails) => {
 
     if (userId === userDetails._id) {
       setIsSpeaking(!mute && isSpeaking);
-
-      // Handle possible errors in toggling tracks
-      if (localMediaStream.current) {
-        localMediaStream.current.getTracks().forEach((track) => {
-          if (track.kind === "audio") {
-            try {
-              track.enabled = !mute;
-              console.log(`Track ${track.kind} enabled: ${track.enabled}`);
-            } catch (error) {
-              console.error("Error enabling/disabling audio track:", error);
-            }
-          }
-        });
-      }
-
+      // Enable or disable the audio track based on mute status
+      localMediaStream.current.getTracks().forEach((track) => {
+        if (track.kind === "audio") {
+          track.enabled = !mute;
+        }
+      });
       socket.current.emit(ACTIONS.TALK, {
         userId,
         roomId,
@@ -511,17 +489,14 @@ export const useWebRTC = (roomId, userDetails) => {
   const getAudioLevel = async () => {
     let audioLevel = 0.0;
     const promises = Object.values(connections.current).map(async (pc) => {
+      console.log("Peer connection object:", pc); // Add this
       if (pc && typeof pc.getStats === "function") {
-        try {
-          const stats = await pc.getStats();
-          stats.forEach((report) => {
-            if (report.type === "media-source" && report.kind === "audio") {
-              audioLevel = report.audioLevel || 0.0;
-            }
-          });
-        } catch (error) {
-          console.error("Error getting audio stats:", error);
-        }
+        const stats = await pc.getStats();
+        stats.forEach((report) => {
+          if (report.type === "media-source" && report.kind === "audio") {
+            audioLevel = report.audioLevel || 0.0;
+          }
+        });
       }
     });
     await Promise.all(promises);
