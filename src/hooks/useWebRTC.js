@@ -137,6 +137,10 @@ export const useWebRTC = (roomId, userDetails) => {
           autoGainControl: true,
         },
       });
+      console.log(
+        "DDGdsgasdgsdg:",
+        navigator.mediaDevices.getSupportedConstraints()
+      );
       // Make sure the track is enabled right after capture
       localMediaStream.current.getTracks().forEach((track) => {
         if (track.kind === "audio") {
