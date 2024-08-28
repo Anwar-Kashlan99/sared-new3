@@ -210,14 +210,14 @@ export const useWebRTC = (roomId, userDetails) => {
       const connection = new RTCPeerConnection({ iceServers });
       connections.current[peerId] = connection;
 
-      //   connection.onicecandidate = (event) => {
-      //     if (event.candidate) {
-      //       socket.current.emit(ACTIONS.RELAY_ICE, {
-      //         peerId,
-      //         icecandidate: event.candidate,
-      //       });
-      //     }
-      //   };
+      connection.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.current.emit(ACTIONS.RELAY_ICE, {
+            peerId,
+            icecandidate: event.candidate,
+          });
+        }
+      };
       connection.oniceconnectionstatechange = () => {
         console.log(
           `ICE connection state for ${peerId}: ${connection.iceConnectionState}`
