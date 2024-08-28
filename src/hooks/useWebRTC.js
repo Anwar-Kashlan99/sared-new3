@@ -210,14 +210,14 @@ export const useWebRTC = (roomId, userDetails) => {
       const connection = new RTCPeerConnection({ iceServers });
       connections.current[peerId] = connection;
 
-      connection.onicecandidate = (event) => {
-        if (event.candidate) {
-          socket.current.emit(ACTIONS.RELAY_ICE, {
-            peerId,
-            icecandidate: event.candidate,
-          });
-        }
-      };
+      //   connection.onicecandidate = (event) => {
+      //     if (event.candidate) {
+      //       socket.current.emit(ACTIONS.RELAY_ICE, {
+      //         peerId,
+      //         icecandidate: event.candidate,
+      //       });
+      //     }
+      //   };
       connection.oniceconnectionstatechange = () => {
         console.log(
           `ICE connection state for ${peerId}: ${connection.iceConnectionState}`
@@ -299,6 +299,14 @@ export const useWebRTC = (roomId, userDetails) => {
       try {
         if (connection.remoteDescription && connection.remoteDescription.type) {
           await connection.addIceCandidate(new RTCIceCandidate(icecandidate));
+          connection.onicecandidate = (event) => {
+            if (event.candidate) {
+              socket.current.emit(ACTIONS.RELAY_ICE, {
+                peerId,
+                icecandidate: event.candidate,
+              });
+            }
+          };
           console.log(`ICE candidate added for peer ${peerId}`);
         } else {
           // Queue the ICE candidate until remote description is set
