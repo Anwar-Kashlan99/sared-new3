@@ -20,8 +20,9 @@ import ChatRoom from "../../components/ChatRoom";
 import { SharePopup } from "../../components/SharePopup";
 import { useNavigate, useParams } from "react-router-dom";
 import { useGetRoomQuery } from "../../store/srdClubSlice";
-import { useWebRTCVideo } from "../../hooks/useWebRTCVideo";
+
 import { useSelector } from "react-redux";
+import { useWebRTC } from "../../hooks/useWebRTCVideo2";
 
 const GoLive = () => {
   const { id: roomId } = useParams();
@@ -51,17 +52,17 @@ const GoLive = () => {
     isLoading: roomLoading,
   } = useGetRoomQuery(roomId);
 
-  const { clients, provideRef, handleMute, endRoom, blockUser } =
-    useWebRTCVideo(roomId, userDetails);
+  const { clients, provideRef, handleMute, endRoom, blockUser } = useWebRTC(
+    roomId,
+    userDetails
+  );
+
   const currentUser = clients.find((client) => client._id === userDetails._id);
   console.log("Clients list:", clients);
 
   const videoRef = (instance) => {
     if (streamerId && instance) {
-      console.log(`Received video ref for streamerId: ${streamerId}`);
       provideRef(instance, streamerId);
-    } else {
-      console.warn("Video ref or streamerId is invalid:", instance, streamerId);
     }
   };
   // Effect to determine if the user is an admin or audience
@@ -70,7 +71,7 @@ const GoLive = () => {
     const firstAdmin = clients.find((client) => client.role === "admin");
     if (firstAdmin) {
       setStreamerId(firstAdmin._id);
-      setIsAdmin(true);
+      setIsAdmin(userDetails._id === firstAdmin._id);
     }
 
     const currentUserRole = clients.find(
@@ -82,8 +83,10 @@ const GoLive = () => {
   }, [clients, userDetails._id]);
   // Effect to mute/unmute the user
   useEffect(() => {
-    handleMute(isMuted, userDetails?._id);
-  }, [isMuted, handleMute, userDetails?._id]);
+    if (isAdmin && currentUser) {
+      handleMute(isMuted, userDetails?._id);
+    }
+  }, [isMuted, handleMute, isAdmin, currentUser, userDetails?._id]);
 
   // Scroll to the bottom of the comments when a new comment is added
   useEffect(() => {
@@ -100,7 +103,6 @@ const GoLive = () => {
 
   const handleEndRoom = async () => {
     await endRoom();
-    navigate("/srdhouse");
   };
 
   // const handleCommentChange = (event) => {
@@ -178,6 +180,7 @@ const GoLive = () => {
               alt="goliveimg"
               ref={videoRef}
               autoPlay
+              muted={isAdmin && isMuted}
               style={{
                 width: "100%",
                 display: "block",
@@ -188,6 +191,14 @@ const GoLive = () => {
             />
           ) : (
             <p>Loading video...</p> // Or any other loading state
+          )}
+          {isAdmin && (
+            <Box sx={{ position: "absolute", top: "10px", right: "10px" }}>
+              <IconButton onClick={handleMuteClick}>
+                {isMuted ? "Unmute" : "Mute"}
+              </IconButton>
+              <IconButton onClick={handleEndRoom}>End Room</IconButton>
+            </Box>
           )}
           {/**
            
