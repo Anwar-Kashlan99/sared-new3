@@ -224,6 +224,7 @@ export const useWebRTC = (roomId, userDetails) => {
       console.error("Error handling new peer:", error);
     }
   };
+
   const setRemoteMedia = async ({ peerId, sessionDescription }) => {
     const connection = connections.current[peerId];
     if (!connection) return;
@@ -236,10 +237,18 @@ export const useWebRTC = (roomId, userDetails) => {
       if (sessionDescription.type === "offer") {
         const answer = await connection.createAnswer();
         await connection.setLocalDescription(answer);
-        socket.current.emit(ACTIONS.RELAY_SDP_LIVE, {
+        socket.current.emit(ACTIONS.RELAY_SDP, {
           peerId,
           sessionDescription: answer,
         });
+      }
+
+      // Add queued ICE candidates after setting the remote description
+      if (connection.queuedIceCandidates) {
+        for (const candidate of connection.queuedIceCandidates) {
+          await connection.addIceCandidate(new RTCIceCandidate(candidate));
+        }
+        connection.queuedIceCandidates = [];
       }
     } catch (error) {
       console.error("Error setting remote description", error);
