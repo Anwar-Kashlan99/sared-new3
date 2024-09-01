@@ -179,7 +179,6 @@ const GoLive = () => {
             <video
               alt="goliveimg"
               ref={videoRef}
-              autoPlay
               muted={isAdmin && isMuted}
               style={{
                 width: "100%",
